@@ -4,3 +4,7 @@
 *.o
 sprout
 sprout.byte
+*.zip
+sprout_parse.ml
+sprout_parse.mli
+sprout_lex.ml
