@@ -28,6 +28,10 @@ rule token = parse
   | "false" { BOOL_CONST false }
   | "read" { READ }
   | "write" { WRITE }
+  | "if" { IF }
+  | "then" { THEN }
+  | "else" { ELSE }
+  | "fi" { FI }
   | ":=" { ASSIGN }
   | '(' { LPAREN }
   | ')' { RPAREN }

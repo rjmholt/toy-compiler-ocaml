@@ -9,6 +9,7 @@ open Sprout_ast
 %token BOOL INT
 %token WRITE READ
 %token ASSIGN
+%token IF THEN ELSE FI
 %token LPAREN RPAREN
 %token EQ NEQ LT LEQ GT GEQ
 %token AND OR NOT
@@ -48,7 +49,9 @@ stmts:
   | { [] }
 
 stmt :
-  stmt_body SEMICOLON { $1 }
+  | stmt_body SEMICOLON { $1 }
+  | IF expr THEN stmts FI { If ($2, $4) }
+  | IF expr THEN stmts ELSE stmts FI { IfElse ($2, $4, $6) }
 
 stmt_body:
   | READ lvalue { Read $2 }

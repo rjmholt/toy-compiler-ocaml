@@ -41,6 +41,9 @@ type stmt =
   | Assign of (lvalue * rvalue)
   | Read of lvalue
   | Write of expr
+  | If of (expr * stmt list)
+  | IfElse of (expr * stmt list * stmt list)
+  | While of (expr * stmt list)
 
 type program = {
   decls : typedef list ;

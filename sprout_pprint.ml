@@ -17,6 +17,7 @@ let isHigherPrecedence binop1 binop2 =
                                         || isComparator binop2
   | _                                -> false
 
+(* ---- STRING CONVERSION FUNCTIONS FOR AST LEAVES ---- *)
 let rec string_of_lval lval =
   match lval with
   | LId     ident           -> ident
@@ -71,24 +72,53 @@ let rec string_of_expr expr =
 
 let string_of_rval (Rexpr expr) = string_of_expr expr
 
-let print_assign lval rval =
+(* ---- STATEMENT PRINTING FUNCTIONS ---- *)
+let print_indent indent_level =
+  for i = 1 to indent_level do
+    printf "  "
+  done
+
+let print_assign indent lval rval =
+  print_indent indent;
   printf "%s := %s;\n" (string_of_lval lval) (string_of_rval rval)
 
-let print_read lval = printf "read %s;\n" (string_of_lval lval)
+let print_read indent lval =
+  print_indent indent;
+  printf "read %s;\n" (string_of_lval lval)
 
-let print_write expr = printf "write %s;\n" (string_of_expr expr)
+let print_write indent expr =
+  print_indent indent;
+  printf "write %s;\n" (string_of_expr expr)
 
-let rec print_stmt_list stmt_list =
+let rec print_if indent expr ?elses:(slist=[]) stmts =
+  print_indent indent;
+  printf "if %s then\n" (string_of_expr expr);
+  print_stmt_list (indent+1) stmts;
+  match slist with
+  | [] -> ()
+  | _ ->
+    print_indent indent;
+    printf "else\n";
+    print_stmt_list (indent+1) slist;
+  print_indent indent;
+  printf "fi\n"
+
+(* "and" means print_if and print_stmt_list are mutually recursive *)
+and print_stmt_list indent stmt_list =
   let print_stmt stmt =
     match stmt with
-    | Assign (lval, rval) -> print_assign lval rval
-    | Read   lval         -> print_read lval
-    | Write  expr         -> print_write expr
+    | Assign (lval, rval) -> print_assign indent lval rval
+    | Read   lval         -> print_read indent lval
+    | Write  expr         -> print_write indent expr
+    | If (expr, stmts)    -> print_if indent expr stmts
+    | IfElse (expr, if_stmts, else_stmts) ->
+        print_if indent expr if_stmts ~elses:else_stmts
   in
   match stmt_list with
-  | stmt :: slist   -> print_stmt stmt; print_stmt_list slist
+  | stmt :: slist   -> print_stmt stmt; print_stmt_list indent slist
   | []              -> ()
 
+(* ---- VARIABLE/TYPE DECLARATION PRINTING ---- *)
 let rec print_typedef_list td_list =
   let string_of_beantype bt =
     match bt with
@@ -97,7 +127,7 @@ let rec print_typedef_list td_list =
   in
   let string_of_typedef (id, beantype) =
       let bt_string = string_of_beantype beantype in
-      String.concat " " [bt_string; id]
+      String.concat "" [bt_string; " "; id; ";"]
   in
   match td_list with
   | td :: tds   -> printf "%s\n" (string_of_typedef td);
@@ -105,7 +135,6 @@ let rec print_typedef_list td_list =
   | []          -> ()
 
 let print_program fmt prog =
-  printf "--- IDENTIFIER LIST ---\n";
   print_typedef_list prog.decls;
-  printf "--- END IDENTIFIERS ---\n\n";
-  print_stmt_list prog.stmts
+  printf "----------------\n\n";
+  print_stmt_list 0 prog.stmts
