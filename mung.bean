@@ -1,0 +1,4 @@
+int mung;
+read mung;
+mung := 2*mung + 42;
+write mung;
