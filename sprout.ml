@@ -1,3 +1,4 @@
+open Format
 module P = Sprout_parse
 
 (* Argument parsing code *)
@@ -27,10 +28,15 @@ let main () =
   (* Initialize lexing buffer *)
   let lexbuf = Lexing.from_channel infile in
   (* Call the parser *)
-  let prog = Sprout_parse.program Sprout_lex.token lexbuf in
-  match !mode with
-  | PrettyPrint ->
-    Sprout_pprint.print_program Format.std_formatter prog 
-  | Compile -> ()
+  try
+    let prog = Sprout_parse.program Sprout_lex.token lexbuf in
+    match !mode with
+    | PrettyPrint ->
+      Sprout_pprint.print_program Format.std_formatter prog 
+    | Compile -> ()
+  with
+    e -> 
+      printf "Parse error on line %i\n" !Sprout_lex.linenum;
+      raise e
 
 let _ = main ()

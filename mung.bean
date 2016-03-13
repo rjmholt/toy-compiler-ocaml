@@ -1,7 +1,10 @@
 int mung;
 bool bean;
+# Hello!
 read mung;
 read bean;
+banana
 mung := 2*mung + 42*(3+7);
 bean := not (true or bean);
+mung := (6 * (((3*2)) + 4*5));
 write mung;
