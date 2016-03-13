@@ -1,6 +1,22 @@
 open Sprout_ast
 open Format
 
+(* binary operators follow the following precedence order:
+ *     arithmetic: [* /] > [+ -] > [= != < <= > >=]
+ *     boolean:    [and or] > [= != < <= > >=]              *)
+let isMulDiv op = List.mem op [Op_mul; Op_div]
+let isAddSub op = List.mem op [Op_and; Op_sub]
+let isAndOr op = List.mem op [Op_and;Op_or]
+let isComparator op = List.mem op [Op_eq;Op_neq;Op_lt;Op_leq;Op_gt;Op_geq]
+
+(* True if binop1 is higher precedence than binop2 *)
+let isHigherPrecedence binop1 binop2 =
+  match binop1 with
+  | Op_mul | Op_div | Op_and | Op_or -> not (isMulDiv binop2)
+  | Op_add | Op_sub                  -> not (isMulDiv binop2)
+                                        || isComparator binop2
+  | _                                -> false
+
 let rec string_of_lval lval =
   match lval with
   | LId     ident           -> ident
@@ -11,22 +27,47 @@ let string_of_binop binop =
   | Op_add  -> "+"
   | Op_sub  -> "-"
   | Op_mul  -> "*"
+  | Op_div  -> "/"
+  | Op_and  -> "and"
+  | Op_or   -> "or"
   | Op_eq   -> "="
+  | Op_neq  -> "!="
   | Op_lt   -> "<"
+  | Op_leq  -> "<="
+  | Op_gt   -> ">"
+  | Op_geq  -> ">="
 
-let string_of_unop Op_minus = "-"
+let string_of_unop unop =
+  match unop with
+  | Op_minus  -> "-"
+  | Op_not    -> "not"
 
 let rec string_of_expr expr =
+  (* unary operators bind tightest -- all non-trivial subexpressions
+   * need parentheses *)
+  let parenthesise expr = String.concat "" ["("; string_of_expr expr; ")"] in
+  let unop_subexpr subexpr =
+    match subexpr with
+    | Ebinop _ -> parenthesise subexpr
+    | Eunop _  -> parenthesise subexpr
+    | _        -> string_of_expr subexpr
+  in
+  let binop_subexpr op subexpr =
+    match subexpr with
+    | Ebinop (_, binop, _)  -> if isHigherPrecedence op binop
+      then parenthesise subexpr else string_of_expr subexpr
+    | _                     -> string_of_expr subexpr
+  in
   match expr with
   | Ebool   ebool                -> string_of_bool ebool
   | Eint    eint                 -> string_of_int eint
   | Elval   lval                 -> string_of_lval lval
-  | Ebinop (lexpr, binop, rexpr) ->
-      String.concat " " [string_of_expr lexpr;
-                         string_of_binop binop;
-                         string_of_expr rexpr]
   | Eunop (unop, expr)           ->
-      String.concat " " [string_of_unop unop; string_of_expr expr]
+      String.concat " " [string_of_unop unop; unop_subexpr expr]
+  | Ebinop (lexpr, binop, rexpr) ->
+      String.concat " " [binop_subexpr binop lexpr;
+                         string_of_binop binop;
+                         binop_subexpr binop rexpr]
 
 let string_of_rval (Rexpr expr) = string_of_expr expr
 

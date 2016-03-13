@@ -22,10 +22,18 @@ rule token = parse
   | '(' { LPAREN }
   | ')' { RPAREN }
   | '=' { EQ }
+  | "!=" { NEQ }
   | '<' { LT }
+  | "<=" { LEQ }
+  | '>' { GT }
+  | ">=" { GEQ }
   | '+' { PLUS }
   | '-' { MINUS }
   | '*' { MUL }
+  | '/' { DIV }
+  | "and" { AND }
+  | "or" { OR }
+  | "not" { NOT }
   | ';' { SEMICOLON }
   | ident as lxm { IDENT lxm }
   | eof { EOF }

@@ -1,4 +1,7 @@
 int mung;
+bool bean;
 read mung;
-mung := 2*mung + 42;
+read bean;
+mung := 2*mung + 42*(3+7);
+bean := not (true or bean);
 write mung;
