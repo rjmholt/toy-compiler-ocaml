@@ -35,7 +35,11 @@ type expr =
 type rvalue =
   | Rexpr of expr
 
-type decl = (ident * beantype)
+type pass_type =
+  | Pval
+  | Pref
+
+type proc_head = (pass_type * beantype * ident)
 
 type stmt = 
   | Assign of (lvalue * rvalue)
@@ -45,9 +49,13 @@ type stmt =
   | IfElse of (expr * stmt list * stmt list)
   | While of (expr * stmt list)
 
+type decl = (ident * beantype)
+
+type proc = (ident * proc_head list * stmt list)
+
 type program = {
-  decls : typedef list ;
-  stmts : stmt list
+  decls : decl list ;
+  procs : proc list
 }
  
 type t = program

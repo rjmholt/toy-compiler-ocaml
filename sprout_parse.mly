@@ -10,6 +10,10 @@ open Sprout_ast
 %token WRITE READ
 %token ASSIGN
 %token IF THEN ELSE FI
+%token WHILE DO OD
+%token PROC END
+%token VAL REF
+%token COMMA
 %token LPAREN RPAREN
 %token EQ NEQ LT LEQ GT GEQ
 %token AND OR NOT
@@ -30,35 +34,55 @@ open Sprout_ast
 %%
 
 program:
-  decls stmts { { decls = List.rev $1 ; stmts = List.rev $2 } }
+  decls procs { { decls = List.rev $1 ; procs = List.rev $2 } }
 
-decl :
-  | typespec IDENT SEMICOLON { ($2, $1) }
+decl:
+  typespec IDENT SEMICOLON { ($2, $1) }
 
-decls :
+decls:
   | decls decl { $2 :: $1 }
   | { [] }
 
-typespec :
+typespec:
   | BOOL { Bool }
   | INT { Int }
+
+proc:
+  PROC IDENT LPAREN proc_heads RPAREN stmts END { ($2, $4, $6) }
+
+procs:
+  | procs proc { $2 :: $1 }
+  | { [] }
+
+proc_heads:
+  | proc_heads COMMA proc_head { $3 :: $1 }
+  | proc_head { [$1] }
+  | { [] }
+
+proc_head:
+  pass_type typespec IDENT { ($1, $2, $3) }
+
+pass_type:
+  | VAL { Pval }
+  | REF { Pref }
 
 /* Builds stmts in reverse order */
 stmts:
   | stmts stmt { $2 :: $1 }
   | { [] }
 
-stmt :
+stmt:
   | stmt_body SEMICOLON { $1 }
   | IF expr THEN stmts FI { If ($2, $4) }
   | IF expr THEN stmts ELSE stmts FI { IfElse ($2, $4, $6) }
+  | WHILE expr DO stmts OD { While ($2, $4) }
 
 stmt_body:
   | READ lvalue { Read $2 }
   | WRITE expr { Write $2 }
   | lvalue ASSIGN rvalue { Assign ($1, $3) }
 
-rvalue :
+rvalue:
   | expr { Rexpr $1 }
 
 lvalue:

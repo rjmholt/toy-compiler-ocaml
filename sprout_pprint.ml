@@ -72,6 +72,20 @@ let rec string_of_expr expr =
 
 let string_of_rval (Rexpr expr) = string_of_expr expr
 
+let string_of_beantype bt =
+  match bt with
+  | Bool  -> "bool"
+  | Int   -> "int"
+
+let string_of_typedef (id, beantype) =
+    let bt_string = string_of_beantype beantype in
+    String.concat "" [bt_string; " "; id; ";"]
+
+let string_of_pass pass_type =
+  match pass_type with
+  | Pval  -> "val"
+  | Pref  -> "ref"
+
 (* ---- STATEMENT PRINTING FUNCTIONS ---- *)
 let print_indent indent_level =
   for i = 1 to indent_level do
@@ -103,7 +117,14 @@ let rec print_if indent expr ?elses:(slist=[]) stmts =
   print_indent indent;
   printf "fi\n"
 
-(* "and" means print_if and print_stmt_list are mutually recursive *)
+and print_while indent expr stmts =
+  print_indent indent;
+  printf "while %s do\n" (string_of_expr expr);
+  print_stmt_list (indent+1) stmts;
+  print_indent indent;
+  printf "od\n";
+
+(* "and" means print_if, etc. and print_stmt_list are mutually recursive *)
 and print_stmt_list indent stmt_list =
   let print_stmt stmt =
     match stmt with
@@ -113,28 +134,45 @@ and print_stmt_list indent stmt_list =
     | If (expr, stmts)    -> print_if indent expr stmts
     | IfElse (expr, if_stmts, else_stmts) ->
         print_if indent expr if_stmts ~elses:else_stmts
+    | While (expr, stmts) -> print_while indent expr stmts
   in
   match stmt_list with
   | stmt :: slist   -> print_stmt stmt; print_stmt_list indent slist
   | []              -> ()
 
-(* ---- VARIABLE/TYPE DECLARATION PRINTING ---- *)
-let rec print_typedef_list td_list =
-  let string_of_beantype bt =
-    match bt with
-    | Bool  -> "bool"
-    | Int   -> "int"
-  in
-  let string_of_typedef (id, beantype) =
-      let bt_string = string_of_beantype beantype in
-      String.concat "" [bt_string; " "; id; ";"]
-  in
-  match td_list with
-  | td :: tds   -> printf "%s\n" (string_of_typedef td);
-                   print_typedef_list tds
+let print_proc_head (pass_type, beantype, ident) =
+  printf "%s " (string_of_pass pass_type);
+  printf "%s " (string_of_beantype beantype);
+  printf "%s"  ident
+
+let rec print_proc_head_list head_list =
+  match head_list with
+  | []         -> ()
+  | [head]     -> print_proc_head head
+  | head :: hs -> print_proc_head head; printf ", ";
+                  print_proc_head_list hs
+
+let print_proc (ident, proc_heads, body_stmts) =
+  printf "proc %s (" ident;
+  print_proc_head_list proc_heads;
+  printf ")\n";
+  print_stmt_list 1 body_stmts;
+  printf "end\n\n"
+
+let rec print_proc_list plist =
+  match plist with
+  | proc :: ps  -> print_proc proc
   | []          -> ()
 
+(* ---- VARIABLE/TYPE DECLARATION PRINTING ---- *)
+let print_var_decl typedef = printf "%s\n" (string_of_typedef typedef)
+
+let rec print_decl_list dlist =
+  match dlist with
+  | vdecl :: ds  -> print_var_decl vdecl
+  | []                      -> ()
+
 let print_program fmt prog =
-  print_typedef_list prog.decls;
+  print_decl_list prog.decls;
   printf "----------------\n\n";
-  print_stmt_list 0 prog.stmts
+  print_proc_list prog.procs
