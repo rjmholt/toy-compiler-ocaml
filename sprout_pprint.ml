@@ -86,12 +86,23 @@ let string_of_pass pass_type =
   | Pval  -> "val"
   | Pref  -> "ref"
 
-(* ---- STATEMENT PRINTING FUNCTIONS ---- *)
+(* ---- PRINTING HELPER FUNCTIONS ---- *)
 let print_indent indent_level =
   for i = 1 to indent_level do
     printf "  "
   done
 
+(* ---- DECLARATION PRINTING FUNCTIONS ---- *)
+let print_var_decl indent typedef =
+  print_indent indent;
+  printf "%s\n" (string_of_typedef typedef)
+
+let rec print_decl_list indent dlist =
+  match dlist with
+  | vdecl :: ds  -> print_var_decl indent vdecl; print_decl_list indent ds
+  | []                      -> ()
+
+(* ---- STATEMENT PRINTING FUNCTIONS ---- *)
 let print_assign indent lval rval =
   print_indent indent;
   printf "%s := %s;\n" (string_of_lval lval) (string_of_rval rval)
@@ -152,10 +163,11 @@ let rec print_proc_head_list head_list =
   | head :: hs -> print_proc_head head; printf ", ";
                   print_proc_head_list hs
 
-let print_proc (ident, proc_heads, body_stmts) =
+let print_proc (ident, proc_heads, proc_decls, body_stmts) =
   printf "proc %s (" ident;
   print_proc_head_list proc_heads;
   printf ")\n";
+  print_decl_list 1 proc_decls;
   print_stmt_list 1 body_stmts;
   printf "end\n\n"
 
@@ -164,15 +176,5 @@ let rec print_proc_list plist =
   | proc :: ps  -> print_proc proc
   | []          -> ()
 
-(* ---- VARIABLE/TYPE DECLARATION PRINTING ---- *)
-let print_var_decl typedef = printf "%s\n" (string_of_typedef typedef)
-
-let rec print_decl_list dlist =
-  match dlist with
-  | vdecl :: ds  -> print_var_decl vdecl
-  | []                      -> ()
-
 let print_program fmt prog =
-  print_decl_list prog.decls;
-  printf "----------------\n\n";
   print_proc_list prog.procs

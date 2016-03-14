@@ -34,21 +34,10 @@ open Sprout_ast
 %%
 
 program:
-  decls procs { { decls = List.rev $1 ; procs = List.rev $2 } }
-
-decl:
-  typespec IDENT SEMICOLON { ($2, $1) }
-
-decls:
-  | decls decl { $2 :: $1 }
-  | { [] }
-
-typespec:
-  | BOOL { Bool }
-  | INT { Int }
+  procs { { procs = List.rev $1 } }
 
 proc:
-  PROC IDENT LPAREN proc_heads RPAREN stmts END { ($2, $4, $6) }
+  PROC IDENT LPAREN proc_heads RPAREN decls stmts END { ($2, $4, $6, $7) }
 
 procs:
   | procs proc { $2 :: $1 }
@@ -65,6 +54,18 @@ proc_head:
 pass_type:
   | VAL { Pval }
   | REF { Pref }
+
+decls:
+  | decls decl { $2 :: $1 }
+  | { [] }
+
+decl:
+  typespec IDENT SEMICOLON { ($2, $1) }
+
+typespec:
+  | BOOL { Bool }
+  | INT { Int }
+
 
 /* Builds stmts in reverse order */
 stmts:

@@ -51,10 +51,9 @@ type stmt =
 
 type decl = (ident * beantype)
 
-type proc = (ident * proc_head list * stmt list)
+type proc = (ident * proc_head list * decl list * stmt list)
 
 type program = {
-  decls : decl list ;
   procs : proc list
 }
  

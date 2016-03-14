@@ -1,10 +1,7 @@
 proc main()
-    int mung;
-    bool bean;
     # Hello!
     read mung;
     read bean;
-    duck
     while not (bean and false) do
      if true then mung := 39;
         else
