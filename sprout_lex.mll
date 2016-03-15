@@ -6,7 +6,7 @@ exception Syntax_error of string
 }
 
 let digit = ['0' - '9']
-let alpha = ['a' - 'z' 'A' - 'Z']
+let alpha = ['a' - 'z' 'A' - 'Z' '_']
 let alnum = alpha | digit
 let digits = digit+
 let ident = alpha alnum*
@@ -33,10 +33,14 @@ rule token = parse
   | "ref" { REF }
   | "proc" { PROC }
   | "end" { END }
+  | "typedef" { TYPEDEF }
+  | '"' { read_string (Buffer.create 20) lexbuf }
   | ',' { COMMA }
   | ":=" { ASSIGN }
   | '(' { LPAREN }
   | ')' { RPAREN }
+  | '{' { LBRACE }
+  | '}' { RBRACE }
   | '=' { EQ }
   | "!=" { NEQ }
   | '<' { LT }
@@ -50,8 +54,23 @@ rule token = parse
   | "and" { AND }
   | "or" { OR }
   | "not" { NOT }
+  | ':' { COLON }
   | ';' { SEMICOLON }
   | ident as lxm { IDENT lxm }
   | _ { raise (Syntax_error 
           ("Unknown symbol \""^(Lexing.lexeme lexbuf)^"\"")) }
   | eof { EOF }
+
+and read_string buf =
+  parse
+  | '"' { STR_CONST (Buffer.contents buf) }
+  | '\\' '\\' { Buffer.add_char buf '\\'; read_string buf lexbuf }
+  | '\\' '/' { Buffer.add_char buf '/'; read_string buf lexbuf }
+  | '\\' 'n' { Buffer.add_char buf '\n'; read_string buf lexbuf }
+  | '\\' 'r' { Buffer.add_char buf '\r'; read_string buf lexbuf }
+  | '\\' 't' { Buffer.add_char buf '\t'; read_string buf lexbuf }
+  | [^ '"' '\\'] { Buffer.add_string buf (Lexing.lexeme lexbuf);
+                   read_string buf lexbuf }
+  | _ { raise (Syntax_error
+                ("Illegal string character: \""^(Lexing.lexeme lexbuf)^"\"")) }
+  | eof { raise (Syntax_error "End of file reached before string terminated") }

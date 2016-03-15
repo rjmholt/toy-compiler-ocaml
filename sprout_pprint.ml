@@ -72,12 +72,15 @@ let rec string_of_expr expr =
 
 let string_of_rval (Rexpr expr) = string_of_expr expr
 
+let string_of_typedef (_, ident) = ident
+
 let string_of_beantype bt =
   match bt with
-  | Bool  -> "bool"
-  | Int   -> "int"
+  | Bool            -> "bool"
+  | Int             -> "int"
+  | Typedef typedef -> string_of_typedef typedef
 
-let string_of_typedef (id, beantype) =
+let string_of_typedecl (id, beantype) =
     let bt_string = string_of_beantype beantype in
     String.concat "" [bt_string; " "; id; ";"]
 
@@ -92,10 +95,33 @@ let print_indent indent_level =
     printf "  "
   done
 
+(* TYPEDEF PRINTING FUNCTIONS *)
+let print_fielddecl (ident, beantype) =
+  printf "%s : " ident;
+  printf "%s" (string_of_beantype beantype)
+
+let rec print_fielddecl_list fielddecls =
+  match fielddecls with
+  | []          -> printf "??? EMPTY TYPEDEF ???"
+  | [fd]        -> print_fielddecl fd
+  | fd :: fds   -> print_fielddecl fd;
+                   printf ", ";
+                   print_fielddecl_list fds
+
+let print_typedef (fielddecls, ident) =
+  printf "typedef {";
+  print_fielddecl_list fielddecls;
+  printf "} %s\n" ident
+
+let rec print_typedef_list typedefs =
+  match typedefs with
+  | []        -> printf "\n\n"
+  | td :: tds -> print_typedef td; print_typedef_list tds
+
 (* ---- DECLARATION PRINTING FUNCTIONS ---- *)
-let print_var_decl indent typedef =
+let print_var_decl indent typedecl =
   print_indent indent;
-  printf "%s\n" (string_of_typedef typedef)
+  printf "%s\n" (string_of_typedecl typedecl)
 
 let rec print_decl_list indent dlist =
   match dlist with
@@ -111,9 +137,12 @@ let print_read indent lval =
   print_indent indent;
   printf "read %s;\n" (string_of_lval lval)
 
-let print_write indent expr =
+let print_write indent writeable =
   print_indent indent;
-  printf "write %s;\n" (string_of_expr expr)
+  match writeable with
+  | WExpr expr  -> printf "write %s;\n" (string_of_expr expr)
+  | WString str -> let estr = String.escaped str in
+                   printf "write %s;\n" (String.concat "" ["\"";estr;"\""])
 
 let rec print_if indent expr ?elses:(slist=[]) stmts =
   print_indent indent;
@@ -141,7 +170,7 @@ and print_stmt_list indent stmt_list =
     match stmt with
     | Assign (lval, rval) -> print_assign indent lval rval
     | Read   lval         -> print_read indent lval
-    | Write  expr         -> print_write indent expr
+    | Write  writeable    -> print_write indent writeable
     | If (expr, stmts)    -> print_if indent expr stmts
     | IfElse (expr, if_stmts, else_stmts) ->
         print_if indent expr if_stmts ~elses:else_stmts
@@ -169,12 +198,14 @@ let print_proc (ident, proc_heads, proc_decls, body_stmts) =
   printf ")\n";
   print_decl_list 1 proc_decls;
   print_stmt_list 1 body_stmts;
-  printf "end\n\n"
+  printf "end"
 
 let rec print_proc_list plist =
   match plist with
-  | proc :: ps  -> print_proc proc
   | []          -> ()
+  | [proc]      -> print_proc proc
+  | proc :: ps  -> print_proc proc; printf "\n\n"
 
 let print_program fmt prog =
+  print_typedef_list prog.typedefs;
   print_proc_list prog.procs

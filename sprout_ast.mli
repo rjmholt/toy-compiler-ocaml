@@ -1,12 +1,16 @@
 (* Specification of an AST for bean *)
 type ident = string
  
-(* Keep aliases intact for pretty printing. *)
+(* Define types and typedefs as mutually recusive so *)
+(* typedefs can contain themselves                   *)
 type beantype =
   | Bool
   | Int
+  | Typedef of typedef
 
-type typedef = (ident * beantype)
+and fielddecl = (ident * beantype)
+
+and typedef = (fielddecl list * ident)
 
 type lvalue =
   | LId of ident
@@ -31,6 +35,10 @@ type expr =
   | Ebinop of (expr * binop * expr)
   | Eunop of (unop * expr)
 
+type writeable =
+  | WExpr of expr
+  | WString of string
+
 (* Will need to AST elements with additional data.  *)
 type rvalue =
   | Rexpr of expr
@@ -44,7 +52,7 @@ type proc_head = (pass_type * beantype * ident)
 type stmt = 
   | Assign of (lvalue * rvalue)
   | Read of lvalue
-  | Write of expr
+  | Write of writeable
   | If of (expr * stmt list)
   | IfElse of (expr * stmt list * stmt list)
   | While of (expr * stmt list)
@@ -54,6 +62,7 @@ type decl = (ident * beantype)
 type proc = (ident * proc_head list * decl list * stmt list)
 
 type program = {
+  typedefs : typedef list;
   procs : proc list
 }
  

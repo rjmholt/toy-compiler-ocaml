@@ -5,6 +5,7 @@ open Sprout_ast
 
 %token <bool> BOOL_CONST
 %token <int> INT_CONST
+%token <string> STR_CONST
 %token <string> IDENT
 %token BOOL INT
 %token WRITE READ
@@ -12,12 +13,15 @@ open Sprout_ast
 %token IF THEN ELSE FI
 %token WHILE DO OD
 %token PROC END
+%token TYPEDEF
 %token VAL REF
 %token COMMA
 %token LPAREN RPAREN
+%token LBRACE RBRACE
 %token EQ NEQ LT LEQ GT GEQ
 %token AND OR NOT
 %token PLUS MINUS MUL DIV
+%token COLON
 %token SEMICOLON
 %token EOF
 
@@ -34,10 +38,31 @@ open Sprout_ast
 %%
 
 program:
-  procs { { procs = List.rev $1 } }
+  typedefs procs { { typedefs = List.rev $1; procs = List.rev $2 } }
+
+typedefs:
+  | typedefs typedef { $2 :: $1 }
+  | { [] }
+
+typedef:
+  TYPEDEF typedefbody { $2 }
+  
+typedefbody:
+  LBRACE fielddecls RBRACE IDENT { (List.rev $2, $4) }
+
+fielddecls:
+  | fielddecls COMMA fielddecl { $3 :: $1 }
+  | fielddecl { [$1] }
+  | { [] }
+
+fielddecl:
+  IDENT COLON typespec { ($1, $3) }
 
 proc:
-  PROC IDENT LPAREN proc_heads RPAREN decls stmts END { ($2, $4, $6, $7) }
+  PROC IDENT LPAREN proc_heads RPAREN decls stmts END { ($2, 
+                                                         List.rev $4,
+                                                         List.rev $6,
+                                                         List.rev $7) }
 
 procs:
   | procs proc { $2 :: $1 }
@@ -65,6 +90,7 @@ decl:
 typespec:
   | BOOL { Bool }
   | INT { Int }
+  | typedefbody { Typedef $1 }
 
 
 /* Builds stmts in reverse order */
@@ -80,7 +106,7 @@ stmt:
 
 stmt_body:
   | READ lvalue { Read $2 }
-  | WRITE expr { Write $2 }
+  | WRITE writeable { Write $2 }
   | lvalue ASSIGN rvalue { Assign ($1, $3) }
 
 rvalue:
@@ -109,3 +135,8 @@ expr:
   | MINUS expr %prec UMINUS { Eunop (Op_minus, $2) }
   | NOT expr %prec UNOT { Eunop (Op_not, $2) }
   | LPAREN expr RPAREN { $2 }
+
+ /* Deal with 'write' being able to print strings too */
+writeable:
+  | expr { WExpr $1 }
+  | STR_CONST  { WString $1 }
