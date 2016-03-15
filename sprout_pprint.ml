@@ -115,7 +115,7 @@ let print_typedef (fielddecls, ident) =
 
 let rec print_typedef_list typedefs =
   match typedefs with
-  | []        -> printf "\n\n"
+  | []        -> printf "\n"
   | td :: tds -> print_typedef td; print_typedef_list tds
 
 (* ---- DECLARATION PRINTING FUNCTIONS ---- *)
@@ -203,7 +203,7 @@ let print_proc (ident, proc_heads, proc_decls, body_stmts) =
 let rec print_proc_list plist =
   match plist with
   | []          -> ()
-  | [proc]      -> print_proc proc
+  | [proc]      -> print_proc proc; printf "\n"
   | proc :: ps  -> print_proc proc; printf "\n\n"
 
 let print_program fmt prog =
