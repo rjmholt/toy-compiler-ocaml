@@ -9,7 +9,7 @@ CMXFILES = $(addsuffix .cmx, $(MODULES))
 ALLMODULES = $(MODULES) sprout
 
 OCAMLLEX = ocamllex
-OCAMLYACC = ocamlyacc
+OCAMLYACC = ocamlyacc -v
 OCAMLDEP = ocamldep
 
 OCAMLFLAGS =

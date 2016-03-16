@@ -47,8 +47,11 @@ type writeable =
   | WString of string
 
 (* Will need to AST elements with additional data.  *)
-type rvalue =
+type struct_init = (ident * rvalue) list
+
+and rvalue =
   | Rexpr of expr
+  | Rstruct of struct_init
 
 type pass_type =
   | Pval

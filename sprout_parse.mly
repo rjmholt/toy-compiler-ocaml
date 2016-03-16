@@ -104,30 +104,41 @@ stmts:
 
 stmt:
   | stmt_body SEMICOLON { $1 }
-  | IF expr THEN stmts FI { If ($2, $4) }
-  | IF expr THEN stmts ELSE stmts FI { IfElse ($2, $4, $6) }
-  | WHILE expr DO stmts OD { While ($2, $4) }
+  | IF expr THEN stmts FI { If ($2, List.rev $4) }
+  | IF expr THEN stmts ELSE stmts FI { IfElse ($2, List.rev $4, List.rev $6) }
+  | WHILE expr DO stmts OD { While ($2, List.rev $4) }
 
 stmt_body:
-  | proc_call { $1 }
+  | proc_call { ProcCall $1 }
   | READ lvalue { Read $2 }
   | WRITE writeable { Write $2 }
   | lvalue ASSIGN rvalue { Assign ($1, $3) }
 
 proc_call:
-  IDENT LPAREN lvaluelist RPAREN { ProcCall ($1, List.rev $3) }
+  IDENT LPAREN lvaluelist RPAREN { ($1, List.rev $3) }
 
 rvalue:
   | expr { Rexpr $1 }
+  | struct_init { Rstruct $1 }
 
 lvalue:
-  | IDENT { LId $1 }
   | IDENT DOT lvalue { LField ($3, $1) }
+  | IDENT { LId $1 }
 
 lvaluelist:
   | lvaluelist COMMA lvalue { $3 :: $1 }
   | lvalue { [$1] }
   | { [] }
+
+struct_init:
+  LBRACE struct_assigns RBRACE { List.rev $2 }
+
+struct_assigns:
+  | struct_assigns COMMA struct_assign { $3 :: $1 }
+  | struct_assign { [$1] }
+
+struct_assign:
+  IDENT EQ rvalue { ($1, $3) }
 
 expr:
   | BOOL_CONST { Ebool $1 }

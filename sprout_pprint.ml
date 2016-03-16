@@ -70,7 +70,20 @@ let rec string_of_expr expr =
                          string_of_binop binop;
                          binop_subexpr binop rexpr]
 
-let string_of_rval (Rexpr expr) = string_of_expr expr
+let rec string_of_struct_assign rstruct =
+  let struct_body =
+    String.concat ", " (List.map string_of_struct_entry rstruct)
+  in
+  String.concat struct_body ["{"; "}"]
+
+and string_of_struct_entry (ident, rvalue) =
+  String.concat " = " [ident; string_of_rval rvalue]
+
+and
+string_of_rval rval =
+  match rval with
+  | Rexpr expr      -> string_of_expr expr
+  | Rstruct rstruct -> string_of_struct_assign rstruct
 
 let string_of_typedef (_, ident) = ident
 
@@ -158,7 +171,7 @@ let print_write indent writeable =
 
 let print_proc_call indent pname lvals =
   print_indent indent;
-  printf "%s(%s);" pname (String.concat ", " (List.map string_of_lval lvals))
+  printf "%s(%s);\n" pname (String.concat ", " (List.map string_of_lval lvals))
 
 let rec print_if indent expr ?elses:(slist=[]) stmts =
   print_indent indent;
@@ -210,7 +223,7 @@ let rec print_proc_head_list head_list =
                   print_proc_head_list hs
 
 let print_proc (ident, proc_heads, proc_decls, body_stmts) =
-  printf "proc %s (" ident;
+  printf "proc %s(" ident;
   print_proc_head_list proc_heads;
   printf ")\n";
   print_decl_list 1 proc_decls;

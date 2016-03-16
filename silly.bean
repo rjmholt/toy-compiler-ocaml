@@ -1,0 +1,35 @@
+typedef {
+  f1 : int, f2 :
+{ g1 : bool, g2 : bool }
+} a_record
+typedef {
+  used : bool,
+  rec: a_record
+} b_record
+
+proc q ( val     bool x
+       , ref b_record k
+       )
+int n; bool y;
+a_record z;
+z.f1 := 42;
+end
+
+proc p (ref int i)
+i:=6*1 + 4; end
+
+proc main ()
+int m;
+int n;
+  read n;
+  while n>1 do
+    m := n;
+    while m>0 do
+         if m>0 then
+           n := n - 1;
+           m := m - 1;
+           if m=0 then p(n); fi
+      else m := n - m;
+           m := m - 1  ;
+fi od od
+end
