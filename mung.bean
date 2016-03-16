@@ -1,7 +1,13 @@
 typedef { f1: int, f2: {g1: bool, g2: bool}} a_record
 
+proc f()
+    write "Hello";
+end
+
 proc main()
-    f(x.f1, y.f2.g1);
+    int k;
+    a_record x;
+    a_record y;
     # Hello!
     read mung;
     read bean;

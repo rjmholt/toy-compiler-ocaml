@@ -81,16 +81,24 @@ let rec string_of_fielddecl_list fd_list =
   | fd :: fds ->
       String.concat ", " [string_of_fielddecl fd; string_of_fielddecl_list fds]
 
-and string_of_fielddecl (ident, beantype) =
-  String.concat " : " [ident; string_of_beantype beantype]
+and
+string_of_fielddecl (ident, fieldtype) =
+  String.concat " : " [ident; string_of_fieldtype fieldtype]
 
-and string_of_beantype bt =
+and
+string_of_fieldtype ft =
+  match ft with
+  | Beantype bt     -> string_of_beantype bt
+  | AnonTypedef at  -> string_of_fielddecl_list at
+
+and
+string_of_beantype bt =
   match bt with
   | Bool                    -> "bool"
   | Int                     -> "int"
-  | NamedTypedef ntd        -> string_of_typedef ntd
-  | AnonTypedef typedefbody ->
-      String.concat (string_of_fielddecl_list typedefbody) ["{"; "}"]
+  | NamedTypedef td_name    -> td_name
+  (*| AnonTypedef typedefbody ->
+      String.concat (string_of_fielddecl_list typedefbody) ["{"; "}"]*)
 
 let string_of_typedecl (id, beantype) =
     let bt_string = string_of_beantype beantype in
@@ -211,9 +219,10 @@ let print_proc (ident, proc_heads, proc_decls, body_stmts) =
 
 let rec print_proc_list plist =
   match plist with
-  | []          -> ()
-  | [proc]      -> print_proc proc; printf "\n"
-  | proc :: ps  -> print_proc proc; printf "\n\n"
+  | []          -> ();
+  | [proc]      -> print_proc proc;
+  | proc :: ps  -> print_proc proc; printf "\n\n"; print_proc_list ps;
+  printf "\n"
 
 let print_program fmt prog =
   print_typedef_list prog.typedefs;

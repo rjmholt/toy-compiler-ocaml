@@ -6,12 +6,18 @@ type ident = string
 type beantype =
   | Bool
   | Int
-  | NamedTypedef of typedef
+  | NamedTypedef of ident
+
+and
+typedef_fieldtype =
+  | Beantype of beantype
   | AnonTypedef of fielddecl list
 
-and fielddecl = (ident * beantype)
+and
+fielddecl = (ident * typedef_fieldtype)
 
-and typedef = (fielddecl list * ident)
+and
+typedef = (fielddecl list * ident)
 
 type lvalue =
   | LId of ident

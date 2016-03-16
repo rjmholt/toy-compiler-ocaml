@@ -41,6 +41,11 @@ open Sprout_ast
 program:
   typedefs procs { { typedefs = List.rev $1; procs = List.rev $2 } }
 
+beantype:
+  | BOOL { Bool }
+  | INT { Int }
+  | IDENT { NamedTypedef $1 }
+
 typedefs:
   | typedefs typedef { $2 :: $1 }
   | { [] }
@@ -56,8 +61,12 @@ fielddecls:
   | fielddecl { [$1] }
   | { [] }
 
+fieldtype:
+  | beantype { Beantype $1 }
+  | typedefbody { AnonTypedef $1 }
+
 fielddecl:
-  IDENT COLON typespec { ($1, $3) }
+  IDENT COLON fieldtype { ($1, $3) }
 
 proc:
   PROC IDENT LPAREN proc_heads RPAREN decls stmts END { ($2, 
@@ -75,7 +84,7 @@ proc_heads:
   | { [] }
 
 proc_head:
-  pass_type typespec IDENT { ($1, $2, $3) }
+  pass_type beantype IDENT { ($1, $2, $3) }
 
 pass_type:
   | VAL { Pval }
@@ -86,13 +95,7 @@ decls:
   | { [] }
 
 decl:
-  typespec IDENT SEMICOLON { ($2, $1) }
-
-typespec:
-  | BOOL { Bool }
-  | INT { Int }
-  | typedefbody { AnonTypedef $1 }
-
+  beantype IDENT SEMICOLON { ($2, $1) }
 
 /* Builds stmts in reverse order */
 stmts:
@@ -106,10 +109,13 @@ stmt:
   | WHILE expr DO stmts OD { While ($2, $4) }
 
 stmt_body:
+  | proc_call { $1 }
   | READ lvalue { Read $2 }
   | WRITE writeable { Write $2 }
   | lvalue ASSIGN rvalue { Assign ($1, $3) }
-  | IDENT LPAREN lvaluelist RPAREN { ProcCall ($1, List.rev $3) }
+
+proc_call:
+  IDENT LPAREN lvaluelist RPAREN { ProcCall ($1, List.rev $3) }
 
 rvalue:
   | expr { Rexpr $1 }
