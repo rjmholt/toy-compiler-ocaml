@@ -1,4 +1,4 @@
-typedef { f1: int, f2: bool } a_record
+typedef { f1: int, f2: {g1: bool, g2: bool}} a_record
 
 proc main()
     # Hello!

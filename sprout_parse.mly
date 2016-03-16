@@ -45,10 +45,10 @@ typedefs:
   | { [] }
 
 typedef:
-  TYPEDEF typedefbody { $2 }
+  TYPEDEF typedefbody IDENT { ($2, $3) }
   
 typedefbody:
-  LBRACE fielddecls RBRACE IDENT { (List.rev $2, $4) }
+  LBRACE fielddecls RBRACE { List.rev $2 }
 
 fielddecls:
   | fielddecls COMMA fielddecl { $3 :: $1 }
@@ -90,7 +90,7 @@ decl:
 typespec:
   | BOOL { Bool }
   | INT { Int }
-  | typedefbody { Typedef $1 }
+  | typedefbody { AnonTypedef $1 }
 
 
 /* Builds stmts in reverse order */

@@ -74,11 +74,23 @@ let string_of_rval (Rexpr expr) = string_of_expr expr
 
 let string_of_typedef (_, ident) = ident
 
-let string_of_beantype bt =
+let rec string_of_fielddecl_list fd_list =
+  match fd_list with
+  | []        -> ""
+  | [fd]      -> string_of_fielddecl fd
+  | fd :: fds ->
+      String.concat ", " [string_of_fielddecl fd; string_of_fielddecl_list fds]
+
+and string_of_fielddecl (ident, beantype) =
+  String.concat " : " [ident; string_of_beantype beantype]
+
+and string_of_beantype bt =
   match bt with
-  | Bool            -> "bool"
-  | Int             -> "int"
-  | Typedef typedef -> string_of_typedef typedef
+  | Bool                    -> "bool"
+  | Int                     -> "int"
+  | NamedTypedef ntd        -> string_of_typedef ntd
+  | AnonTypedef typedefbody ->
+      String.concat (string_of_fielddecl_list typedefbody) ["{"; "}"]
 
 let string_of_typedecl (id, beantype) =
     let bt_string = string_of_beantype beantype in
@@ -96,17 +108,9 @@ let print_indent indent_level =
   done
 
 (* TYPEDEF PRINTING FUNCTIONS *)
-let print_fielddecl (ident, beantype) =
-  printf "%s : " ident;
-  printf "%s" (string_of_beantype beantype)
 
-let rec print_fielddecl_list fielddecls =
-  match fielddecls with
-  | []          -> printf "??? EMPTY TYPEDEF ???"
-  | [fd]        -> print_fielddecl fd
-  | fd :: fds   -> print_fielddecl fd;
-                   printf ", ";
-                   print_fielddecl_list fds
+let print_fielddecl_list fds =
+  printf "%s" (string_of_fielddecl_list fds)
 
 let print_typedef (fielddecls, ident) =
   printf "typedef {";

@@ -6,7 +6,8 @@ type ident = string
 type beantype =
   | Bool
   | Int
-  | Typedef of typedef
+  | NamedTypedef of typedef
+  | AnonTypedef of fielddecl list
 
 and fielddecl = (ident * beantype)
 
