@@ -57,6 +57,7 @@ type stmt =
   | If of (expr * stmt list)
   | IfElse of (expr * stmt list * stmt list)
   | While of (expr * stmt list)
+  | ProcCall of (ident * lvalue list)
 
 type decl = (ident * beantype)
 

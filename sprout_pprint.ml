@@ -21,7 +21,7 @@ let isHigherPrecedence binop1 binop2 =
 let rec string_of_lval lval =
   match lval with
   | LId     ident           -> ident
-  | LField  (lval, ident)   -> String.concat ", " [string_of_lval lval; ident]
+  | LField  (lval, ident)   -> String.concat "." [ident; string_of_lval lval]
 
 let string_of_binop binop =
   match binop with
@@ -148,6 +148,10 @@ let print_write indent writeable =
   | WString str -> let estr = String.escaped str in
                    printf "write %s;\n" (String.concat "" ["\"";estr;"\""])
 
+let print_proc_call indent pname lvals =
+  print_indent indent;
+  printf "%s(%s);" pname (String.concat ", " (List.map string_of_lval lvals))
+
 let rec print_if indent expr ?elses:(slist=[]) stmts =
   print_indent indent;
   printf "if %s then\n" (string_of_expr expr);
@@ -172,13 +176,14 @@ and print_while indent expr stmts =
 and print_stmt_list indent stmt_list =
   let print_stmt stmt =
     match stmt with
-    | Assign (lval, rval) -> print_assign indent lval rval
-    | Read   lval         -> print_read indent lval
-    | Write  writeable    -> print_write indent writeable
-    | If (expr, stmts)    -> print_if indent expr stmts
+    | Assign (lval, rval)     -> print_assign indent lval rval
+    | Read   lval             -> print_read indent lval
+    | Write  writeable        -> print_write indent writeable
+    | If (expr, stmts)        -> print_if indent expr stmts
+    | While (expr, stmts)     -> print_while indent expr stmts
+    | ProcCall (ident, lvals) -> print_proc_call indent ident lvals
     | IfElse (expr, if_stmts, else_stmts) ->
         print_if indent expr if_stmts ~elses:else_stmts
-    | While (expr, stmts) -> print_while indent expr stmts
   in
   match stmt_list with
   | stmt :: slist   -> print_stmt stmt; print_stmt_list indent slist

@@ -36,6 +36,7 @@ rule token = parse
   | "typedef" { TYPEDEF }
   | '"' { read_string (Buffer.create 20) lexbuf }
   | ',' { COMMA }
+  | '.' { DOT }
   | ":=" { ASSIGN }
   | '(' { LPAREN }
   | ')' { RPAREN }

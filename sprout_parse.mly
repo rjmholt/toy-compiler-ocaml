@@ -14,6 +14,7 @@ open Sprout_ast
 %token WHILE DO OD
 %token PROC END
 %token TYPEDEF
+%token DOT
 %token VAL REF
 %token COMMA
 %token LPAREN RPAREN
@@ -108,12 +109,19 @@ stmt_body:
   | READ lvalue { Read $2 }
   | WRITE writeable { Write $2 }
   | lvalue ASSIGN rvalue { Assign ($1, $3) }
+  | IDENT LPAREN lvaluelist RPAREN { ProcCall ($1, List.rev $3) }
 
 rvalue:
   | expr { Rexpr $1 }
 
 lvalue:
   | IDENT { LId $1 }
+  | IDENT DOT lvalue { LField ($3, $1) }
+
+lvaluelist:
+  | lvaluelist COMMA lvalue { $3 :: $1 }
+  | lvalue { [$1] }
+  | { [] }
 
 expr:
   | BOOL_CONST { Ebool $1 }
