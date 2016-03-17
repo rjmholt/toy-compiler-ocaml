@@ -69,10 +69,10 @@ fielddecl:
   IDENT COLON fieldtype { ($1, $3) }
 
 proc:
-  PROC IDENT LPAREN proc_heads RPAREN decls stmts END { ($2, 
+  PROC IDENT LPAREN proc_heads RPAREN decls stmts END { ($2,
                                                          List.rev $4,
                                                          List.rev $6,
-                                                         List.rev $7) }
+                                                         $7) }
 
 procs:
   | procs proc { $2 :: $1 }
@@ -97,9 +97,9 @@ decls:
 decl:
   beantype IDENT SEMICOLON { ($2, $1) }
 
-/* Builds stmts in reverse order */
+/* Builds stmts in non-reverse, right-recursive order */
 stmts:
-  | stmts stmt { $2 :: $1 }
+  | stmt stmts { $1 :: $2 }
   | { [] }
 
 stmt:
