@@ -1,8 +1,16 @@
+module L = Lexing
+
 (* Specification of an AST for bean *)
 
 type ident = string
 
-type pos = Sprout.pos
+type pos = Lexing.position
+
+let get_lex_pos lexpos =
+  let fname = lexpos.L.pos_fname in
+  let line = lexpos.L.pos_lnum in
+  let col = lexpos.L.pos_cnum - lexpos.L.pos_bol + 1 in
+  (fname, line, col)
  
 (* Define types and typedefs as mutually recusive so *)
 (* typedefs can contain themselves                   *)
@@ -59,7 +67,7 @@ type pass_type =
   | Pval
   | Pref
 
-type proc_head = (pos * pass_type * beantype * ident * pos)
+type proc_head = (pos * pass_type * beantype * ident)
 
 type stmt = 
   | Assign of (pos * lvalue * rvalue)
@@ -78,3 +86,5 @@ type program = {
   typedefs : typedef list;
   procs : proc list
 }
+
+type t = program

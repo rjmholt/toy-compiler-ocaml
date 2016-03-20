@@ -51,7 +51,7 @@ typedefs:
   | { [] }
 
 typedef:
-  TYPEDEF typedefbody IDENT { ($2, $3) }
+  TYPEDEF typedefbody IDENT { (symbol_start_pos (), $2, $3) }
   
 typedefbody:
   LBRACE fielddecls RBRACE { List.rev $2 }
@@ -66,10 +66,11 @@ fieldtype:
   | typedefbody { AnonTypedef $1 }
 
 fielddecl:
-  IDENT COLON fieldtype { ($1, $3) }
+  IDENT COLON fieldtype { (symbol_start_pos (), $1, $3) }
 
 proc:
-  PROC IDENT LPAREN proc_heads RPAREN decls stmts END { ($2,
+  PROC IDENT LPAREN proc_heads RPAREN decls stmts END { (symbol_start_pos (),
+                                                         $2,
                                                          List.rev $4,
                                                          List.rev $6,
                                                          $7) }
@@ -84,7 +85,7 @@ proc_heads:
   | { [] }
 
 proc_head:
-  pass_type beantype IDENT { ($1, $2, $3) }
+  pass_type beantype IDENT { (symbol_start_pos (), $1, $2, $3) }
 
 pass_type:
   | VAL { Pval }
@@ -102,7 +103,7 @@ decls:
   | { [] }
 
 decl:
-  beantype IDENT SEMICOLON { ($2, $1) }
+  beantype IDENT SEMICOLON { (symbol_start_pos (), $2, $1) }
 
 /* Builds stmts in non-reverse, right-recursive order */
 stmts:
@@ -111,26 +112,27 @@ stmts:
 
 stmt:
   | stmt_body SEMICOLON { $1 }
-  | IF expr THEN stmts FI { If ($2, List.rev $4) }
-  | IF expr THEN stmts ELSE stmts FI { IfElse ($2, List.rev $4, List.rev $6) }
-  | WHILE expr DO stmts OD { While ($2, List.rev $4) }
+  | IF expr THEN stmts FI { If (symbol_start_pos (), $2, List.rev $4) }
+  | IF expr THEN stmts ELSE stmts FI { IfElse (symbol_start_pos (), $2,
+                                               List.rev $4, List.rev $6) }
+  | WHILE expr DO stmts OD { While (symbol_start_pos (), $2, List.rev $4) }
 
 stmt_body:
   | proc_call { ProcCall $1 }
-  | READ lvalue { Read $2 }
-  | WRITE writeable { Write $2 }
-  | lvalue ASSIGN rvalue { Assign ($1, $3) }
+  | READ lvalue { Read (symbol_start_pos (), $2) }
+  | WRITE writeable { Write (symbol_start_pos (), $2) }
+  | lvalue ASSIGN rvalue { Assign (symbol_start_pos (), $1, $3) }
 
 proc_call:
-  IDENT LPAREN lvaluelist RPAREN { ($1, List.rev $3) }
+  IDENT LPAREN lvaluelist RPAREN { (symbol_start_pos (), $1, List.rev $3) }
 
 rvalue:
-  | expr { Rexpr $1 }
-  | struct_init { Rstruct $1 }
+  | expr { Rexpr (symbol_start_pos (), $1) }
+  | struct_init { Rstruct (symbol_start_pos (), $1) }
 
 lvalue:
-  | IDENT DOT lvalue { LField ($3, $1) }
-  | IDENT { LId $1 }
+  | IDENT DOT lvalue { LField (symbol_start_pos (), $3, $1) }
+  | IDENT { LId (symbol_start_pos (), $1) }
 
 lvaluelist:
   | lvaluelist COMMA lvalue { $3 :: $1 }
@@ -145,30 +147,30 @@ struct_assigns:
   | struct_assign { [$1] }
 
 struct_assign:
-  IDENT EQ rvalue { ($1, $3) }
+  IDENT EQ rvalue { (symbol_start_pos (), $1, $3) }
 
 expr:
-  | BOOL_CONST { Ebool $1 }
-  | INT_CONST { Eint $1 }
-  | lvalue { Elval $1 }
+  | BOOL_CONST { Ebool (symbol_start_pos (), $1) }
+  | INT_CONST { Eint (symbol_start_pos (), $1) }
+  | lvalue { Elval (symbol_start_pos (), $1) }
   /* Binary operators */
-  | expr PLUS expr { Ebinop ($1, Op_add, $3) }
-  | expr MINUS expr { Ebinop ($1, Op_sub, $3) }
-  | expr MUL expr { Ebinop ($1, Op_mul, $3) }
-  | expr DIV expr { Ebinop ($1, Op_div, $3) }
-  | expr AND expr { Ebinop ($1, Op_and, $3) }
-  | expr OR expr { Ebinop ($1, Op_or, $3) }
-  | expr EQ expr { Ebinop ($1, Op_eq, $3) }
-  | expr NEQ expr { Ebinop ($1, Op_neq, $3) }
-  | expr LT expr { Ebinop ($1, Op_lt, $3) }
-  | expr LEQ expr { Ebinop ($1, Op_leq, $3) }
-  | expr GT expr { Ebinop ($1, Op_gt, $3) }
-  | expr GEQ expr { Ebinop ($1, Op_geq, $3) }
-  | MINUS expr %prec UMINUS { Eunop (Op_minus, $2) }
-  | NOT expr %prec UNOT { Eunop (Op_not, $2) }
+  | expr PLUS expr { Ebinop (symbol_start_pos (), $1, Op_add, $3) }
+  | expr MINUS expr { Ebinop (symbol_start_pos (), $1, Op_sub, $3) }
+  | expr MUL expr { Ebinop (symbol_start_pos (), $1, Op_mul, $3) }
+  | expr DIV expr { Ebinop (symbol_start_pos (), $1, Op_div, $3) }
+  | expr AND expr { Ebinop (symbol_start_pos (), $1, Op_and, $3) }
+  | expr OR expr { Ebinop (symbol_start_pos (), $1, Op_or, $3) }
+  | expr EQ expr { Ebinop (symbol_start_pos (), $1, Op_eq, $3) }
+  | expr NEQ expr { Ebinop (symbol_start_pos (), $1, Op_neq, $3) }
+  | expr LT expr { Ebinop (symbol_start_pos (), $1, Op_lt, $3) }
+  | expr LEQ expr { Ebinop (symbol_start_pos (), $1, Op_leq, $3) }
+  | expr GT expr { Ebinop (symbol_start_pos (), $1, Op_gt, $3) }
+  | expr GEQ expr { Ebinop (symbol_start_pos (), $1, Op_geq, $3) }
+  | MINUS expr %prec UMINUS { Eunop (symbol_start_pos (), Op_minus, $2) }
+  | NOT expr %prec UNOT { Eunop (symbol_start_pos (), Op_not, $2) }
   | LPAREN expr RPAREN { $2 }
 
  /* Deal with 'write' being able to print strings too */
 writeable:
-  | expr { WExpr $1 }
-  | STR_CONST  { WString $1 }
+  | expr { WExpr (symbol_start_pos (), $1) }
+  | STR_CONST  { WString (symbol_start_pos (), $1) }

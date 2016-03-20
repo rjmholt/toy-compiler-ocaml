@@ -20,8 +20,8 @@ let isHigherPrecedence binop1 binop2 =
 (* ---- STRING CONVERSION FUNCTIONS FOR AST LEAVES ---- *)
 let rec string_of_lval lval =
   match lval with
-  | LId     ident           -> ident
-  | LField  (lval, ident)   -> String.concat "." [ident; string_of_lval lval]
+  | LId     (_, ident)       -> ident
+  | LField  (_, lval, ident) -> String.concat "." [ident; string_of_lval lval]
 
 let string_of_binop binop =
   match binop with
@@ -55,17 +55,17 @@ let rec string_of_expr expr =
   in
   let binop_subexpr op subexpr =
     match subexpr with
-    | Ebinop (_, binop, _)  -> if isHigherPrecedence op binop
+    | Ebinop (_, _, binop, _)  -> if isHigherPrecedence op binop
       then parenthesise subexpr else string_of_expr subexpr
     | _                     -> string_of_expr subexpr
   in
   match expr with
-  | Ebool   ebool                -> string_of_bool ebool
-  | Eint    eint                 -> string_of_int eint
-  | Elval   lval                 -> string_of_lval lval
-  | Eunop (unop, expr)           ->
+  | Ebool   (_, ebool)                -> string_of_bool ebool
+  | Eint    (_, eint)                 -> string_of_int eint
+  | Elval   (_, lval)                 -> string_of_lval lval
+  | Eunop (_, unop, expr)           ->
       String.concat " " [string_of_unop unop; unop_subexpr expr]
-  | Ebinop (lexpr, binop, rexpr) ->
+  | Ebinop (_, lexpr, binop, rexpr) ->
       String.concat " " [binop_subexpr binop lexpr;
                          string_of_binop binop;
                          binop_subexpr binop rexpr]
@@ -76,14 +76,14 @@ let rec string_of_struct_assign rstruct =
   in
   String.concat struct_body ["{"; "}"]
 
-and string_of_struct_entry (ident, rvalue) =
+and string_of_struct_entry (_, ident, rvalue) =
   String.concat " = " [ident; string_of_rval rvalue]
 
 and
 string_of_rval rval =
   match rval with
-  | Rexpr expr      -> string_of_expr expr
-  | Rstruct rstruct -> string_of_struct_assign rstruct
+  | Rexpr (_, expr)      -> string_of_expr expr
+  | Rstruct (_, rstruct) -> string_of_struct_assign rstruct
 
 let string_of_typedef (_, ident) = ident
 
@@ -95,7 +95,7 @@ let rec string_of_fielddecl_list fd_list =
       String.concat ", " [string_of_fielddecl fd; string_of_fielddecl_list fds]
 
 and
-string_of_fielddecl (ident, fieldtype) =
+string_of_fielddecl (_, ident, fieldtype) =
   String.concat " : " [ident; string_of_fieldtype fieldtype]
 
 and
@@ -113,7 +113,7 @@ string_of_beantype bt =
   (*| AnonTypedef typedefbody ->
       String.concat (string_of_fielddecl_list typedefbody) ["{"; "}"]*)
 
-let string_of_typedecl (id, beantype) =
+let string_of_typedecl (_, id, beantype) =
     let bt_string = string_of_beantype beantype in
     String.concat "" [bt_string; " "; id; ";"]
 
@@ -133,7 +133,7 @@ let print_indent indent_level =
 let print_fielddecl_list fds =
   printf "%s" (string_of_fielddecl_list fds)
 
-let print_typedef (fielddecls, ident) =
+let print_typedef (_, fielddecls, ident) =
   printf "typedef {";
   print_fielddecl_list fielddecls;
   printf "} %s\n" ident
@@ -165,8 +165,8 @@ let print_read indent lval =
 let print_write indent writeable =
   print_indent indent;
   match writeable with
-  | WExpr expr  -> printf "write %s;\n" (string_of_expr expr)
-  | WString str -> let estr = String.escaped str in
+  | WExpr (_, expr)  -> printf "write %s;\n" (string_of_expr expr)
+  | WString (_, str) -> let estr = String.escaped str in
                    printf "write %s;\n" (String.concat "" ["\"";estr;"\""])
 
 let print_proc_call indent pname lvals =
@@ -197,20 +197,20 @@ and print_while indent expr stmts =
 and print_stmt_list indent stmt_list =
   let print_stmt stmt =
     match stmt with
-    | Assign (lval, rval)     -> print_assign indent lval rval
-    | Read   lval             -> print_read indent lval
-    | Write  writeable        -> print_write indent writeable
-    | If (expr, stmts)        -> print_if indent expr stmts
-    | While (expr, stmts)     -> print_while indent expr stmts
-    | ProcCall (ident, lvals) -> print_proc_call indent ident lvals
-    | IfElse (expr, if_stmts, else_stmts) ->
+    | Assign (_, lval, rval)     -> print_assign indent lval rval
+    | Read   (_, lval)           -> print_read indent lval
+    | Write  (_, writeable)      -> print_write indent writeable
+    | If (_, expr, stmts)        -> print_if indent expr stmts
+    | While (_, expr, stmts)     -> print_while indent expr stmts
+    | ProcCall (_, ident, lvals) -> print_proc_call indent ident lvals
+    | IfElse (_, expr, if_stmts, else_stmts) ->
         print_if indent expr if_stmts ~elses:else_stmts
   in
   match stmt_list with
   | stmt :: slist   -> print_stmt stmt; print_stmt_list indent slist
   | []              -> ()
 
-let print_proc_head (pass_type, beantype, ident) =
+let print_proc_head (_, pass_type, beantype, ident) =
   printf "%s " (string_of_pass pass_type);
   printf "%s " (string_of_beantype beantype);
   printf "%s"  ident
@@ -222,7 +222,7 @@ let rec print_proc_head_list head_list =
   | head :: hs -> print_proc_head head; printf ", ";
                   print_proc_head_list hs
 
-let print_proc (ident, proc_heads, proc_decls, body_stmts) =
+let print_proc (_, ident, proc_heads, proc_decls, body_stmts) =
   printf "proc %s(" ident;
   print_proc_head_list proc_heads;
   printf ")\n";

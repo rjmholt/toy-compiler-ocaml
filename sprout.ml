@@ -1,6 +1,7 @@
 open Format
 module P = Sprout_parse
 module L = Lexing
+module AST = Sprout_ast
 
 (* Argument parsing code *)
 let infile_name = ref None
@@ -20,15 +21,6 @@ let (speclist:(Arg.key * Arg.spec * Arg.doc) list) =
 (* --------------------------------------------- *)
 (*  Lexer/Parser error tracking functions        *)
 (* --------------------------------------------- *)
-
-type pos = (string * int * int)
-
-let get_lex_pos lexbuf =
-  let pos = lexbuf.Lexing.lex_curr_p in
-  let fname = pos.L.pos_fname in
-  let line = pos.L.pos_lnum in
-  let col = pos.L.pos_cnum - pos.L.pos_bol + 1 in
-  (fname, line, col)
 
 let set_lex_file filename lexbuf =
   lexbuf.L.lex_curr_p <- { lexbuf.L.lex_curr_p with
@@ -60,11 +52,11 @@ let main () =
     | Compile -> ()
   with
   | Sprout_lex.Syntax_error msg ->
-      let (fname, ln, col) = get_lex_pos lexbuf in
+      let (fname, ln, col) = AST.get_lex_pos lexbuf.Lexing.lex_curr_p in
       printf "%s at line %i, column %i in file %s\n"
          msg ln col fname
   | e ->
-      let (fname, ln, col) = get_lex_pos lexbuf in
+      let (fname, ln, col) = AST.get_lex_pos lexbuf.Lexing.lex_curr_p in
       printf "%s at line %i, column %i in file %s\n"
         "Parse error" ln col fname
 
