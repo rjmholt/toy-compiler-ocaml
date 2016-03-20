@@ -55,9 +55,13 @@ let main () =
       let (fname, ln, col) = AST.get_lex_pos lexbuf.Lexing.lex_curr_p in
       printf "%s at line %i, column %i in file %s\n"
          msg ln col fname
-  | e ->
+  | Parsing.Parse_error ->
       let (fname, ln, col) = AST.get_lex_pos lexbuf.Lexing.lex_curr_p in
       printf "%s at line %i, column %i in file %s\n"
         "Parse error" ln col fname
+  (*| Bean_varcheck.Undefined_variable (id, pos) ->
+      let (fname, line, col) = AST.get_lex_pos pos in
+      printf "Undefined variable %s in %s on line %i, column %i"
+        id fname line col*)
 
 let _ = main ()

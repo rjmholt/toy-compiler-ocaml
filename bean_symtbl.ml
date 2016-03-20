@@ -11,7 +11,6 @@ type beantype =
   | TBool
   | TInt
   | TTypedef of typedef
-  | TAnonStruct of typedef
 
 and fielddecl =
   { field_pos: pos;
@@ -47,11 +46,14 @@ type proc =
   }
 
 type symtbl =
-  { typedefs: (ident, typedef) Hashtbl.t;
-    procs: (ident, proc) Hashtbl.t;
+  { sym_tds: (ident, typedef) Hashtbl.t;
+    sym_procs: (ident, proc) Hashtbl.t;
   }
 
-(* Symbol Table Constructor Functions *)
+(* ---- SYMBOL TABLE CONSTRUCTOR FUNCTIONS ---- *)
+
+(* Exception if the user has tried to set a type
+ * they have not defined                         *)
 exception Undefined_type of (string * int * int)
 
 let get_typedef pos tdtbl id =
@@ -61,21 +63,64 @@ let get_typedef pos tdtbl id =
       let loc = AST.get_lex_pos pos in
       raise (Undefined_type loc)
 
+(* Convert between the AST's hack types and a more
+ * unified type understanding                      *)
 let symtbl_t_of_ast_t pos tdtbl ast_type =
   match ast_type with
   | AST.Bool -> TBool
   | AST.Int  -> TInt
   | AST.NamedTypedef id -> TTypedef (get_typedef pos tdtbl id)
 
-let symtbl_t_of_ast_td_t pos tdtbl ast_td_type =
+(* WARNING: Giant mutual recursion to build nested field tables*)
+let rec symtbl_t_of_ast_td_t pos tdtbl ast_td_type =
   match ast_td_type with
   | AST.Beantype bt -> symtbl_t_of_ast_t pos tdtbl bt
+  | AST.AnonTypedef fields ->
+      TTypedef ({td_pos = pos;
+                 td_fields = build_fieldtbl tdtbl fields})
 
-let init_val_of_type decl_type =
+and
+add_field tdtbl fieldtbl (field_pos, id, ast_td_type) =
+  let field_type = symtbl_t_of_ast_td_t field_pos tdtbl ast_td_type in
+  Hashtbl.add fieldtbl id { field_pos; field_type }
+
+and
+add_fields tdtbl fieldtbl fields =
+  match fields with
+  | [] -> fieldtbl
+  | f :: fs -> add_field tdtbl fieldtbl f; add_fields tdtbl fieldtbl fs
+
+and
+build_fieldtbl tdtbl fields =
+  let fieldtbl = Hashtbl.create 5 in
+  add_fields tdtbl fieldtbl fields
+
+(* Add typedef symbols to table *)
+let add_typedef tdtbl (td_pos, fields, ident) =
+  let td_fields = build_fieldtbl tdtbl fields in
+  Hashtbl.add tdtbl ident
+    { td_pos; td_fields }
+
+let rec add_typedefs tdtbl tds =
+  match tds with
+  | td :: tds -> add_typedef tdtbl td; add_typedefs tdtbl tds
+  | [] -> ()
+
+(* Initialise declared values recursively:
+ * int -> 0, bool -> false, structs have fields set *)
+let rec init_val_of_type decl_type =
   match decl_type with
   | TBool   -> VBool false
   | TInt    -> VInt  0
+  | TTypedef { td_pos = _; td_fields } ->
+      let valtbl = Hashtbl.create 5 in
+      let setval id {field_pos=_;field_type} =
+        Hashtbl.add valtbl id (init_val_of_type field_type)
+      in
+      Hashtbl.iter setval td_fields;
+      VStruct valtbl
 
+(* Add declaration symbols to table *)
 let add_decl tdtbl decltbl (decl_pos, id, decl_ast_type) =
   let decl_type = symtbl_t_of_ast_t decl_pos tdtbl decl_ast_type in
   let decl_val = init_val_of_type decl_type in
@@ -90,6 +135,7 @@ let build_decltbl tdtbl decls =
   let decltbl = Hashtbl.create 10 in
   add_decls tdtbl decltbl decls
 
+(* Add proc header symbols to table *)
 let add_head tdtbl headtbl (head_pos, head_pass, head_ast_type, id) =
   let head_type = symtbl_t_of_ast_t head_pos tdtbl head_ast_type in
   Hashtbl.add headtbl id { head_pass; head_type; head_pos }
@@ -113,34 +159,11 @@ let rec add_procs tdtbl ptbl procs =
   | []  -> ()
   | p :: ps -> add_proc tdtbl ptbl p; add_procs tdtbl ptbl ps
 
-let add_field tdtbl fieldtbl (field_pos, id, ast_td_type) =
-  let field_type = symtbl_t_of_ast_td_t field_pos tdtbl ast_td_type in
-  Hashtbl.add fieldtbl id { field_pos; field_type }
-
-let rec add_fields tdtbl fieldtbl fields =
-  match fields with
-  | [] -> fieldtbl
-  | f :: fs -> add_field tdtbl fieldtbl f; add_fields tdtbl fieldtbl fs
-
-let build_fieldtbl tdtbl fields =
-  let fieldtbl = Hashtbl.create 5 in
-  add_fields tdtbl fieldtbl fields
-
-  (* TODO: Work out how to build the damn field table *)
-let add_typedef tdtbl (td_pos, fields, ident) =
-  let td_fields = build_fieldtbl tdtbl fields in
-  Hashtbl.add tdtbl ident
-    { td_pos; td_fields }
-
-let rec add_typedefs tdtbl tds =
-  match tds with
-  | td :: tds -> add_typedef tdtbl td; add_typedefs tdtbl tds
-  | [] -> ()
-
+(* Root table constructor function -- takes the AST as input *)
 let build_symtbl ast =
-  let typedefs = Hashtbl.create 5 in
-  let procs = Hashtbl.create 10 in
-  let symtbl = {typedefs; procs} in
-  add_typedefs typedefs ast.AST.typedefs;
-  add_procs typedefs procs ast.AST.procs;
+  let sym_tds = Hashtbl.create 5 in
+  let sym_procs = Hashtbl.create 10 in
+  let symtbl = {sym_tds; sym_procs} in
+  add_typedefs sym_tds ast.AST.typedefs;
+  add_procs sym_tds sym_procs ast.AST.procs;
   symtbl
