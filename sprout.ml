@@ -21,6 +21,8 @@ let (speclist:(Arg.key * Arg.spec * Arg.doc) list) =
 (*  Lexer/Parser error tracking functions        *)
 (* --------------------------------------------- *)
 
+type pos = (string * int * int)
+
 let get_lex_pos lexbuf =
   let pos = lexbuf.Lexing.lex_curr_p in
   let fname = pos.L.pos_fname in

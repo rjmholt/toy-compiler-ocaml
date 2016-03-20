@@ -90,6 +90,13 @@ pass_type:
   | VAL { Pval }
   | REF { Pref }
 
+/* Improvement to decl/stmt grammar problem?
+proc_body:
+  | decl proc_body { Add decl to decl_list }
+  | proc_body stmt { Add stmt to stmt_list }
+  | { ([], []) }
+*/
+
 decls:
   | decls decl { $2 :: $1 }
   | { [] }
