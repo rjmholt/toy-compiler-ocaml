@@ -52,8 +52,32 @@ type symtbl =
   }
 
 (* Symbol Table Constructor Functions *)
+exception Undefined_type of (string * int * int)
+
+let get_typedef pos tdtbl id =
+  try Hashtbl.find tdtbl id
+  with
+  | Not_found ->
+      let loc = AST.get_lex_pos pos in
+      raise (Undefined_type loc)
+
+let symtbl_t_of_ast_t pos tdtbl ast_type =
+  match ast_type with
+  | AST.Bool -> TBool
+  | AST.Int  -> TInt
+  | AST.NamedTypedef id -> TTypedef (get_typedef pos tdtbl id)
+
+let symtbl_t_of_ast_td_t pos tdtbl ast_td_type =
+  match ast_td_type with
+  | AST.Beantype bt -> symtbl_t_of_ast_t pos tdtbl bt
+
+let init_val_of_type decl_type =
+  match decl_type with
+  | TBool   -> VBool false
+  | TInt    -> VInt  0
+
 let add_decl tdtbl decltbl (decl_pos, id, decl_ast_type) =
-  let decl_type = symtbl_t_of_ast_t tdtbl decl_ast_type in
+  let decl_type = symtbl_t_of_ast_t decl_pos tdtbl decl_ast_type in
   let decl_val = init_val_of_type decl_type in
   Hashtbl.add decltbl id { decl_val; decl_type; decl_pos }
 
@@ -67,7 +91,7 @@ let build_decltbl tdtbl decls =
   add_decls tdtbl decltbl decls
 
 let add_head tdtbl headtbl (head_pos, head_pass, head_ast_type, id) =
-  let head_type = symtbl_t_of_ast_t tdtbl head_ast_type in
+  let head_type = symtbl_t_of_ast_t head_pos tdtbl head_ast_type in
   Hashtbl.add headtbl id { head_pass; head_type; head_pos }
 
 let rec add_heads tdtbl headtbl heads =
@@ -90,7 +114,7 @@ let rec add_procs tdtbl ptbl procs =
   | p :: ps -> add_proc tdtbl ptbl p; add_procs tdtbl ptbl ps
 
 let add_field tdtbl fieldtbl (field_pos, id, ast_td_type) =
-  let field_type = symtbl_t_of_ast_td_t tdtbl ast_td_type in
+  let field_type = symtbl_t_of_ast_td_t field_pos tdtbl ast_td_type in
   Hashtbl.add fieldtbl id { field_pos; field_type }
 
 let rec add_fields tdtbl fieldtbl fields =
