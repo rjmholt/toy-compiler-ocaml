@@ -98,8 +98,7 @@ build_fieldtbl tdtbl fields =
 (* Add typedef symbols to table *)
 let add_typedef tdtbl (td_pos, fields, ident) =
   let td_fields = build_fieldtbl tdtbl fields in
-  Hashtbl.add tdtbl ident
-    { td_pos; td_fields }
+  Hashtbl.add tdtbl ident { td_pos; td_fields }
 
 let rec add_typedefs tdtbl tds =
   match tds with
@@ -112,13 +111,15 @@ let rec init_val_of_type decl_type =
   match decl_type with
   | TBool   -> VBool false
   | TInt    -> VInt  0
-  | TTypedef { td_pos = _; td_fields } ->
-      let valtbl = Hashtbl.create 5 in
-      let setval id {field_pos=_;field_type} =
-        Hashtbl.add valtbl id (init_val_of_type field_type)
-      in
-      Hashtbl.iter setval td_fields;
-      VStruct valtbl
+  | TTypedef typedef -> init_typedef typedef
+
+and init_typedef {td_pos = _; td_fields } =
+    let valtbl = Hashtbl.create 5 in
+    let setval id {field_pos=_;field_type} =
+      Hashtbl.add valtbl id (init_val_of_type field_type)
+    in
+    Hashtbl.iter setval td_fields;
+    VStruct valtbl
 
 (* Add declaration symbols to table *)
 let add_decl tdtbl decltbl (decl_pos, id, decl_ast_type) =
