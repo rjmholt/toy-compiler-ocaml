@@ -10,7 +10,8 @@ type pos = Lexing.position
 type beantype =
   | TBool
   | TInt
-  | TTypedef of typedef
+  | TTypedef of (ident * typedef)
+  | TAnonTypedef of typedef
 
 and fielddecl =
   { field_pos: pos;

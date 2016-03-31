@@ -10,7 +10,8 @@ type pos = Lexing.position
 type beantype =
   | TBool
   | TInt
-  | TTypedef of typedef
+  | TTypedef of (ident * typedef)
+  | TAnonTypedef of typedef
 
 and fielddecl =
   { field_pos: pos;
@@ -69,14 +70,14 @@ let symtbl_t_of_ast_t pos tdtbl ast_type =
   match ast_type with
   | AST.Bool -> TBool
   | AST.Int  -> TInt
-  | AST.NamedTypedef id -> TTypedef (get_typedef pos tdtbl id)
+  | AST.NamedTypedef id -> TTypedef (id, get_typedef pos tdtbl id)
 
 (* WARNING: Giant mutual recursion to build nested field tables*)
 let rec symtbl_t_of_ast_td_t pos tdtbl ast_td_type =
   match ast_td_type with
   | AST.Beantype bt -> symtbl_t_of_ast_t pos tdtbl bt
   | AST.AnonTypedef fields ->
-      TTypedef ({td_pos = pos;
+      TAnonTypedef ({td_pos = pos;
                  td_fields = build_fieldtbl tdtbl fields})
 
 and
@@ -111,7 +112,8 @@ let rec init_val_of_type decl_type =
   match decl_type with
   | TBool   -> VBool false
   | TInt    -> VInt  0
-  | TTypedef typedef -> init_typedef typedef
+  | TTypedef (_, typedef) -> init_typedef typedef
+  | TAnonTypedef typedef  -> init_typedef typedef
 
 and init_typedef {td_pos = _; td_fields } =
     let valtbl = Hashtbl.create 5 in

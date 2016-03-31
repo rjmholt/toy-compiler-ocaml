@@ -171,7 +171,7 @@ let print_write indent writeable =
 
 let print_proc_call indent pname lvals =
   print_indent indent;
-  printf "%s(%s);\n" pname (String.concat ", " (List.map string_of_lval lvals))
+  printf "%s(%s);\n" pname (String.concat ", " (List.map string_of_expr lvals))
 
 let rec print_if indent expr ?elses:(slist=[]) stmts =
   print_indent indent;
@@ -202,7 +202,7 @@ and print_stmt_list indent stmt_list =
     | Write  (_, writeable)      -> print_write indent writeable
     | If (_, expr, stmts)        -> print_if indent expr stmts
     | While (_, expr, stmts)     -> print_while indent expr stmts
-    | ProcCall (_, ident, lvals) -> print_proc_call indent ident lvals
+    | ProcCall (_, ident, exprs) -> print_proc_call indent ident exprs
     | IfElse (_, expr, if_stmts, else_stmts) ->
         print_if indent expr if_stmts ~elses:else_stmts
   in

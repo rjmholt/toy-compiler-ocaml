@@ -72,7 +72,7 @@ type stmt =
   | If of (pos * expr * stmt list)
   | IfElse of (pos * expr * stmt list * stmt list)
   | While of (pos * expr * stmt list)
-  | ProcCall of (pos * ident * lvalue list)
+  | ProcCall of (pos * ident * expr list)
 
 type decl = (pos * ident * beantype)
 

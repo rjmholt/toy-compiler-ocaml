@@ -124,7 +124,7 @@ stmt_body:
   | lvalue ASSIGN rvalue { Assign (symbol_start_pos (), $1, $3) }
 
 proc_call:
-  IDENT LPAREN lvaluelist RPAREN { (symbol_start_pos (), $1, List.rev $3) }
+  IDENT LPAREN exprlist RPAREN { (symbol_start_pos (), $1, List.rev $3) }
 
 rvalue:
   | expr { Rexpr (symbol_start_pos (), $1) }
@@ -133,11 +133,6 @@ rvalue:
 lvalue:
   | IDENT DOT lvalue { LField (symbol_start_pos (), $3, $1) }
   | IDENT { LId (symbol_start_pos (), $1) }
-
-lvaluelist:
-  | lvaluelist COMMA lvalue { $3 :: $1 }
-  | lvalue { [$1] }
-  | { [] }
 
 struct_init:
   LBRACE struct_assigns RBRACE { List.rev $2 }
@@ -169,6 +164,12 @@ expr:
   | MINUS expr %prec UMINUS { Eunop (symbol_start_pos (), Op_minus, $2) }
   | NOT expr %prec UNOT { Eunop (symbol_start_pos (), Op_not, $2) }
   | LPAREN expr RPAREN { $2 }
+
+exprlist:
+  | exprlist COMMA expr { $3 :: $1 }
+  | expr { [$1] }
+  | { [] }
+
 
  /* Deal with 'write' being able to print strings too */
 writeable:
