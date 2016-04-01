@@ -1,7 +1,7 @@
 TARGETS = sprout
 TARGETS_BYTE=$(TARGETS:%=%.byte)
 
-MODULES = sprout_ast sprout_lex sprout_parse sprout_pprint bean_symtbl
+MODULES = sprout_ast sprout_lex sprout_parse sprout_pprint bean_symtbl bean_semantic
 MLFILES = $(addsuffix .ml, $(MODULES))
 CMOFILES = $(addsuffix .cmo, $(MODULES))
 CMXFILES = $(addsuffix .cmx, $(MODULES))

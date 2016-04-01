@@ -51,6 +51,8 @@ type symtbl =
     sym_procs: (ident, proc) Hashtbl.t;
   }
 
+type t = symtbl
+
 (* Exception if the user has tried to set a type
  * they have not defined                         *)
 exception Undefined_type of (string * int * int)

@@ -51,6 +51,8 @@ type symtbl =
     sym_procs: (ident, proc) Hashtbl.t;
   }
 
+type t = symtbl
+
 (* ---- SYMBOL TABLE CONSTRUCTOR FUNCTIONS ---- *)
 
 (* Exception if the user has tried to set a type

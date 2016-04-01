@@ -48,7 +48,7 @@ let main () =
     let prog = Sprout_parse.program Sprout_lex.token lexbuf in
     match !mode with
     | PrettyPrint ->
-      Sprout_pprint.print_program Format.std_formatter prog 
+        Sprout_pprint.print_program Format.std_formatter prog 
     | Compile -> ()
   with
   | Sprout_lex.Syntax_error msg ->
