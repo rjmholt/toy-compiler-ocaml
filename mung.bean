@@ -1,26 +1,7 @@
-typedef { f1: int, f2: {g1: bool, g2: bool}} a_record
-
-proc f(ref int x, val a_record y)
-    write "Hello";
-end
-
 proc main()
     int k;
-    a_record x;
-    a_record y;
-    write "Hello!\n";
-    mung := 2*mung + 42*(3+7);
-    while not (bean and false) do
-     if true then mung := 39;
-        else
-            # Hi
-            mung := 48;
-        fi
-    od
-    read mung;
-    m := {g1 = 12, duck = true};
-    f(x);
-    read bean;
-    bean := not (true or bean);
-    mung := (6 * (((3*2)) + 4*5));
+    bool h;
+    h := true;
+    k := 1;
+    h := k;
 end

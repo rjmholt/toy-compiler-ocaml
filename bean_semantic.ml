@@ -83,14 +83,20 @@ let rec are_asgn_type_match proc pos lval_t rval =
       then true
       else raise (Type_error (":=", pos))
 
-(* TODO document this *)
+(* Checks that the lvalue being assigned a field is
+ * valid for assignment:
+ *   - check it has a struct type
+ *   - check the struct fields recursively          *)
 and
 check_field_asgn (proc : Sym.proc) (pos : AST.pos) lval_t fields =
   match lval_t with
   | Sym.TTypedef (_, typedef) -> is_struct_isomorphic proc typedef fields
   | _ -> raise (Type_error (":=", pos))
 
-(* TODO document this *)
+(* Check a struct rvalue assignment is valid:
+ *   - checks every rvalue field corresponds to an
+ *     lvalue of the same identifier
+ *   - checks the assignment of every field is valid *)
 and
 is_struct_isomorphic proc typedef (_, fields) =
   let go (pos, rid, rval) isValid =
