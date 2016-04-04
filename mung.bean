@@ -1,7 +1,7 @@
 proc main()
-    int k;
     bool h;
-    h := true;
-    k := 1;
-    h := k;
+    int x;
+    if ( x ) then
+        h := true;
+    fi
 end
