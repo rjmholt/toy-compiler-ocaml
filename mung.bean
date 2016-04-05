@@ -1,5 +1,6 @@
 proc main()
     bool h;
-    int x;
     h := true;
+    k := 1;
+    h := k;
 end
