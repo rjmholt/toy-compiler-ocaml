@@ -1,5 +1,4 @@
 typedef { f1: int, f2: {g1: bool, g2: bool}} a_record
-typedef bool myBool
 
 typedef bool myBool
 
