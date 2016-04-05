@@ -4,20 +4,21 @@ type ident = string
 (* Define types and typedefs as mutually recusive so *)
 (* typedefs can contain themselves                   *)
 type beantype =
-  | Bool
-  | Int
-  | NamedTypedef of ident
+  | TBool
+  | TInt
+  | TNamedTypedef of ident
+  | TAnonTypedef of fielddecl list
 
 and
-typedef_fieldtype =
-  | Beantype of beantype
-  | AnonTypedef of fielddecl list
+fielddecl = (ident * beantype)
 
 and
-fielddecl = (ident * typedef_fieldtype)
+typedefbody =
+  | TDStruct of fielddecl list
+  | TDAlias of beantype
 
 and
-typedef = (fielddecl list * ident)
+typedef = (typedefbody * ident)
 
 type lvalue =
   | LId of ident

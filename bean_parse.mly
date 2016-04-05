@@ -42,9 +42,9 @@ program:
   typedefs procs { { typedefs = List.rev $1; procs = List.rev $2 } }
 
 beantype:
-  | BOOL { Bool }
-  | INT { Int }
-  | IDENT { NamedTypedef $1 }
+  | BOOL { TBool }
+  | INT { TInt }
+  | IDENT { TNamedTypedef $1 }
 
 typedefs:
   | typedefs typedef { $2 :: $1 }
@@ -54,6 +54,10 @@ typedef:
   TYPEDEF typedefbody IDENT { ($2, $3) }
   
 typedefbody:
+  | beantype { TDAlias $1 }
+  | tdfields { TDStruct $1 }
+
+tdfields :
   LBRACE fielddecls RBRACE { List.rev $2 }
 
 fielddecls:
@@ -62,8 +66,8 @@ fielddecls:
   | { [] }
 
 fieldtype:
-  | beantype { Beantype $1 }
-  | typedefbody { AnonTypedef $1 }
+  | beantype { $1 }
+  | tdfields { TAnonTypedef $1 }
 
 fielddecl:
   IDENT COLON fieldtype { ($1, $3) }
