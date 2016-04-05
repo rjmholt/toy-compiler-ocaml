@@ -1,6 +1,6 @@
 /* ocamlyacc parser for bean */
 %{
-open Sprout_ast
+open Bean_ast
 %}
 
 %token <bool> BOOL_CONST
@@ -33,7 +33,7 @@ open Sprout_ast
 %nonassoc UMINUS
 %nonassoc UNOT
 
-%type <Sprout_ast.program> program
+%type <Bean_ast.program> program
 
 %start program
 %%

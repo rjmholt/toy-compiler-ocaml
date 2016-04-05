@@ -1,5 +1,5 @@
 open Format
-module P = Sprout_parse
+module P = Bean_parse
 module L = Lexing
 
 (* Argument parsing code *)
@@ -51,13 +51,13 @@ let main () =
   set_lex_file filename lexbuf;
   (* Call the parser *)
   try
-    let prog = Sprout_parse.program Sprout_lex.token lexbuf in
+    let prog = Bean_parse.program Bean_lex.token lexbuf in
     match !mode with
     | PrettyPrint ->
-      Sprout_pprint.print_program Format.std_formatter prog 
+      Bean_pprint.print_program Format.std_formatter prog 
     | Compile -> ()
   with
-  | Sprout_lex.Syntax_error msg ->
+  | Bean_lex.Syntax_error msg ->
       let (fname, ln, col) = get_lex_pos lexbuf in
       printf "%s at line %i, column %i in file %s\n"
          msg ln col fname

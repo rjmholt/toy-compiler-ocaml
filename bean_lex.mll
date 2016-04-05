@@ -1,5 +1,5 @@
 {
-open Sprout_parse
+open Bean_parse
 
 (* Define helpful error messages *)
 exception Syntax_error of string

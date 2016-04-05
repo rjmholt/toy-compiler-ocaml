@@ -1,12 +1,12 @@
-TARGETS = sprout
+TARGETS = bean
 TARGETS_BYTE=$(TARGETS:%=%.byte)
 
-MODULES = sprout_ast sprout_lex sprout_parse sprout_pprint
+MODULES = bean_ast bean_lex bean_parse bean_pprint
 MLFILES = $(addsuffix .ml, $(MODULES))
 CMOFILES = $(addsuffix .cmo, $(MODULES))
 CMXFILES = $(addsuffix .cmx, $(MODULES))
 
-ALLMODULES = $(MODULES) sprout
+ALLMODULES = $(MODULES) bean
 
 OCAMLLEX = ocamllex
 OCAMLYACC = ocamlyacc -v
@@ -33,15 +33,15 @@ opt: $(TARGETS)
 %.ml %.mli: %.mly
 	$(OCAMLYACC) $^
 
-sprout.byte : $(CMOFILES) sprout.cmo
+bean.byte : $(CMOFILES) bean.cmo
 	ocamlc -g -o $@ $^
 
-sprout : $(CMXFILES) sprout.cmx
+bean : $(CMXFILES) bean.cmx
 	ocamlopt -g -o $@ $^
 
 clean :
 	rm -f *.cmo *.cmi *.cmx *.o
-	rm -f sprout_lex.ml sprout_parse.ml sprout_parse.mli
+	rm -f bean_lex.ml bean_parse.ml bean_parse.mli
 
 clobber : clean
 	rm -f $(TARGETS) $(TARGETS_BYTE)
@@ -49,7 +49,7 @@ clobber : clean
 .PHONY : clean clobber depend
 
 # include depend
-depend: sprout_lex.ml sprout_parse.ml
-	$(OCAMLDEP) sprout.ml sprout.mli $(ALLMODULES:%=%.mli) $(ALLMODULES:%=%.ml) >Makefile.depend
+depend: bean_lex.ml bean_parse.ml
+	$(OCAMLDEP) bean.ml bean.mli $(ALLMODULES:%=%.mli) $(ALLMODULES:%=%.ml) >Makefile.depend
 
 -include Makefile.depend

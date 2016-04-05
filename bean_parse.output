@@ -1,0 +1,1695 @@
+   0  $accept : %entry% $end
+
+   1  program : typedefs procs
+
+   2  beantype : BOOL
+   3           | INT
+   4           | IDENT
+
+   5  typedefs : typedefs typedef
+   6           |
+
+   7  typedef : TYPEDEF typedefbody IDENT
+
+   8  typedefbody : LBRACE fielddecls RBRACE
+
+   9  fielddecls : fielddecls COMMA fielddecl
+  10             | fielddecl
+  11             |
+
+  12  fieldtype : beantype
+  13            | typedefbody
+
+  14  fielddecl : IDENT COLON fieldtype
+
+  15  proc : PROC IDENT LPAREN proc_heads RPAREN decls stmts END
+
+  16  procs : procs proc
+  17        |
+
+  18  proc_heads : proc_heads COMMA proc_head
+  19             | proc_head
+  20             |
+
+  21  proc_head : pass_type beantype IDENT
+
+  22  pass_type : VAL
+  23            | REF
+
+  24  decls : decls decl
+  25        |
+
+  26  decl : beantype IDENT SEMICOLON
+
+  27  stmts : stmt stmts
+  28        |
+
+  29  stmt : stmt_body SEMICOLON
+  30       | IF expr THEN stmts FI
+  31       | IF expr THEN stmts ELSE stmts FI
+  32       | WHILE expr DO stmts OD
+
+  33  stmt_body : proc_call
+  34            | READ lvalue
+  35            | WRITE writeable
+  36            | lvalue ASSIGN rvalue
+
+  37  proc_call : IDENT LPAREN lvaluelist RPAREN
+
+  38  rvalue : expr
+  39         | struct_init
+
+  40  lvalue : IDENT DOT lvalue
+  41         | IDENT
+
+  42  lvaluelist : lvaluelist COMMA lvalue
+  43             | lvalue
+  44             |
+
+  45  struct_init : LBRACE struct_assigns RBRACE
+
+  46  struct_assigns : struct_assigns COMMA struct_assign
+  47                 | struct_assign
+
+  48  struct_assign : IDENT EQ rvalue
+
+  49  expr : BOOL_CONST
+  50       | INT_CONST
+  51       | lvalue
+  52       | expr PLUS expr
+  53       | expr MINUS expr
+  54       | expr MUL expr
+  55       | expr DIV expr
+  56       | expr AND expr
+  57       | expr OR expr
+  58       | expr EQ expr
+  59       | expr NEQ expr
+  60       | expr LT expr
+  61       | expr LEQ expr
+  62       | expr GT expr
+  63       | expr GEQ expr
+  64       | MINUS expr
+  65       | NOT expr
+  66       | LPAREN expr RPAREN
+
+  67  writeable : expr
+  68            | STR_CONST
+
+  69  %entry% : '\001' program
+
+state 0
+	$accept : . %entry% $end  (0)
+
+	'\001'  shift 1
+	.  error
+
+	%entry%  goto 2
+
+
+state 1
+	%entry% : '\001' . program  (69)
+	typedefs : .  (6)
+
+	.  reduce 6
+
+	program  goto 3
+	typedefs  goto 4
+
+
+state 2
+	$accept : %entry% . $end  (0)
+
+	$end  accept
+
+
+state 3
+	%entry% : '\001' program .  (69)
+
+	.  reduce 69
+
+
+state 4
+	program : typedefs . procs  (1)
+	typedefs : typedefs . typedef  (5)
+	procs : .  (17)
+
+	TYPEDEF  shift 5
+	$end  reduce 17
+	PROC  reduce 17
+
+	procs  goto 6
+	typedef  goto 7
+
+
+state 5
+	typedef : TYPEDEF . typedefbody IDENT  (7)
+
+	LBRACE  shift 8
+	.  error
+
+	typedefbody  goto 9
+
+
+state 6
+	program : typedefs procs .  (1)
+	procs : procs . proc  (16)
+
+	PROC  shift 10
+	$end  reduce 1
+
+	proc  goto 11
+
+
+state 7
+	typedefs : typedefs typedef .  (5)
+
+	.  reduce 5
+
+
+state 8
+	typedefbody : LBRACE . fielddecls RBRACE  (8)
+	fielddecls : .  (11)
+
+	IDENT  shift 12
+	COMMA  reduce 11
+	RBRACE  reduce 11
+
+	fielddecls  goto 13
+	fielddecl  goto 14
+
+
+state 9
+	typedef : TYPEDEF typedefbody . IDENT  (7)
+
+	IDENT  shift 15
+	.  error
+
+
+state 10
+	proc : PROC . IDENT LPAREN proc_heads RPAREN decls stmts END  (15)
+
+	IDENT  shift 16
+	.  error
+
+
+state 11
+	procs : procs proc .  (16)
+
+	.  reduce 16
+
+
+state 12
+	fielddecl : IDENT . COLON fieldtype  (14)
+
+	COLON  shift 17
+	.  error
+
+
+state 13
+	typedefbody : LBRACE fielddecls . RBRACE  (8)
+	fielddecls : fielddecls . COMMA fielddecl  (9)
+
+	COMMA  shift 18
+	RBRACE  shift 19
+	.  error
+
+
+state 14
+	fielddecls : fielddecl .  (10)
+
+	.  reduce 10
+
+
+state 15
+	typedef : TYPEDEF typedefbody IDENT .  (7)
+
+	.  reduce 7
+
+
+state 16
+	proc : PROC IDENT . LPAREN proc_heads RPAREN decls stmts END  (15)
+
+	LPAREN  shift 20
+	.  error
+
+
+state 17
+	fielddecl : IDENT COLON . fieldtype  (14)
+
+	IDENT  shift 21
+	BOOL  shift 22
+	INT  shift 23
+	LBRACE  shift 8
+	.  error
+
+	beantype  goto 24
+	typedefbody  goto 25
+	fieldtype  goto 26
+
+
+state 18
+	fielddecls : fielddecls COMMA . fielddecl  (9)
+
+	IDENT  shift 12
+	.  error
+
+	fielddecl  goto 27
+
+
+state 19
+	typedefbody : LBRACE fielddecls RBRACE .  (8)
+
+	.  reduce 8
+
+
+state 20
+	proc : PROC IDENT LPAREN . proc_heads RPAREN decls stmts END  (15)
+	proc_heads : .  (20)
+
+	VAL  shift 28
+	REF  shift 29
+	COMMA  reduce 20
+	RPAREN  reduce 20
+
+	proc_heads  goto 30
+	proc_head  goto 31
+	pass_type  goto 32
+
+
+state 21
+	beantype : IDENT .  (4)
+
+	.  reduce 4
+
+
+state 22
+	beantype : BOOL .  (2)
+
+	.  reduce 2
+
+
+state 23
+	beantype : INT .  (3)
+
+	.  reduce 3
+
+
+state 24
+	fieldtype : beantype .  (12)
+
+	.  reduce 12
+
+
+state 25
+	fieldtype : typedefbody .  (13)
+
+	.  reduce 13
+
+
+state 26
+	fielddecl : IDENT COLON fieldtype .  (14)
+
+	.  reduce 14
+
+
+state 27
+	fielddecls : fielddecls COMMA fielddecl .  (9)
+
+	.  reduce 9
+
+
+state 28
+	pass_type : VAL .  (22)
+
+	.  reduce 22
+
+
+state 29
+	pass_type : REF .  (23)
+
+	.  reduce 23
+
+
+state 30
+	proc : PROC IDENT LPAREN proc_heads . RPAREN decls stmts END  (15)
+	proc_heads : proc_heads . COMMA proc_head  (18)
+
+	COMMA  shift 33
+	RPAREN  shift 34
+	.  error
+
+
+state 31
+	proc_heads : proc_head .  (19)
+
+	.  reduce 19
+
+
+state 32
+	proc_head : pass_type . beantype IDENT  (21)
+
+	IDENT  shift 21
+	BOOL  shift 22
+	INT  shift 23
+	.  error
+
+	beantype  goto 35
+
+
+state 33
+	proc_heads : proc_heads COMMA . proc_head  (18)
+
+	VAL  shift 28
+	REF  shift 29
+	.  error
+
+	proc_head  goto 36
+	pass_type  goto 32
+
+
+state 34
+	proc : PROC IDENT LPAREN proc_heads RPAREN . decls stmts END  (15)
+	decls : .  (25)
+
+	.  reduce 25
+
+	decls  goto 37
+
+
+state 35
+	proc_head : pass_type beantype . IDENT  (21)
+
+	IDENT  shift 38
+	.  error
+
+
+state 36
+	proc_heads : proc_heads COMMA proc_head .  (18)
+
+	.  reduce 18
+
+
+state 37
+	proc : PROC IDENT LPAREN proc_heads RPAREN decls . stmts END  (15)
+	decls : decls . decl  (24)
+	stmts : .  (28)
+
+	IDENT  shift 39
+	BOOL  shift 22
+	INT  shift 23
+	WRITE  shift 40
+	READ  shift 41
+	IF  shift 42
+	WHILE  shift 43
+	END  reduce 28
+
+	beantype  goto 44
+	stmts  goto 45
+	decl  goto 46
+	stmt  goto 47
+	stmt_body  goto 48
+	proc_call  goto 49
+	lvalue  goto 50
+
+
+state 38
+	proc_head : pass_type beantype IDENT .  (21)
+
+	.  reduce 21
+
+
+state 39
+	beantype : IDENT .  (4)
+	proc_call : IDENT . LPAREN lvaluelist RPAREN  (37)
+	lvalue : IDENT . DOT lvalue  (40)
+	lvalue : IDENT .  (41)
+
+	DOT  shift 51
+	LPAREN  shift 52
+	IDENT  reduce 4
+	ASSIGN  reduce 41
+
+
+state 40
+	stmt_body : WRITE . writeable  (35)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	STR_CONST  shift 55
+	IDENT  shift 56
+	LPAREN  shift 57
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 60
+	lvalue  goto 61
+	writeable  goto 62
+
+
+state 41
+	stmt_body : READ . lvalue  (34)
+
+	IDENT  shift 56
+	.  error
+
+	lvalue  goto 63
+
+
+state 42
+	stmt : IF . expr THEN stmts FI  (30)
+	stmt : IF . expr THEN stmts ELSE stmts FI  (31)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 64
+	lvalue  goto 61
+
+
+state 43
+	stmt : WHILE . expr DO stmts OD  (32)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 65
+	lvalue  goto 61
+
+
+state 44
+	decl : beantype . IDENT SEMICOLON  (26)
+
+	IDENT  shift 66
+	.  error
+
+
+state 45
+	proc : PROC IDENT LPAREN proc_heads RPAREN decls stmts . END  (15)
+
+	END  shift 67
+	.  error
+
+
+state 46
+	decls : decls decl .  (24)
+
+	.  reduce 24
+
+
+state 47
+	stmts : stmt . stmts  (27)
+	stmts : .  (28)
+
+	IDENT  shift 68
+	WRITE  shift 40
+	READ  shift 41
+	IF  shift 42
+	WHILE  shift 43
+	ELSE  reduce 28
+	FI  reduce 28
+	OD  reduce 28
+	END  reduce 28
+
+	stmts  goto 69
+	stmt  goto 47
+	stmt_body  goto 48
+	proc_call  goto 49
+	lvalue  goto 50
+
+
+state 48
+	stmt : stmt_body . SEMICOLON  (29)
+
+	SEMICOLON  shift 70
+	.  error
+
+
+state 49
+	stmt_body : proc_call .  (33)
+
+	.  reduce 33
+
+
+state 50
+	stmt_body : lvalue . ASSIGN rvalue  (36)
+
+	ASSIGN  shift 71
+	.  error
+
+
+state 51
+	lvalue : IDENT DOT . lvalue  (40)
+
+	IDENT  shift 56
+	.  error
+
+	lvalue  goto 72
+
+
+state 52
+	proc_call : IDENT LPAREN . lvaluelist RPAREN  (37)
+	lvaluelist : .  (44)
+
+	IDENT  shift 56
+	COMMA  reduce 44
+	RPAREN  reduce 44
+
+	lvalue  goto 73
+	lvaluelist  goto 74
+
+
+state 53
+	expr : BOOL_CONST .  (49)
+
+	.  reduce 49
+
+
+state 54
+	expr : INT_CONST .  (50)
+
+	.  reduce 50
+
+
+state 55
+	writeable : STR_CONST .  (68)
+
+	.  reduce 68
+
+
+state 56
+	lvalue : IDENT . DOT lvalue  (40)
+	lvalue : IDENT .  (41)
+
+	DOT  shift 51
+	ASSIGN  reduce 41
+	THEN  reduce 41
+	DO  reduce 41
+	COMMA  reduce 41
+	RPAREN  reduce 41
+	RBRACE  reduce 41
+	EQ  reduce 41
+	NEQ  reduce 41
+	LT  reduce 41
+	LEQ  reduce 41
+	GT  reduce 41
+	GEQ  reduce 41
+	AND  reduce 41
+	OR  reduce 41
+	PLUS  reduce 41
+	MINUS  reduce 41
+	MUL  reduce 41
+	DIV  reduce 41
+	SEMICOLON  reduce 41
+
+
+state 57
+	expr : LPAREN . expr RPAREN  (66)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 75
+	lvalue  goto 61
+
+
+state 58
+	expr : NOT . expr  (65)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 76
+	lvalue  goto 61
+
+
+state 59
+	expr : MINUS . expr  (64)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 77
+	lvalue  goto 61
+
+
+state 60
+	expr : expr . PLUS expr  (52)
+	expr : expr . MINUS expr  (53)
+	expr : expr . MUL expr  (54)
+	expr : expr . DIV expr  (55)
+	expr : expr . AND expr  (56)
+	expr : expr . OR expr  (57)
+	expr : expr . EQ expr  (58)
+	expr : expr . NEQ expr  (59)
+	expr : expr . LT expr  (60)
+	expr : expr . LEQ expr  (61)
+	expr : expr . GT expr  (62)
+	expr : expr . GEQ expr  (63)
+	writeable : expr .  (67)
+
+	EQ  shift 78
+	NEQ  shift 79
+	LT  shift 80
+	LEQ  shift 81
+	GT  shift 82
+	GEQ  shift 83
+	AND  shift 84
+	OR  shift 85
+	PLUS  shift 86
+	MINUS  shift 87
+	MUL  shift 88
+	DIV  shift 89
+	SEMICOLON  reduce 67
+
+
+state 61
+	expr : lvalue .  (51)
+
+	.  reduce 51
+
+
+state 62
+	stmt_body : WRITE writeable .  (35)
+
+	.  reduce 35
+
+
+state 63
+	stmt_body : READ lvalue .  (34)
+
+	.  reduce 34
+
+
+state 64
+	stmt : IF expr . THEN stmts FI  (30)
+	stmt : IF expr . THEN stmts ELSE stmts FI  (31)
+	expr : expr . PLUS expr  (52)
+	expr : expr . MINUS expr  (53)
+	expr : expr . MUL expr  (54)
+	expr : expr . DIV expr  (55)
+	expr : expr . AND expr  (56)
+	expr : expr . OR expr  (57)
+	expr : expr . EQ expr  (58)
+	expr : expr . NEQ expr  (59)
+	expr : expr . LT expr  (60)
+	expr : expr . LEQ expr  (61)
+	expr : expr . GT expr  (62)
+	expr : expr . GEQ expr  (63)
+
+	THEN  shift 90
+	EQ  shift 78
+	NEQ  shift 79
+	LT  shift 80
+	LEQ  shift 81
+	GT  shift 82
+	GEQ  shift 83
+	AND  shift 84
+	OR  shift 85
+	PLUS  shift 86
+	MINUS  shift 87
+	MUL  shift 88
+	DIV  shift 89
+	.  error
+
+
+state 65
+	stmt : WHILE expr . DO stmts OD  (32)
+	expr : expr . PLUS expr  (52)
+	expr : expr . MINUS expr  (53)
+	expr : expr . MUL expr  (54)
+	expr : expr . DIV expr  (55)
+	expr : expr . AND expr  (56)
+	expr : expr . OR expr  (57)
+	expr : expr . EQ expr  (58)
+	expr : expr . NEQ expr  (59)
+	expr : expr . LT expr  (60)
+	expr : expr . LEQ expr  (61)
+	expr : expr . GT expr  (62)
+	expr : expr . GEQ expr  (63)
+
+	DO  shift 91
+	EQ  shift 78
+	NEQ  shift 79
+	LT  shift 80
+	LEQ  shift 81
+	GT  shift 82
+	GEQ  shift 83
+	AND  shift 84
+	OR  shift 85
+	PLUS  shift 86
+	MINUS  shift 87
+	MUL  shift 88
+	DIV  shift 89
+	.  error
+
+
+state 66
+	decl : beantype IDENT . SEMICOLON  (26)
+
+	SEMICOLON  shift 92
+	.  error
+
+
+state 67
+	proc : PROC IDENT LPAREN proc_heads RPAREN decls stmts END .  (15)
+
+	.  reduce 15
+
+
+state 68
+	proc_call : IDENT . LPAREN lvaluelist RPAREN  (37)
+	lvalue : IDENT . DOT lvalue  (40)
+	lvalue : IDENT .  (41)
+
+	DOT  shift 51
+	LPAREN  shift 52
+	ASSIGN  reduce 41
+
+
+state 69
+	stmts : stmt stmts .  (27)
+
+	.  reduce 27
+
+
+state 70
+	stmt : stmt_body SEMICOLON .  (29)
+
+	.  reduce 29
+
+
+state 71
+	stmt_body : lvalue ASSIGN . rvalue  (36)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	LBRACE  shift 93
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 94
+	lvalue  goto 61
+	rvalue  goto 95
+	struct_init  goto 96
+
+
+state 72
+	lvalue : IDENT DOT lvalue .  (40)
+
+	.  reduce 40
+
+
+state 73
+	lvaluelist : lvalue .  (43)
+
+	.  reduce 43
+
+
+state 74
+	proc_call : IDENT LPAREN lvaluelist . RPAREN  (37)
+	lvaluelist : lvaluelist . COMMA lvalue  (42)
+
+	COMMA  shift 97
+	RPAREN  shift 98
+	.  error
+
+
+state 75
+	expr : expr . PLUS expr  (52)
+	expr : expr . MINUS expr  (53)
+	expr : expr . MUL expr  (54)
+	expr : expr . DIV expr  (55)
+	expr : expr . AND expr  (56)
+	expr : expr . OR expr  (57)
+	expr : expr . EQ expr  (58)
+	expr : expr . NEQ expr  (59)
+	expr : expr . LT expr  (60)
+	expr : expr . LEQ expr  (61)
+	expr : expr . GT expr  (62)
+	expr : expr . GEQ expr  (63)
+	expr : LPAREN expr . RPAREN  (66)
+
+	RPAREN  shift 99
+	EQ  shift 78
+	NEQ  shift 79
+	LT  shift 80
+	LEQ  shift 81
+	GT  shift 82
+	GEQ  shift 83
+	AND  shift 84
+	OR  shift 85
+	PLUS  shift 86
+	MINUS  shift 87
+	MUL  shift 88
+	DIV  shift 89
+	.  error
+
+
+state 76
+	expr : expr . PLUS expr  (52)
+	expr : expr . MINUS expr  (53)
+	expr : expr . MUL expr  (54)
+	expr : expr . DIV expr  (55)
+	expr : expr . AND expr  (56)
+	expr : expr . OR expr  (57)
+	expr : expr . EQ expr  (58)
+	expr : expr . NEQ expr  (59)
+	expr : expr . LT expr  (60)
+	expr : expr . LEQ expr  (61)
+	expr : expr . GT expr  (62)
+	expr : expr . GEQ expr  (63)
+	expr : NOT expr .  (65)
+
+	.  reduce 65
+
+
+state 77
+	expr : expr . PLUS expr  (52)
+	expr : expr . MINUS expr  (53)
+	expr : expr . MUL expr  (54)
+	expr : expr . DIV expr  (55)
+	expr : expr . AND expr  (56)
+	expr : expr . OR expr  (57)
+	expr : expr . EQ expr  (58)
+	expr : expr . NEQ expr  (59)
+	expr : expr . LT expr  (60)
+	expr : expr . LEQ expr  (61)
+	expr : expr . GT expr  (62)
+	expr : expr . GEQ expr  (63)
+	expr : MINUS expr .  (64)
+
+	.  reduce 64
+
+
+state 78
+	expr : expr EQ . expr  (58)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 100
+	lvalue  goto 61
+
+
+state 79
+	expr : expr NEQ . expr  (59)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 101
+	lvalue  goto 61
+
+
+state 80
+	expr : expr LT . expr  (60)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 102
+	lvalue  goto 61
+
+
+state 81
+	expr : expr LEQ . expr  (61)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 103
+	lvalue  goto 61
+
+
+state 82
+	expr : expr GT . expr  (62)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 104
+	lvalue  goto 61
+
+
+state 83
+	expr : expr GEQ . expr  (63)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 105
+	lvalue  goto 61
+
+
+state 84
+	expr : expr AND . expr  (56)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 106
+	lvalue  goto 61
+
+
+state 85
+	expr : expr OR . expr  (57)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 107
+	lvalue  goto 61
+
+
+state 86
+	expr : expr PLUS . expr  (52)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 108
+	lvalue  goto 61
+
+
+state 87
+	expr : expr MINUS . expr  (53)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 109
+	lvalue  goto 61
+
+
+state 88
+	expr : expr MUL . expr  (54)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 110
+	lvalue  goto 61
+
+
+state 89
+	expr : expr DIV . expr  (55)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 111
+	lvalue  goto 61
+
+
+state 90
+	stmt : IF expr THEN . stmts FI  (30)
+	stmt : IF expr THEN . stmts ELSE stmts FI  (31)
+	stmts : .  (28)
+
+	IDENT  shift 68
+	WRITE  shift 40
+	READ  shift 41
+	IF  shift 42
+	WHILE  shift 43
+	ELSE  reduce 28
+	FI  reduce 28
+
+	stmts  goto 112
+	stmt  goto 47
+	stmt_body  goto 48
+	proc_call  goto 49
+	lvalue  goto 50
+
+
+state 91
+	stmt : WHILE expr DO . stmts OD  (32)
+	stmts : .  (28)
+
+	IDENT  shift 68
+	WRITE  shift 40
+	READ  shift 41
+	IF  shift 42
+	WHILE  shift 43
+	OD  reduce 28
+
+	stmts  goto 113
+	stmt  goto 47
+	stmt_body  goto 48
+	proc_call  goto 49
+	lvalue  goto 50
+
+
+state 92
+	decl : beantype IDENT SEMICOLON .  (26)
+
+	.  reduce 26
+
+
+state 93
+	struct_init : LBRACE . struct_assigns RBRACE  (45)
+
+	IDENT  shift 114
+	.  error
+
+	struct_assigns  goto 115
+	struct_assign  goto 116
+
+
+state 94
+	rvalue : expr .  (38)
+	expr : expr . PLUS expr  (52)
+	expr : expr . MINUS expr  (53)
+	expr : expr . MUL expr  (54)
+	expr : expr . DIV expr  (55)
+	expr : expr . AND expr  (56)
+	expr : expr . OR expr  (57)
+	expr : expr . EQ expr  (58)
+	expr : expr . NEQ expr  (59)
+	expr : expr . LT expr  (60)
+	expr : expr . LEQ expr  (61)
+	expr : expr . GT expr  (62)
+	expr : expr . GEQ expr  (63)
+
+	EQ  shift 78
+	NEQ  shift 79
+	LT  shift 80
+	LEQ  shift 81
+	GT  shift 82
+	GEQ  shift 83
+	AND  shift 84
+	OR  shift 85
+	PLUS  shift 86
+	MINUS  shift 87
+	MUL  shift 88
+	DIV  shift 89
+	COMMA  reduce 38
+	RBRACE  reduce 38
+	SEMICOLON  reduce 38
+
+
+state 95
+	stmt_body : lvalue ASSIGN rvalue .  (36)
+
+	.  reduce 36
+
+
+state 96
+	rvalue : struct_init .  (39)
+
+	.  reduce 39
+
+
+state 97
+	lvaluelist : lvaluelist COMMA . lvalue  (42)
+
+	IDENT  shift 56
+	.  error
+
+	lvalue  goto 117
+
+
+state 98
+	proc_call : IDENT LPAREN lvaluelist RPAREN .  (37)
+
+	.  reduce 37
+
+
+state 99
+	expr : LPAREN expr RPAREN .  (66)
+
+	.  reduce 66
+
+
+state 100
+	expr : expr . PLUS expr  (52)
+	expr : expr . MINUS expr  (53)
+	expr : expr . MUL expr  (54)
+	expr : expr . DIV expr  (55)
+	expr : expr . AND expr  (56)
+	expr : expr . OR expr  (57)
+	expr : expr . EQ expr  (58)
+	expr : expr EQ expr .  (58)
+	expr : expr . NEQ expr  (59)
+	expr : expr . LT expr  (60)
+	expr : expr . LEQ expr  (61)
+	expr : expr . GT expr  (62)
+	expr : expr . GEQ expr  (63)
+
+	AND  shift 84
+	OR  shift 85
+	PLUS  shift 86
+	MINUS  shift 87
+	MUL  shift 88
+	DIV  shift 89
+	THEN  reduce 58
+	DO  reduce 58
+	COMMA  reduce 58
+	RPAREN  reduce 58
+	RBRACE  reduce 58
+	SEMICOLON  reduce 58
+
+
+state 101
+	expr : expr . PLUS expr  (52)
+	expr : expr . MINUS expr  (53)
+	expr : expr . MUL expr  (54)
+	expr : expr . DIV expr  (55)
+	expr : expr . AND expr  (56)
+	expr : expr . OR expr  (57)
+	expr : expr . EQ expr  (58)
+	expr : expr . NEQ expr  (59)
+	expr : expr NEQ expr .  (59)
+	expr : expr . LT expr  (60)
+	expr : expr . LEQ expr  (61)
+	expr : expr . GT expr  (62)
+	expr : expr . GEQ expr  (63)
+
+	AND  shift 84
+	OR  shift 85
+	PLUS  shift 86
+	MINUS  shift 87
+	MUL  shift 88
+	DIV  shift 89
+	THEN  reduce 59
+	DO  reduce 59
+	COMMA  reduce 59
+	RPAREN  reduce 59
+	RBRACE  reduce 59
+	SEMICOLON  reduce 59
+
+
+state 102
+	expr : expr . PLUS expr  (52)
+	expr : expr . MINUS expr  (53)
+	expr : expr . MUL expr  (54)
+	expr : expr . DIV expr  (55)
+	expr : expr . AND expr  (56)
+	expr : expr . OR expr  (57)
+	expr : expr . EQ expr  (58)
+	expr : expr . NEQ expr  (59)
+	expr : expr . LT expr  (60)
+	expr : expr LT expr .  (60)
+	expr : expr . LEQ expr  (61)
+	expr : expr . GT expr  (62)
+	expr : expr . GEQ expr  (63)
+
+	AND  shift 84
+	OR  shift 85
+	PLUS  shift 86
+	MINUS  shift 87
+	MUL  shift 88
+	DIV  shift 89
+	THEN  reduce 60
+	DO  reduce 60
+	COMMA  reduce 60
+	RPAREN  reduce 60
+	RBRACE  reduce 60
+	SEMICOLON  reduce 60
+
+
+state 103
+	expr : expr . PLUS expr  (52)
+	expr : expr . MINUS expr  (53)
+	expr : expr . MUL expr  (54)
+	expr : expr . DIV expr  (55)
+	expr : expr . AND expr  (56)
+	expr : expr . OR expr  (57)
+	expr : expr . EQ expr  (58)
+	expr : expr . NEQ expr  (59)
+	expr : expr . LT expr  (60)
+	expr : expr . LEQ expr  (61)
+	expr : expr LEQ expr .  (61)
+	expr : expr . GT expr  (62)
+	expr : expr . GEQ expr  (63)
+
+	AND  shift 84
+	OR  shift 85
+	PLUS  shift 86
+	MINUS  shift 87
+	MUL  shift 88
+	DIV  shift 89
+	THEN  reduce 61
+	DO  reduce 61
+	COMMA  reduce 61
+	RPAREN  reduce 61
+	RBRACE  reduce 61
+	SEMICOLON  reduce 61
+
+
+state 104
+	expr : expr . PLUS expr  (52)
+	expr : expr . MINUS expr  (53)
+	expr : expr . MUL expr  (54)
+	expr : expr . DIV expr  (55)
+	expr : expr . AND expr  (56)
+	expr : expr . OR expr  (57)
+	expr : expr . EQ expr  (58)
+	expr : expr . NEQ expr  (59)
+	expr : expr . LT expr  (60)
+	expr : expr . LEQ expr  (61)
+	expr : expr . GT expr  (62)
+	expr : expr GT expr .  (62)
+	expr : expr . GEQ expr  (63)
+
+	AND  shift 84
+	OR  shift 85
+	PLUS  shift 86
+	MINUS  shift 87
+	MUL  shift 88
+	DIV  shift 89
+	THEN  reduce 62
+	DO  reduce 62
+	COMMA  reduce 62
+	RPAREN  reduce 62
+	RBRACE  reduce 62
+	SEMICOLON  reduce 62
+
+
+state 105
+	expr : expr . PLUS expr  (52)
+	expr : expr . MINUS expr  (53)
+	expr : expr . MUL expr  (54)
+	expr : expr . DIV expr  (55)
+	expr : expr . AND expr  (56)
+	expr : expr . OR expr  (57)
+	expr : expr . EQ expr  (58)
+	expr : expr . NEQ expr  (59)
+	expr : expr . LT expr  (60)
+	expr : expr . LEQ expr  (61)
+	expr : expr . GT expr  (62)
+	expr : expr . GEQ expr  (63)
+	expr : expr GEQ expr .  (63)
+
+	AND  shift 84
+	OR  shift 85
+	PLUS  shift 86
+	MINUS  shift 87
+	MUL  shift 88
+	DIV  shift 89
+	THEN  reduce 63
+	DO  reduce 63
+	COMMA  reduce 63
+	RPAREN  reduce 63
+	RBRACE  reduce 63
+	SEMICOLON  reduce 63
+
+
+state 106
+	expr : expr . PLUS expr  (52)
+	expr : expr . MINUS expr  (53)
+	expr : expr . MUL expr  (54)
+	expr : expr . DIV expr  (55)
+	expr : expr . AND expr  (56)
+	expr : expr AND expr .  (56)
+	expr : expr . OR expr  (57)
+	expr : expr . EQ expr  (58)
+	expr : expr . NEQ expr  (59)
+	expr : expr . LT expr  (60)
+	expr : expr . LEQ expr  (61)
+	expr : expr . GT expr  (62)
+	expr : expr . GEQ expr  (63)
+
+	.  reduce 56
+
+
+state 107
+	expr : expr . PLUS expr  (52)
+	expr : expr . MINUS expr  (53)
+	expr : expr . MUL expr  (54)
+	expr : expr . DIV expr  (55)
+	expr : expr . AND expr  (56)
+	expr : expr . OR expr  (57)
+	expr : expr OR expr .  (57)
+	expr : expr . EQ expr  (58)
+	expr : expr . NEQ expr  (59)
+	expr : expr . LT expr  (60)
+	expr : expr . LEQ expr  (61)
+	expr : expr . GT expr  (62)
+	expr : expr . GEQ expr  (63)
+
+	.  reduce 57
+
+
+state 108
+	expr : expr . PLUS expr  (52)
+	expr : expr PLUS expr .  (52)
+	expr : expr . MINUS expr  (53)
+	expr : expr . MUL expr  (54)
+	expr : expr . DIV expr  (55)
+	expr : expr . AND expr  (56)
+	expr : expr . OR expr  (57)
+	expr : expr . EQ expr  (58)
+	expr : expr . NEQ expr  (59)
+	expr : expr . LT expr  (60)
+	expr : expr . LEQ expr  (61)
+	expr : expr . GT expr  (62)
+	expr : expr . GEQ expr  (63)
+
+	AND  shift 84
+	OR  shift 85
+	MUL  shift 88
+	DIV  shift 89
+	THEN  reduce 52
+	DO  reduce 52
+	COMMA  reduce 52
+	RPAREN  reduce 52
+	RBRACE  reduce 52
+	EQ  reduce 52
+	NEQ  reduce 52
+	LT  reduce 52
+	LEQ  reduce 52
+	GT  reduce 52
+	GEQ  reduce 52
+	PLUS  reduce 52
+	MINUS  reduce 52
+	SEMICOLON  reduce 52
+
+
+state 109
+	expr : expr . PLUS expr  (52)
+	expr : expr . MINUS expr  (53)
+	expr : expr MINUS expr .  (53)
+	expr : expr . MUL expr  (54)
+	expr : expr . DIV expr  (55)
+	expr : expr . AND expr  (56)
+	expr : expr . OR expr  (57)
+	expr : expr . EQ expr  (58)
+	expr : expr . NEQ expr  (59)
+	expr : expr . LT expr  (60)
+	expr : expr . LEQ expr  (61)
+	expr : expr . GT expr  (62)
+	expr : expr . GEQ expr  (63)
+
+	AND  shift 84
+	OR  shift 85
+	MUL  shift 88
+	DIV  shift 89
+	THEN  reduce 53
+	DO  reduce 53
+	COMMA  reduce 53
+	RPAREN  reduce 53
+	RBRACE  reduce 53
+	EQ  reduce 53
+	NEQ  reduce 53
+	LT  reduce 53
+	LEQ  reduce 53
+	GT  reduce 53
+	GEQ  reduce 53
+	PLUS  reduce 53
+	MINUS  reduce 53
+	SEMICOLON  reduce 53
+
+
+state 110
+	expr : expr . PLUS expr  (52)
+	expr : expr . MINUS expr  (53)
+	expr : expr . MUL expr  (54)
+	expr : expr MUL expr .  (54)
+	expr : expr . DIV expr  (55)
+	expr : expr . AND expr  (56)
+	expr : expr . OR expr  (57)
+	expr : expr . EQ expr  (58)
+	expr : expr . NEQ expr  (59)
+	expr : expr . LT expr  (60)
+	expr : expr . LEQ expr  (61)
+	expr : expr . GT expr  (62)
+	expr : expr . GEQ expr  (63)
+
+	AND  shift 84
+	OR  shift 85
+	THEN  reduce 54
+	DO  reduce 54
+	COMMA  reduce 54
+	RPAREN  reduce 54
+	RBRACE  reduce 54
+	EQ  reduce 54
+	NEQ  reduce 54
+	LT  reduce 54
+	LEQ  reduce 54
+	GT  reduce 54
+	GEQ  reduce 54
+	PLUS  reduce 54
+	MINUS  reduce 54
+	MUL  reduce 54
+	DIV  reduce 54
+	SEMICOLON  reduce 54
+
+
+state 111
+	expr : expr . PLUS expr  (52)
+	expr : expr . MINUS expr  (53)
+	expr : expr . MUL expr  (54)
+	expr : expr . DIV expr  (55)
+	expr : expr DIV expr .  (55)
+	expr : expr . AND expr  (56)
+	expr : expr . OR expr  (57)
+	expr : expr . EQ expr  (58)
+	expr : expr . NEQ expr  (59)
+	expr : expr . LT expr  (60)
+	expr : expr . LEQ expr  (61)
+	expr : expr . GT expr  (62)
+	expr : expr . GEQ expr  (63)
+
+	AND  shift 84
+	OR  shift 85
+	THEN  reduce 55
+	DO  reduce 55
+	COMMA  reduce 55
+	RPAREN  reduce 55
+	RBRACE  reduce 55
+	EQ  reduce 55
+	NEQ  reduce 55
+	LT  reduce 55
+	LEQ  reduce 55
+	GT  reduce 55
+	GEQ  reduce 55
+	PLUS  reduce 55
+	MINUS  reduce 55
+	MUL  reduce 55
+	DIV  reduce 55
+	SEMICOLON  reduce 55
+
+
+state 112
+	stmt : IF expr THEN stmts . FI  (30)
+	stmt : IF expr THEN stmts . ELSE stmts FI  (31)
+
+	ELSE  shift 118
+	FI  shift 119
+	.  error
+
+
+state 113
+	stmt : WHILE expr DO stmts . OD  (32)
+
+	OD  shift 120
+	.  error
+
+
+state 114
+	struct_assign : IDENT . EQ rvalue  (48)
+
+	EQ  shift 121
+	.  error
+
+
+state 115
+	struct_init : LBRACE struct_assigns . RBRACE  (45)
+	struct_assigns : struct_assigns . COMMA struct_assign  (46)
+
+	COMMA  shift 122
+	RBRACE  shift 123
+	.  error
+
+
+state 116
+	struct_assigns : struct_assign .  (47)
+
+	.  reduce 47
+
+
+state 117
+	lvaluelist : lvaluelist COMMA lvalue .  (42)
+
+	.  reduce 42
+
+
+state 118
+	stmt : IF expr THEN stmts ELSE . stmts FI  (31)
+	stmts : .  (28)
+
+	IDENT  shift 68
+	WRITE  shift 40
+	READ  shift 41
+	IF  shift 42
+	WHILE  shift 43
+	FI  reduce 28
+
+	stmts  goto 124
+	stmt  goto 47
+	stmt_body  goto 48
+	proc_call  goto 49
+	lvalue  goto 50
+
+
+state 119
+	stmt : IF expr THEN stmts FI .  (30)
+
+	.  reduce 30
+
+
+state 120
+	stmt : WHILE expr DO stmts OD .  (32)
+
+	.  reduce 32
+
+
+state 121
+	struct_assign : IDENT EQ . rvalue  (48)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	LBRACE  shift 93
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 94
+	lvalue  goto 61
+	rvalue  goto 125
+	struct_init  goto 96
+
+
+state 122
+	struct_assigns : struct_assigns COMMA . struct_assign  (46)
+
+	IDENT  shift 114
+	.  error
+
+	struct_assign  goto 126
+
+
+state 123
+	struct_init : LBRACE struct_assigns RBRACE .  (45)
+
+	.  reduce 45
+
+
+state 124
+	stmt : IF expr THEN stmts ELSE stmts . FI  (31)
+
+	FI  shift 127
+	.  error
+
+
+state 125
+	struct_assign : IDENT EQ rvalue .  (48)
+
+	.  reduce 48
+
+
+state 126
+	struct_assigns : struct_assigns COMMA struct_assign .  (46)
+
+	.  reduce 46
+
+
+state 127
+	stmt : IF expr THEN stmts ELSE stmts FI .  (31)
+
+	.  reduce 31
+
+
+48 terminals, 29 nonterminals
+70 grammar rules, 128 states

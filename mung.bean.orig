@@ -1,0 +1,11 @@
+proc main()
+    bool h;
+    int x;
+<<<<<<< HEAD
+    h := true;
+=======
+    if ( x ) then
+        h := true;
+    fi
+>>>>>>> 75aef422591317caa74f7f1135528bfa19bb6762
+end

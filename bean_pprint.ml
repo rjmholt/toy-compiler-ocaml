@@ -1,4 +1,4 @@
-open Sprout_ast
+open Bean_ast
 open Format
 
 (* binary operators follow the following precedence order:
