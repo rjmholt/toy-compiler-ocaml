@@ -1,5 +1,3 @@
-module L = Lexing
-
 (* Specification of an AST for bean *)
 
 type ident = string

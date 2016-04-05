@@ -1,10 +1,8 @@
 (* Bean Symbol Table *)
 
-module AST = Sprout_ast
-
 (* Symbol table data structure definitions *)
 
-type ident = AST.ident
+type ident = Sprout_ast.ident
 type pos = Lexing.position
 
 type beantype =
@@ -29,7 +27,7 @@ type beanval =
   | VStruct of (ident, beanval) Hashtbl.t
 
 type head =
-  { head_pass: AST.pass_type;
+  { head_pass: Sprout_ast.pass_type;
     head_type: beantype;
     head_pos: pos;
   }

@@ -55,13 +55,13 @@ let rec get_expr_type proc expr =
   | AST.Eunop (pos, unop, expr) ->
       let unop_type = get_unop_type unop in
       let expr_type = get_expr_type proc expr in
-      if unop_type == expr_type then unop_type else
+      if unop_type = expr_type then unop_type else
         raise (Type_error (PP.string_of_unop unop, pos))
   | AST.Ebinop (pos, lexpr, binop, rexpr) ->
       let binop_type = get_binop_type binop in
       let lexpr_type = get_expr_type proc lexpr in
       let rexpr_type = get_expr_type proc rexpr in
-      if binop_type == lexpr_type && binop_type == rexpr_type
+      if binop_type = lexpr_type && binop_type = rexpr_type
       then binop_type
       else raise (Type_error (PP.string_of_binop binop, pos))
 
@@ -79,7 +79,7 @@ let rec are_asgn_type_match proc pos lval_t rval =
   match rval with
   | AST.Rstruct fields -> check_field_asgn proc pos lval_t fields
   | AST.Rexpr (_, expr) ->
-      if lval_t == get_expr_type proc expr
+      if lval_t = get_expr_type proc expr
       then true
       else raise (Type_error (":=", pos))
 
@@ -88,7 +88,7 @@ let rec are_asgn_type_match proc pos lval_t rval =
  *   - check it has a struct type
  *   - check the struct fields recursively          *)
 and
-check_field_asgn (proc : Sym.proc) (pos : AST.pos) lval_t fields =
+check_field_asgn proc pos lval_t fields =
   match lval_t with
   | Sym.TTypedef (_, typedef) -> is_struct_isomorphic proc typedef fields
   | _ -> raise (Type_error (":=", pos))
@@ -158,7 +158,7 @@ let check_pcall procs_tbl heads proc (pos, id, exprs) =
   let asgn_pairs = List.combine heads exprs in
   let go (head, expr) isValid =
     isValid
-    && get_prochead_symtype proc head == get_expr_type proc expr
+    && get_prochead_symtype proc head = get_expr_type proc expr
     (* TODO check proc assignment
      * -- record proc arg position in symtab *)
   in
@@ -175,7 +175,7 @@ let rec check_cond procs_tbl heads proc cond =
   let go stmt isValid = isValid && check_stmt procs_tbl heads proc stmt in
   let check_cond_expr proc expr =
     check_expr proc expr
-    && get_expr_type proc expr == Sym.TBool
+    && get_expr_type proc expr = Sym.TBool
   in
   match cond with
   | AST.If (_, expr, stmts) ->
