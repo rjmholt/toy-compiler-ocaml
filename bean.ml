@@ -30,7 +30,7 @@ let get_lex_pos lexbuf =
 
 let set_lex_file filename lexbuf =
   lexbuf.L.lex_curr_p <- { lexbuf.L.lex_curr_p with
-                           pos_fname = filename }
+                           L.pos_fname = filename }
 
 let main () =
   (* Parse the command-line arguments *)

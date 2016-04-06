@@ -2,10 +2,12 @@
 *.cmo
 *.cmx
 *.o
-sprout
-sprout.byte
+bean
+bean.byte
 *.zip
 sprout_parse.ml
 sprout_parse.mli
 sprout_lex.ml
 Members.txt
+beanCore/
+*.zip
