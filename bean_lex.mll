@@ -7,7 +7,7 @@ exception Syntax_error of string
 
 let digit = ['0' - '9']
 let alpha = ['a' - 'z' 'A' - 'Z' '_']
-let alnum = alpha | digit
+let alnum = alpha | digit | '\''
 let digits = digit+
 let ident = alpha alnum*
 rule token = parse
