@@ -206,21 +206,21 @@ and print_stmt_list indent stmt_list =
   | stmt :: slist   -> print_stmt stmt; print_stmt_list indent slist
   | []              -> ()
 
-let print_proc_head (pass_type, beantype, ident) =
+let print_proc_param (pass_type, beantype, ident) =
   printf "%s " (string_of_pass pass_type);
   printf "%s " (string_of_beantype beantype);
   printf "%s"  ident
 
-let rec print_proc_head_list head_list =
+let rec print_proc_param_list head_list =
   match head_list with
   | []         -> ()
-  | [head]     -> print_proc_head head
-  | head :: hs -> print_proc_head head; printf ", ";
-                  print_proc_head_list hs
+  | [head]     -> print_proc_param head
+  | head :: hs -> print_proc_param head; printf ", ";
+                  print_proc_param_list hs
 
-let print_proc (ident, proc_heads, proc_decls, body_stmts) =
+let print_proc (ident, proc_params, proc_decls, body_stmts) =
   printf "proc %s(" ident;
-  print_proc_head_list proc_heads;
+  print_proc_param_list proc_params;
   printf ")\n";
   print_decl_list 1 proc_decls;
   print_stmt_list 1 body_stmts;
@@ -229,9 +229,8 @@ let print_proc (ident, proc_heads, proc_decls, body_stmts) =
 let rec print_proc_list plist =
   match plist with
   | []          -> ();
-  | [proc]      -> print_proc proc;
+  | [proc]      -> print_proc proc; printf "\n"
   | proc :: ps  -> print_proc proc; printf "\n\n"; print_proc_list ps;
-  printf "\n"
 
 let print_program fmt prog =
   print_typedef_list prog.typedefs;

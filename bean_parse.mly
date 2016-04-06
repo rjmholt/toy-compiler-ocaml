@@ -99,7 +99,7 @@ decl:
 /* Builds stmts in non-reverse, right-recursive order */
 stmts:
   | stmt stmts { $1 :: $2 }
-  | { [] }
+  | stmt { [$1] }
 
 stmt:
   | stmt_body SEMICOLON { $1 }
