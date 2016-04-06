@@ -81,10 +81,11 @@ and read_string buf =
   (* Tab *)
   | '\\' 't'      { Buffer.add_char buf '\t'; read_string buf lexbuf }
   (* Other non-special characters *)
-  | [^ '"' '\\']  { Buffer.add_string buf (Lexing.lexeme lexbuf);
+  | [^ '"' '\\' '\n']  { Buffer.add_string buf (Lexing.lexeme lexbuf);
                       read_string buf lexbuf }
   (* Weird characters are rejected *)
-  | _   { raise (Syntax_error
+  | '\n' { raise (Syntax_error ("Illegal newline in string")) }
+  | _    { raise (Syntax_error
                 ("Illegal string character: \""^(Lexing.lexeme lexbuf)^"\"")) }
   (* Programs can't terminate with an open string *)
-  | eof { raise (Syntax_error "End of file reached before string terminated") }
+  | eof  { raise (Syntax_error "End of file reached before string terminated") }
