@@ -6,19 +6,21 @@ type ident = string
 type beantype =
   | TBool
   | TInt
-  | TNamedTypedef of ident
-  | TAnonTypedef of fielddecl list
+
+type definedtype = ident
+
+type field = (ident * typespec)
 
 and
-fielddecl = (ident * beantype)
+field_struct = field list
 
 and
-typedefbody =
-  | TDStruct of fielddecl list
-  | TDAlias of beantype
+typespec =
+  | TSBeantype of beantype
+  | TSDefinedtype of definedtype
+  | TSFieldStruct of field_struct
 
-and
-typedef = (typedefbody * ident)
+type typedef = (typespec * ident)
 
 type lvalue =
   | LId of ident
@@ -58,7 +60,7 @@ type pass_type =
   | Pval
   | Pref
 
-type proc_head = (pass_type * beantype * ident)
+type proc_param = (pass_type * typespec * ident)
 
 type stmt = 
   | Assign of (lvalue * rvalue)
@@ -67,11 +69,11 @@ type stmt =
   | If of (expr * stmt list)
   | IfElse of (expr * stmt list * stmt list)
   | While of (expr * stmt list)
-  | ProcCall of (ident * lvalue list)
+  | ProcCall of (ident * expr list)
 
-type decl = (ident * beantype)
+type decl = (ident * typespec)
 
-type proc = (ident * proc_head list * decl list * stmt list)
+type proc = (ident * proc_param list * decl list * stmt list)
 
 type program = {
   typedefs : typedef list;

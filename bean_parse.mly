@@ -44,36 +44,31 @@ program:
 beantype:
   | BOOL { TBool }
   | INT { TInt }
-  | IDENT { TNamedTypedef $1 }
+
+definedtype:
+  IDENT { $1 }
 
 typedefs:
   | typedefs typedef { $2 :: $1 }
   | { [] }
 
 typedef:
-  TYPEDEF typedefbody IDENT { ($2, $3) }
+  TYPEDEF typespec IDENT { ($2, $3) }
+
+typespec:
+  | beantype { TSBeantype $1 }
+  | definedtype { TSDefinedtype $1 }
+  | LBRACE fields RBRACE { TSFieldStruct $2 }
+
+fields:
+  | fields COMMA field { $3 :: $1 }
+  | field { [$1] }
+
+field:
+  IDENT COLON typespec { ($1, $3) }
   
-typedefbody:
-  | beantype { TDAlias $1 }
-  | tdfields { TDStruct $1 }
-
-tdfields :
-  LBRACE fielddecls RBRACE { List.rev $2 }
-
-fielddecls:
-  | fielddecls COMMA fielddecl { $3 :: $1 }
-  | fielddecl { [$1] }
-  | { [] }
-
-fieldtype:
-  | beantype { $1 }
-  | tdfields { TAnonTypedef $1 }
-
-fielddecl:
-  IDENT COLON fieldtype { ($1, $3) }
-
 proc:
-  PROC IDENT LPAREN proc_heads RPAREN decls stmts END { ($2,
+  PROC IDENT LPAREN proc_params RPAREN decls stmts END { ($2,
                                                          List.rev $4,
                                                          List.rev $6,
                                                          $7) }
@@ -82,13 +77,13 @@ procs:
   | procs proc { $2 :: $1 }
   | { [] }
 
-proc_heads:
-  | proc_heads COMMA proc_head { $3 :: $1 }
-  | proc_head { [$1] }
+proc_params:
+  | proc_params COMMA proc_param { $3 :: $1 }
+  | proc_param { [$1] }
   | { [] }
 
-proc_head:
-  pass_type beantype IDENT { ($1, $2, $3) }
+proc_param:
+  pass_type typespec IDENT { ($1, $2, $3) }
 
 pass_type:
   | VAL { Pval }
@@ -99,7 +94,7 @@ decls:
   | { [] }
 
 decl:
-  beantype IDENT SEMICOLON { ($2, $1) }
+  typespec IDENT SEMICOLON { ($2, $1) }
 
 /* Builds stmts in non-reverse, right-recursive order */
 stmts:
@@ -119,7 +114,12 @@ stmt_body:
   | lvalue ASSIGN rvalue { Assign ($1, $3) }
 
 proc_call:
-  IDENT LPAREN lvaluelist RPAREN { ($1, List.rev $3) }
+  IDENT LPAREN exprs RPAREN { ($1, List.rev $3) }
+
+exprs:
+  | exprs COMMA expr { $3 :: $1 }
+  | expr { [$1] }
+  | { [] }
 
 rvalue:
   | expr { Rexpr $1 }
@@ -128,11 +128,6 @@ rvalue:
 lvalue:
   | IDENT DOT lvalue { LField ($3, $1) }
   | IDENT { LId $1 }
-
-lvaluelist:
-  | lvaluelist COMMA lvalue { $3 :: $1 }
-  | lvalue { [$1] }
-  | { [] }
 
 struct_init:
   LBRACE struct_assigns RBRACE { List.rev $2 }
@@ -145,10 +140,17 @@ struct_assign:
   IDENT EQ rvalue { ($1, $3) }
 
 expr:
+  | literal { $1 }
+  | lvalue { Elval $1 }
+  | binop { $1 }
+  | unop { $1 }
+  | LPAREN expr RPAREN { $2 }
+
+literal:
   | BOOL_CONST { Ebool $1 }
   | INT_CONST { Eint $1 }
-  | lvalue { Elval $1 }
-  /* Binary operators */
+
+binop:
   | expr PLUS expr { Ebinop ($1, Op_add, $3) }
   | expr MINUS expr { Ebinop ($1, Op_sub, $3) }
   | expr MUL expr { Ebinop ($1, Op_mul, $3) }
@@ -161,9 +163,10 @@ expr:
   | expr LEQ expr { Ebinop ($1, Op_leq, $3) }
   | expr GT expr { Ebinop ($1, Op_gt, $3) }
   | expr GEQ expr { Ebinop ($1, Op_geq, $3) }
+
+unop:
   | MINUS expr %prec UMINUS { Eunop (Op_minus, $2) }
   | NOT expr %prec UNOT { Eunop (Op_not, $2) }
-  | LPAREN expr RPAREN { $2 }
 
  /* Deal with 'write' being able to print strings too */
 writeable:
