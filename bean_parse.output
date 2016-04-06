@@ -41,7 +41,7 @@
   25  decl : typespec IDENT SEMICOLON
 
   26  stmts : stmt stmts
-  27        |
+  27        | stmt
 
   28  stmt : stmt_body SEMICOLON
   29       | IF expr THEN stmts FI
@@ -403,7 +403,6 @@ state 36
 state 37
 	proc : PROC IDENT LPAREN proc_params RPAREN decls . stmts END  (14)
 	decls : decls . decl  (23)
-	stmts : .  (27)
 
 	IDENT  shift 39
 	BOOL  shift 9
@@ -413,7 +412,7 @@ state 37
 	IF  shift 42
 	WHILE  shift 43
 	LBRACE  shift 11
-	END  reduce 27
+	.  error
 
 	beantype  goto 12
 	definedtype  goto 13
@@ -532,7 +531,7 @@ state 46
 
 state 47
 	stmts : stmt . stmts  (26)
-	stmts : .  (27)
+	stmts : stmt .  (27)
 
 	IDENT  shift 71
 	WRITE  shift 40
@@ -1216,15 +1215,13 @@ state 92
 state 93
 	stmt : IF expr THEN . stmts FI  (29)
 	stmt : IF expr THEN . stmts ELSE stmts FI  (30)
-	stmts : .  (27)
 
 	IDENT  shift 71
 	WRITE  shift 40
 	READ  shift 41
 	IF  shift 42
 	WHILE  shift 43
-	ELSE  reduce 27
-	FI  reduce 27
+	.  error
 
 	stmts  goto 115
 	stmt  goto 47
@@ -1235,14 +1232,13 @@ state 93
 
 state 94
 	stmt : WHILE expr DO . stmts OD  (31)
-	stmts : .  (27)
 
 	IDENT  shift 71
 	WRITE  shift 40
 	READ  shift 41
 	IF  shift 42
 	WHILE  shift 43
-	OD  reduce 27
+	.  error
 
 	stmts  goto 116
 	stmt  goto 47
@@ -1762,14 +1758,13 @@ state 120
 
 state 121
 	stmt : IF expr THEN stmts ELSE . stmts FI  (30)
-	stmts : .  (27)
 
 	IDENT  shift 71
 	WRITE  shift 40
 	READ  shift 41
 	IF  shift 42
 	WHILE  shift 43
-	FI  reduce 27
+	.  error
 
 	stmts  goto 127
 	stmt  goto 47

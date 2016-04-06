@@ -85,27 +85,23 @@ string_of_rval rval =
   | Rexpr expr      -> string_of_expr expr
   | Rstruct rstruct -> string_of_struct_assign rstruct
 
-let string_of_typedef (_, ident) = ident
-
-let rec string_of_fielddecl_list fd_list =
-  match fd_list with
-  | []        -> ""
-  | [fd]      -> string_of_fielddecl fd
-  | fd :: fds ->
-      String.concat ", " [string_of_fielddecl fd; string_of_fielddecl_list fds]
-
-and
-string_of_fielddecl (ident, fieldtype) =
-  String.concat " : " [ident; string_of_beantype fieldtype]
-
-and
-string_of_beantype bt =
+let string_of_beantype bt =
   match bt with
   | TBool                    -> "bool"
   | TInt                     -> "int"
-  | TNamedTypedef td_name    -> td_name
-  | TAnonTypedef fielddecls ->
-      String.concat (string_of_fielddecl_list fielddecls) ["{ "; " }"]
+
+let rec string_of_typespec ts =
+  match ts with
+  | TSBeantype bt       -> string_of_beantype bt
+  | TSDefinedtype dt    -> dt
+  | TSFieldStruct fields ->
+      let fstrs = List.map string_of_field fields in
+      let body = String.concat ", " fstrs in
+      String.concat body ["{";"}"]
+
+and
+string_of_field (ident, typespec) =
+  String.concat ": " [ident; string_of_typespec typespec]
 
 let string_of_typedecl (id, beantype) =
     let bt_string = string_of_beantype beantype in
@@ -124,14 +120,9 @@ let print_indent indent_level =
 
 (* TYPEDEF PRINTING FUNCTIONS *)
 
-let print_typedef_body tdbody =
-  match tdbody with
-  | TDAlias beantype -> printf "%s" (string_of_beantype beantype)
-  | TDStruct fields -> printf "{ %s }" (string_of_fielddecl_list fields)
-
-let print_typedef (tdbody, ident) =
+let print_typedef (typespec, ident) =
   printf "typedef ";
-  print_typedef_body tdbody;
+  printf "%s" (string_of_typespec typespec);
   printf " %s\n" ident
 
 let rec print_typedef_list typedefs =
@@ -140,9 +131,9 @@ let rec print_typedef_list typedefs =
   | td :: tds -> print_typedef td; print_typedef_list tds
 
 (* ---- DECLARATION PRINTING FUNCTIONS ---- *)
-let print_var_decl indent typedecl =
+let print_var_decl indent (ident, typespec) =
   print_indent indent;
-  printf "%s\n" (string_of_typedecl typedecl)
+  printf "%s %s;\n" (string_of_typespec typespec) ident
 
 let rec print_decl_list indent dlist =
   match dlist with
@@ -165,9 +156,9 @@ let print_write indent writeable =
   | WString str -> let estr = String.escaped str in
                    printf "write %s;\n" (String.concat "" ["\"";estr;"\""])
 
-let print_proc_call indent pname lvals =
+let print_proc_call indent pname exprs =
   print_indent indent;
-  printf "%s(%s);\n" pname (String.concat ", " (List.map string_of_lval lvals))
+  printf "%s(%s);\n" pname (String.concat ", " (List.map string_of_expr exprs))
 
 let rec print_if indent expr ?elses:(slist=[]) stmts =
   print_indent indent;
@@ -198,7 +189,7 @@ and print_stmt_list indent stmt_list =
     | Write  writeable        -> print_write indent writeable
     | If (expr, stmts)        -> print_if indent expr stmts
     | While (expr, stmts)     -> print_while indent expr stmts
-    | ProcCall (ident, lvals) -> print_proc_call indent ident lvals
+    | ProcCall (ident, exprs) -> print_proc_call indent ident exprs
     | IfElse (expr, if_stmts, else_stmts) ->
         print_if indent expr if_stmts ~elses:else_stmts
   in
@@ -206,17 +197,17 @@ and print_stmt_list indent stmt_list =
   | stmt :: slist   -> print_stmt stmt; print_stmt_list indent slist
   | []              -> ()
 
-let print_proc_param (pass_type, beantype, ident) =
+let print_proc_param (pass_type, typespec, ident) =
   printf "%s " (string_of_pass pass_type);
-  printf "%s " (string_of_beantype beantype);
+  printf "%s " (string_of_typespec typespec);
   printf "%s"  ident
 
-let rec print_proc_param_list head_list =
-  match head_list with
-  | []         -> ()
-  | [head]     -> print_proc_param head
-  | head :: hs -> print_proc_param head; printf ", ";
-                  print_proc_param_list hs
+let rec print_proc_param_list param_list =
+  match param_list with
+  | []          -> ()
+  | [param]     -> print_proc_param param
+  | param :: ps -> print_proc_param param; printf ", ";
+                   print_proc_param_list ps
 
 let print_proc (ident, proc_params, proc_decls, body_stmts) =
   printf "proc %s(" ident;
@@ -230,7 +221,7 @@ let rec print_proc_list plist =
   match plist with
   | []          -> ();
   | [proc]      -> print_proc proc; printf "\n"
-  | proc :: ps  -> print_proc proc; printf "\n\n"; print_proc_list ps;
+  | proc :: ps  -> print_proc proc; printf "\n\n"; print_proc_list ps
 
 let print_program fmt prog =
   print_typedef_list prog.typedefs;
