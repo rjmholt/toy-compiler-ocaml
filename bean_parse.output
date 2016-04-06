@@ -2,13 +2,13 @@
 
    1  program : typedefs procs
 
-   2  beantype : BOOL
-   3           | INT
+   2  typedefs : typedefs typedef
+   3           |
 
-   4  definedtype : IDENT
+   4  beantype : BOOL
+   5           | INT
 
-   5  typedefs : typedefs typedef
-   6           |
+   6  definedtype : IDENT
 
    7  typedef : TYPEDEF typespec IDENT
 
@@ -21,10 +21,10 @@
 
   13  field : IDENT COLON typespec
 
-  14  proc : PROC IDENT LPAREN proc_params RPAREN decls stmts END
+  14  procs : procs proc
+  15        |
 
-  15  procs : procs proc
-  16        |
+  16  proc : PROC IDENT LPAREN proc_params RPAREN decls stmts END
 
   17  proc_params : proc_params COMMA proc_param
   18              | proc_param
@@ -113,9 +113,9 @@ state 0
 
 state 1
 	%entry% : '\001' . program  (71)
-	typedefs : .  (6)
+	typedefs : .  (3)
 
-	.  reduce 6
+	.  reduce 3
 
 	program  goto 3
 	typedefs  goto 4
@@ -135,12 +135,12 @@ state 3
 
 state 4
 	program : typedefs . procs  (1)
-	typedefs : typedefs . typedef  (5)
-	procs : .  (16)
+	typedefs : typedefs . typedef  (2)
+	procs : .  (15)
 
 	TYPEDEF  shift 5
-	$end  reduce 16
-	PROC  reduce 16
+	$end  reduce 15
+	PROC  reduce 15
 
 	procs  goto 6
 	typedef  goto 7
@@ -162,7 +162,7 @@ state 5
 
 state 6
 	program : typedefs procs .  (1)
-	procs : procs . proc  (15)
+	procs : procs . proc  (14)
 
 	PROC  shift 15
 	$end  reduce 1
@@ -171,27 +171,27 @@ state 6
 
 
 state 7
-	typedefs : typedefs typedef .  (5)
-
-	.  reduce 5
-
-
-state 8
-	definedtype : IDENT .  (4)
-
-	.  reduce 4
-
-
-state 9
-	beantype : BOOL .  (2)
+	typedefs : typedefs typedef .  (2)
 
 	.  reduce 2
 
 
-state 10
-	beantype : INT .  (3)
+state 8
+	definedtype : IDENT .  (6)
 
-	.  reduce 3
+	.  reduce 6
+
+
+state 9
+	beantype : BOOL .  (4)
+
+	.  reduce 4
+
+
+state 10
+	beantype : INT .  (5)
+
+	.  reduce 5
 
 
 state 11
@@ -224,16 +224,16 @@ state 14
 
 
 state 15
-	proc : PROC . IDENT LPAREN proc_params RPAREN decls stmts END  (14)
+	proc : PROC . IDENT LPAREN proc_params RPAREN decls stmts END  (16)
 
 	IDENT  shift 21
 	.  error
 
 
 state 16
-	procs : procs proc .  (15)
+	procs : procs proc .  (14)
 
-	.  reduce 15
+	.  reduce 14
 
 
 state 17
@@ -265,7 +265,7 @@ state 20
 
 
 state 21
-	proc : PROC IDENT . LPAREN proc_params RPAREN decls stmts END  (14)
+	proc : PROC IDENT . LPAREN proc_params RPAREN decls stmts END  (16)
 
 	LPAREN  shift 25
 	.  error
@@ -301,7 +301,7 @@ state 24
 
 
 state 25
-	proc : PROC IDENT LPAREN . proc_params RPAREN decls stmts END  (14)
+	proc : PROC IDENT LPAREN . proc_params RPAREN decls stmts END  (16)
 	proc_params : .  (19)
 
 	VAL  shift 28
@@ -339,7 +339,7 @@ state 29
 
 
 state 30
-	proc : PROC IDENT LPAREN proc_params . RPAREN decls stmts END  (14)
+	proc : PROC IDENT LPAREN proc_params . RPAREN decls stmts END  (16)
 	proc_params : proc_params . COMMA proc_param  (17)
 
 	COMMA  shift 33
@@ -379,7 +379,7 @@ state 33
 
 
 state 34
-	proc : PROC IDENT LPAREN proc_params RPAREN . decls stmts END  (14)
+	proc : PROC IDENT LPAREN proc_params RPAREN . decls stmts END  (16)
 	decls : .  (24)
 
 	.  reduce 24
@@ -401,7 +401,7 @@ state 36
 
 
 state 37
-	proc : PROC IDENT LPAREN proc_params RPAREN decls . stmts END  (14)
+	proc : PROC IDENT LPAREN proc_params RPAREN decls . stmts END  (16)
 	decls : decls . decl  (23)
 
 	IDENT  shift 39
@@ -432,14 +432,14 @@ state 38
 
 
 state 39
-	definedtype : IDENT .  (4)
+	definedtype : IDENT .  (6)
 	proc_call : IDENT . LPAREN exprs RPAREN  (36)
 	lvalue : IDENT . DOT lvalue  (42)
 	lvalue : IDENT .  (43)
 
 	DOT  shift 51
 	LPAREN  shift 52
-	IDENT  reduce 4
+	IDENT  reduce 6
 	ASSIGN  reduce 43
 
 
@@ -517,7 +517,7 @@ state 44
 
 
 state 45
-	proc : PROC IDENT LPAREN proc_params RPAREN decls stmts . END  (14)
+	proc : PROC IDENT LPAREN proc_params RPAREN decls stmts . END  (16)
 
 	END  shift 70
 	.  error
@@ -835,9 +835,9 @@ state 69
 
 
 state 70
-	proc : PROC IDENT LPAREN proc_params RPAREN decls stmts END .  (14)
+	proc : PROC IDENT LPAREN proc_params RPAREN decls stmts END .  (16)
 
-	.  reduce 14
+	.  reduce 16
 
 
 state 71

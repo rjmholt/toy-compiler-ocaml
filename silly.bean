@@ -15,6 +15,7 @@ a_record z;
 z.f1 := 42;
 z.f2 := { g2 = true,
 g1 = false } ;
+p(7+3);
 end
 
 proc p (ref int i)

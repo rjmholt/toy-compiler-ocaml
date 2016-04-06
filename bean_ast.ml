@@ -1,14 +1,14 @@
 (* Specification of an AST for bean *)
 type ident = string
  
-(* Define types and typedefs as mutually recusive so *)
-(* typedefs can contain themselves                   *)
 type beantype =
   | TBool
   | TInt
 
 type definedtype = ident
 
+(* Fields and typespecs are mutually recursive, as in:
+ *     {x : int, y : {a : int, b : bool}}              *)
 type field = (ident * typespec)
 
 and
@@ -49,17 +49,22 @@ type writeable =
   | WExpr of expr
   | WString of string
 
-(* Will need to AST elements with additional data.  *)
+(* A struct/field initialisation rvalue, like:
+ *     var := {x = 3, y = {a = (7+3)*12, b = true}}   *)
 type struct_init = (ident * rvalue) list
 
 and rvalue =
   | Rexpr of expr
   | Rstruct of struct_init
 
+(* Proc parameter pass type:
+ *   - "val" -> by value
+ *   - "ref" -> by reference *)
 type pass_type =
   | Pval
   | Pref
 
+(* Parameters in a proc header *)
 type proc_param = (pass_type * typespec * ident)
 
 type stmt = 
