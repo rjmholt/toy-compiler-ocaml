@@ -63,9 +63,12 @@ let rec string_of_unop_expr unop subexpr =
     | _                  -> string_of_expr expr
   in
   match subexpr with
-  | Eint i -> String.concat "" [string_of_unop unop; string_of_int i]
-  | _      ->
-              String.concat " "
+  | Eint i ->
+      (match unop with
+        | Op_minus -> String.concat "" [string_of_unop unop; string_of_int i]
+        | _        -> String.concat " "
+                        [string_of_unop unop; preserve_precedence_repr subexpr])
+  | _      -> String.concat " "
                 [string_of_unop unop; preserve_precedence_repr subexpr]
 
 (* String representation of a binary operator expression *)
@@ -224,8 +227,9 @@ let print_write indent writeable =
   print_indent indent;
   match writeable with
   | WExpr expr  -> printf "write %s;\n" (string_of_expr expr)
-  | WString str -> let estr = String.escaped str in
-                   printf "write %s;\n" (String.concat "" ["\"";estr;"\""])
+  | WString str ->
+      let estr = String.escaped str in
+      printf "write %s;\n" (String.concat "" ["\"";estr;"\""])
 
 (* Print a procedure call:
  *   - print the procedure ident

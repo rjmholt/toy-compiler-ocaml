@@ -77,8 +77,10 @@ and read_string buf =
   parse
   (* Terminate string *)
   | '"'           { STR_CONST (Buffer.contents buf) }
+  (* NOTE: Not allowed in the spec
   (* Escaped string delimiter *)
   | '\\' '"'      { Buffer.add_char buf '"';  read_string buf lexbuf }
+  *)
   (* New line *)
   | '\\' 'n'      { Buffer.add_char buf '\n'; read_string buf lexbuf }
   (* Carriage return *)
@@ -86,9 +88,7 @@ and read_string buf =
   (* Tab *)
   | '\\' 't'      { Buffer.add_char buf '\t'; read_string buf lexbuf }
   (* Backslash *)
-  | '\\' [^ '"' 'n' 'r' 't'] { Buffer.add_char buf '\\';
-                               Buffer.add_string buf (Lexing.lexeme lexbuf);
-                               read_string buf lexbuf }
+  | '\\' '\\'     { Buffer.add_char buf '\\'; read_string buf lexbuf }
   (* Other non-special characters *)
   | [^ '"' '\\' '\n']  { Buffer.add_string buf (Lexing.lexeme lexbuf);
                       read_string buf lexbuf }

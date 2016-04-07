@@ -23,7 +23,7 @@ proc main()
     m := {g1 = 12, duck = true};
     f(x);
     x := - 3;
-    write "Hello   \n\"     kevin";
+    write "Kevin,\\ \\you \n\rdirty\n\r\t\t shill;:^``";
     read bean;
     bean := not (true or bean);
     mung := (6 * (((3*2)) + 4*5));
