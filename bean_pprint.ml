@@ -12,7 +12,7 @@ let isComparator op = List.mem op [ Op_eq  ; Op_neq ;
                                     Op_gt  ; Op_geq ]
 
 (* True if binop1 is higher precedence than binop2 *)
-let isHigherPrecedence binop1 binop2 =
+let is_higher_precedence binop1 binop2 =
   match binop1 with
   | Op_mul | Op_div | Op_and | Op_or -> not (isMulDiv binop2)
   | Op_add | Op_sub                  -> not (isMulDiv binop2)
@@ -51,38 +51,51 @@ let string_of_unop unop =
   | Op_minus  -> "-"
   | Op_not    -> "not"
 
+(* Place parentheses around a string *)
+let parenthesise str =
+  String.concat str ["(";")"]
+
+(* String representation of a unary operator expression *)
+let rec string_of_unop_expr unop subexpr =
+  let preserve_precedence_repr expr =
+    match expr with
+    | Eunop _ | Ebinop _ -> parenthesise (string_of_expr expr)
+    | _                  -> string_of_expr expr
+  in
+  match subexpr with
+  | Eint i -> String.concat "" [string_of_unop unop; string_of_int i]
+  | _      ->
+              String.concat " "
+                [string_of_unop unop; preserve_precedence_repr subexpr]
+
+(* String representation of a binary operator expression *)
+and
+string_of_binop_expr binop lexpr rexpr =
+  let preserve_precedence_repr op expr =
+    match expr with
+    | Ebinop (_, subop, _) ->
+        if is_higher_precedence op subop
+        then parenthesise (string_of_expr expr)
+        else string_of_expr expr
+    | _                    -> string_of_expr expr
+  in
+  String.concat " " [preserve_precedence_repr binop lexpr;
+                     string_of_binop binop;
+                     preserve_precedence_repr binop rexpr]
 (* String representation of expressions.
  * Expressions can be lvals, unary operations, binary operations,
  * or literals. When they are complex, precedence matters and
  * parentheses are important, so parentheses are dealt with here   *)
-let rec string_of_expr expr =
+and
+string_of_expr expr =
   (* unary operators bind tightest -- all non-trivial subexpressions
    * need parentheses *)
-  let parenthesise expr = String.concat "" ["("; string_of_expr expr; ")"] in
-  let unop_subexpr subexpr =
-    match subexpr with
-    | Ebinop _ -> parenthesise subexpr
-    | Eunop _  -> parenthesise subexpr
-    | _        -> string_of_expr subexpr
-  in
-  let binop_subexpr op subexpr =
-    match subexpr with
-    | Ebinop (_, binop, _)  -> if isHigherPrecedence op binop
-     (* If a subexpression is lower precedence than the binary operator,
-      * it needs parentheses around it to preserve order of operations   *)
-      then parenthesise subexpr else string_of_expr subexpr
-    | _                     -> string_of_expr subexpr
-  in
   match expr with
-  | Ebool   ebool                -> string_of_bool ebool
-  | Eint    eint                 -> string_of_int eint
-  | Elval   lval                 -> string_of_lval lval
-  | Eunop (unop, expr)           ->
-      String.concat " " [string_of_unop unop; unop_subexpr expr]
-  | Ebinop (lexpr, binop, rexpr) ->
-      String.concat " " [binop_subexpr binop lexpr;
-                         string_of_binop binop;
-                         binop_subexpr binop rexpr]
+  | Ebool  ebool                 -> string_of_bool ebool
+  | Eint   eint                  -> string_of_int  eint
+  | Elval  lval                  -> string_of_lval lval
+  | Eunop  (unop, subexpr)       -> string_of_unop_expr unop subexpr
+  | Ebinop (lexpr, binop, rexpr) -> string_of_binop_expr binop lexpr rexpr
 
 (* Rval struct assignments look like:
  *     {x = true, y = {a = 8+10, b = true or v}}    *)
@@ -94,7 +107,8 @@ let rec string_of_struct_assign rstruct =
 
 (* Rval struct fields look like:
  *     x = 3 | y = true           *)
-and string_of_struct_entry (ident, rvalue) =
+and
+string_of_struct_entry (ident, rvalue) =
   String.concat " = " [ident; string_of_rval rvalue]
 
 (* Rvals are either an expression or a struct init *)
