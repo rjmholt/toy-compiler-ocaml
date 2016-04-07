@@ -71,6 +71,8 @@ rule token = parse
                           ("Unknown symbol \""^(Lexing.lexeme lexbuf)^"\"")) }
 
 (* String parsing, with escaped characters*)
+(* This is largely inspired by the JSON string parsing chapter in
+ * Real World OCaml -- there aren't many different ways to do it  *)
 and read_string buf =
   parse
   (* Terminate string *)
