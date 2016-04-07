@@ -22,6 +22,8 @@ proc main()
     read mung;
     m := {g1 = 12, duck = true};
     f(x);
+    x := - 3;
+    write "Hello   \n\"     kevin";
     read bean;
     bean := not (true or bean);
     mung := (6 * (((3*2)) + 4*5));

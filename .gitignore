@@ -5,9 +5,9 @@
 bean
 bean.byte
 *.zip
-sprout_parse.ml
-sprout_parse.mli
-sprout_lex.ml
+bean_parse.ml
+bean_parse.mli
+bean_lex.ml
 Members.txt
 beanCore/
 *.zip
