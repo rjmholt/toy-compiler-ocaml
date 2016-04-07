@@ -4,10 +4,12 @@ open Format
 (* binary operators follow the following precedence order:
  *     arithmetic: [* /] > [+ -] > [= != < <= > >=]
  *     boolean:    [and or] > [= != < <= > >=]              *)
-let isMulDiv op = List.mem op [Op_mul; Op_div]
-let isAddSub op = List.mem op [Op_and; Op_sub]
-let isAndOr op = List.mem op [Op_and;Op_or]
-let isComparator op = List.mem op [Op_eq;Op_neq;Op_lt;Op_leq;Op_gt;Op_geq]
+let isMulDiv     op = List.mem op [ Op_mul ; Op_div ]
+let isAddSub     op = List.mem op [ Op_and ; Op_sub ]
+let isAndOr      op = List.mem op [ Op_and ; Op_or  ]
+let isComparator op = List.mem op [ Op_eq  ; Op_neq ;
+                                    Op_lt  ; Op_leq ;
+                                    Op_gt  ; Op_geq ]
 
 (* True if binop1 is higher precedence than binop2 *)
 let isHigherPrecedence binop1 binop2 =
@@ -105,8 +107,8 @@ string_of_rval rval =
 (* Native bean type representations *)
 let string_of_beantype bt =
   match bt with
-  | TBool                    -> "bool"
-  | TInt                     -> "int"
+  | TBool -> "bool"
+  | TInt  -> "int"
 
 (* Typespecs are either native bean types, user-defined, or structs (like in C):
  *   - bean types         -> "int" or "bool"
@@ -114,8 +116,8 @@ let string_of_beantype bt =
  *   - type specification -> {<field>, ...}                                 *)
 let rec string_of_typespec ts =
   match ts with
-  | TSBeantype bt       -> string_of_beantype bt
-  | TSDefinedtype dt    -> dt
+  | TSBeantype bt        -> string_of_beantype bt
+  | TSDefinedtype dt     -> dt
   | TSFieldStruct fields ->
       let fstrs = List.map string_of_field fields in
       let body = String.concat ", " fstrs in
@@ -136,8 +138,8 @@ let string_of_typedecl (id, beantype) =
 (* Pass types are either "val" or "ref" *)
 let string_of_pass pass_type =
   match pass_type with
-  | Pval  -> "val"
-  | Pref  -> "ref"
+  | Pval -> "val"
+  | Pref -> "ref"
 
 (* ---- PRINTING HELPER FUNCTIONS ---- *)
 
@@ -242,7 +244,7 @@ let rec print_if indent expr ?elses:(slist=[]) stmts =
 (* Print a while statement:
  *   - print "while"
  *   - print the boolean guard expression
- *   - print the body statements           
+ *   - print the body statements
  *   - print "od"                         *)
 and
 print_while indent expr stmts =
@@ -260,11 +262,11 @@ and
 print_stmt_list indent stmt_list =
   let print_stmt stmt =
     match stmt with
-    | Assign (lval, rval)     -> print_assign indent lval rval
-    | Read   lval             -> print_read indent lval
-    | Write  writeable        -> print_write indent writeable
-    | If (expr, stmts)        -> print_if indent expr stmts
-    | While (expr, stmts)     -> print_while indent expr stmts
+    | Assign   (lval, rval)   -> print_assign indent lval rval
+    | Read     lval           -> print_read indent lval
+    | Write    writeable      -> print_write indent writeable
+    | If       (expr, stmts)  -> print_if indent expr stmts
+    | While    (expr, stmts)  -> print_while indent expr stmts
     | ProcCall (ident, exprs) -> print_proc_call indent ident exprs
     | IfElse (expr, if_stmts, else_stmts) ->
         print_if indent expr if_stmts ~elses:else_stmts
@@ -274,7 +276,7 @@ print_stmt_list indent stmt_list =
   | []              -> ()
 
 (* --- PROCEDURE PRINTING FUNCTIONS --- *)
-  
+
 (* Print a parameter:
  *   - print the pass type
  *   - print the typespec
