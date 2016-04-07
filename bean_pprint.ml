@@ -146,7 +146,7 @@ let string_of_pass pass_type =
 (* Print an ident of level n by printing 2*n spaces *)
 let print_indent indent_level =
   for i = 1 to indent_level do
-    printf "  "
+    printf "    "
   done
 
 (* TYPEDEF PRINTING FUNCTIONS *)
@@ -179,8 +179,9 @@ let print_var_decl indent (ident, typespec) =
 (* Print declarations by printing the first one, then the rest *)
 let rec print_decl_list indent dlist =
   match dlist with
-  | vdecl :: ds  -> print_var_decl indent vdecl; print_decl_list indent ds
-  | []                      -> ()
+  | [decl]      -> print_var_decl indent decl; printf "\n"; ()
+  | vdecl :: ds -> print_var_decl indent vdecl; print_decl_list indent ds
+  | []          -> ()
 
 (* ---- STATEMENT PRINTING FUNCTIONS ---- *)
 
@@ -233,7 +234,7 @@ let rec print_if indent expr ?elses:(slist=[]) stmts =
   printf "if %s then\n" (string_of_expr expr);
   print_stmt_list (indent+1) stmts;
   match slist with
-  | [] -> ()
+  | [] -> print_indent indent ; printf "fi\n" ; ()
   | _ ->
     print_indent indent;
     printf "else\n";
