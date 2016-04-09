@@ -21,6 +21,8 @@ proc main()
     od
     read mung;
     m := {g1 = 12, duck = true};
+    l := 3 < 4/2 and true;
+    l := 3 < 2 and 2 < 3;
     f(x);
     x := - 3;
     write "Kevin,\\ \\you \n\rdirty\n\r\t\t shill;:^``";

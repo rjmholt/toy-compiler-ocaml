@@ -1352,8 +1352,6 @@ state 103
 	binop : expr . GT expr  (65)
 	binop : expr . GEQ expr  (66)
 
-	AND  shift 87
-	OR  shift 88
 	PLUS  shift 89
 	MINUS  shift 90
 	MUL  shift 91
@@ -1363,6 +1361,8 @@ state 103
 	COMMA  reduce 61
 	RPAREN  reduce 61
 	RBRACE  reduce 61
+	AND  reduce 61
+	OR  reduce 61
 	SEMICOLON  reduce 61
 
 
@@ -1381,8 +1381,6 @@ state 104
 	binop : expr . GT expr  (65)
 	binop : expr . GEQ expr  (66)
 
-	AND  shift 87
-	OR  shift 88
 	PLUS  shift 89
 	MINUS  shift 90
 	MUL  shift 91
@@ -1392,6 +1390,8 @@ state 104
 	COMMA  reduce 62
 	RPAREN  reduce 62
 	RBRACE  reduce 62
+	AND  reduce 62
+	OR  reduce 62
 	SEMICOLON  reduce 62
 
 
@@ -1410,8 +1410,6 @@ state 105
 	binop : expr . GT expr  (65)
 	binop : expr . GEQ expr  (66)
 
-	AND  shift 87
-	OR  shift 88
 	PLUS  shift 89
 	MINUS  shift 90
 	MUL  shift 91
@@ -1421,6 +1419,8 @@ state 105
 	COMMA  reduce 63
 	RPAREN  reduce 63
 	RBRACE  reduce 63
+	AND  reduce 63
+	OR  reduce 63
 	SEMICOLON  reduce 63
 
 
@@ -1439,8 +1439,6 @@ state 106
 	binop : expr . GT expr  (65)
 	binop : expr . GEQ expr  (66)
 
-	AND  shift 87
-	OR  shift 88
 	PLUS  shift 89
 	MINUS  shift 90
 	MUL  shift 91
@@ -1450,6 +1448,8 @@ state 106
 	COMMA  reduce 64
 	RPAREN  reduce 64
 	RBRACE  reduce 64
+	AND  reduce 64
+	OR  reduce 64
 	SEMICOLON  reduce 64
 
 
@@ -1468,8 +1468,6 @@ state 107
 	binop : expr GT expr .  (65)
 	binop : expr . GEQ expr  (66)
 
-	AND  shift 87
-	OR  shift 88
 	PLUS  shift 89
 	MINUS  shift 90
 	MUL  shift 91
@@ -1479,6 +1477,8 @@ state 107
 	COMMA  reduce 65
 	RPAREN  reduce 65
 	RBRACE  reduce 65
+	AND  reduce 65
+	OR  reduce 65
 	SEMICOLON  reduce 65
 
 
@@ -1497,8 +1497,6 @@ state 108
 	binop : expr . GEQ expr  (66)
 	binop : expr GEQ expr .  (66)
 
-	AND  shift 87
-	OR  shift 88
 	PLUS  shift 89
 	MINUS  shift 90
 	MUL  shift 91
@@ -1508,6 +1506,8 @@ state 108
 	COMMA  reduce 66
 	RPAREN  reduce 66
 	RBRACE  reduce 66
+	AND  reduce 66
+	OR  reduce 66
 	SEMICOLON  reduce 66
 
 
@@ -1526,7 +1526,24 @@ state 109
 	binop : expr . GT expr  (65)
 	binop : expr . GEQ expr  (66)
 
-	.  reduce 59
+	EQ  shift 81
+	NEQ  shift 82
+	LT  shift 83
+	LEQ  shift 84
+	GT  shift 85
+	GEQ  shift 86
+	PLUS  shift 89
+	MINUS  shift 90
+	MUL  shift 91
+	DIV  shift 92
+	THEN  reduce 59
+	DO  reduce 59
+	COMMA  reduce 59
+	RPAREN  reduce 59
+	RBRACE  reduce 59
+	AND  reduce 59
+	OR  reduce 59
+	SEMICOLON  reduce 59
 
 
 state 110
@@ -1544,7 +1561,24 @@ state 110
 	binop : expr . GT expr  (65)
 	binop : expr . GEQ expr  (66)
 
-	.  reduce 60
+	EQ  shift 81
+	NEQ  shift 82
+	LT  shift 83
+	LEQ  shift 84
+	GT  shift 85
+	GEQ  shift 86
+	PLUS  shift 89
+	MINUS  shift 90
+	MUL  shift 91
+	DIV  shift 92
+	THEN  reduce 60
+	DO  reduce 60
+	COMMA  reduce 60
+	RPAREN  reduce 60
+	RBRACE  reduce 60
+	AND  reduce 60
+	OR  reduce 60
+	SEMICOLON  reduce 60
 
 
 state 111
@@ -1562,8 +1596,6 @@ state 111
 	binop : expr . GT expr  (65)
 	binop : expr . GEQ expr  (66)
 
-	AND  shift 87
-	OR  shift 88
 	MUL  shift 91
 	DIV  shift 92
 	THEN  reduce 55
@@ -1577,6 +1609,8 @@ state 111
 	LEQ  reduce 55
 	GT  reduce 55
 	GEQ  reduce 55
+	AND  reduce 55
+	OR  reduce 55
 	PLUS  reduce 55
 	MINUS  reduce 55
 	SEMICOLON  reduce 55
@@ -1597,8 +1631,6 @@ state 112
 	binop : expr . GT expr  (65)
 	binop : expr . GEQ expr  (66)
 
-	AND  shift 87
-	OR  shift 88
 	MUL  shift 91
 	DIV  shift 92
 	THEN  reduce 56
@@ -1612,6 +1644,8 @@ state 112
 	LEQ  reduce 56
 	GT  reduce 56
 	GEQ  reduce 56
+	AND  reduce 56
+	OR  reduce 56
 	PLUS  reduce 56
 	MINUS  reduce 56
 	SEMICOLON  reduce 56
@@ -1632,24 +1666,7 @@ state 113
 	binop : expr . GT expr  (65)
 	binop : expr . GEQ expr  (66)
 
-	AND  shift 87
-	OR  shift 88
-	THEN  reduce 57
-	DO  reduce 57
-	COMMA  reduce 57
-	RPAREN  reduce 57
-	RBRACE  reduce 57
-	EQ  reduce 57
-	NEQ  reduce 57
-	LT  reduce 57
-	LEQ  reduce 57
-	GT  reduce 57
-	GEQ  reduce 57
-	PLUS  reduce 57
-	MINUS  reduce 57
-	MUL  reduce 57
-	DIV  reduce 57
-	SEMICOLON  reduce 57
+	.  reduce 57
 
 
 state 114
@@ -1667,24 +1684,7 @@ state 114
 	binop : expr . GT expr  (65)
 	binop : expr . GEQ expr  (66)
 
-	AND  shift 87
-	OR  shift 88
-	THEN  reduce 58
-	DO  reduce 58
-	COMMA  reduce 58
-	RPAREN  reduce 58
-	RBRACE  reduce 58
-	EQ  reduce 58
-	NEQ  reduce 58
-	LT  reduce 58
-	LEQ  reduce 58
-	GT  reduce 58
-	GEQ  reduce 58
-	PLUS  reduce 58
-	MINUS  reduce 58
-	MUL  reduce 58
-	DIV  reduce 58
-	SEMICOLON  reduce 58
+	.  reduce 58
 
 
 state 115

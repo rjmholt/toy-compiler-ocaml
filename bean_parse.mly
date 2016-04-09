@@ -28,10 +28,10 @@ open Bean_ast
 %token SEMICOLON
 %token EOF
 
+%left     AND OR
 %nonassoc EQ NEQ LT LEQ GT GEQ
 %left     PLUS MINUS
 %left     MUL DIV
-%left     AND OR
 %nonassoc UMINUS
 %nonassoc UNOT
 
