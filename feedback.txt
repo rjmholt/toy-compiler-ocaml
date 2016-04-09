@@ -1,6 +1,6 @@
 ============================================
 vis/rholt.out
-14:59:46_Saturday_09_April_2016
+15:38:10_Saturday_09_April_2016
 ============================================
 COMP90045 project - Test of parser and pretty-printer
 User:  rholt
@@ -218,7 +218,7 @@ Parse error at line 1, column 26 in file "../data/syn19.bad.bean"
 
 ============================================
 src/Makefile
-14:59:44_Saturday_09_April_2016
+15:38:08_Saturday_09_April_2016
 ============================================
 TARGETS = bean
 TARGETS_BYTE=$(TARGETS:%=%.byte)
@@ -276,101 +276,8 @@ depend: bean_lex.ml bean_parse.ml
 
 -include Makefile.depend
 ============================================
-src/bean_lex.mll
-14:59:44_Saturday_09_April_2016
-============================================
-{
-open Bean_parse
-
-(* Define helpful error messages *)
-exception Syntax_error of string
-}
-
-let digit  = ['0' - '9']
-let alpha  = ['a' - 'z' 'A' - 'Z' '_']
-let alnum  = alpha | digit | '\''
-let digits = digit+
-let ident  = alpha alnum*
-
-rule token = parse
-    [' ' '\t']            { token lexbuf }     (* skip blanks *)
-  | '#'[^'\n']*           { token lexbuf }     (* ignore comments *)
-  | '\n'                  { Lexing.new_line lexbuf ; token lexbuf }
-  | '-'?['0'-'9']+ as lxm { INT_CONST(int_of_string lxm) }
-
-  (* keywords *)
-  | "bool"    { BOOL }
-  | "int"     { INT }
-  | "true"    { BOOL_CONST true }
-  | "false"   { BOOL_CONST false }
-  | "read"    { READ }
-  | "write"   { WRITE }
-  | "if"      { IF }
-  | "then"    { THEN }
-  | "else"    { ELSE }
-  | "fi"      { FI }
-  | "while"   { WHILE }
-  | "do"      { DO }
-  | "od"      { OD }
-  | "val"     { VAL }
-  | "ref"     { REF }
-  | "proc"    { PROC }
-  | "end"     { END }
-  | "typedef" { TYPEDEF }
-  | "and"     { AND }
-  | "or"      { OR }
-  | "not"     { NOT }
-
-  (* Begin a string -- see second lex rule *)
-  | '"'  { read_string (Buffer.create 20) lexbuf }
-  | ','  { COMMA }
-  | '.'  { DOT }
-  | ":=" { ASSIGN }
-  | '('  { LPAREN }
-  | ')'  { RPAREN }
-  | '{'  { LBRACE }
-  | '}'  { RBRACE }
-
-  (* Operators *)
-  | '='  { EQ }
-  | "!=" { NEQ }
-  | '<'  { LT }
-  | "<=" { LEQ }
-  | '>'  { GT }
-  | ">=" { GEQ }
-  | '+'  { PLUS }
-  | '-'  { MINUS }
-  | '*'  { MUL }
-  | '/'  { DIV }
-  | ':'  { COLON }
-  | ';'  { SEMICOLON }
-
-  (* Idents have a low rule to not conflict with keywords *)
-  | ident as lxm { IDENT lxm }
-  | eof          { EOF }
-  | _            { raise (Syntax_error
-                          ("Unknown symbol \""^(Lexing.lexeme lexbuf)^"\"")) }
-
-(* String parsing, with escaped characters*)
-(* This is largely inspired by the JSON string parsing chapter in
- * Real World OCaml -- there aren't many different ways to do it  *)
-and read_string buf =
-  parse
-  (* Terminate string *)
-  | '"'           { STR_CONST (Buffer.contents buf) }
-  (* Other characters *)
-  | [^ '"' '\n']  { Buffer.add_string buf (Lexing.lexeme lexbuf);
-                      read_string buf lexbuf }
-  (* Weird characters are rejected *)
-  | '\n' { raise (Syntax_error ("Illegal newline in string")) }
-  | '\t' { raise (Syntax_error ("Illegal tab character in string")) }
-  | _    { raise (Syntax_error
-                ("Illegal string character: \""^(Lexing.lexeme lexbuf)^"\"")) }
-  (* Programs can't terminate with an open string *)
-  | eof  { raise (Syntax_error "End of file reached before string terminated") }
-============================================
 src/bean.ml
-14:59:44_Saturday_09_April_2016
+15:38:08_Saturday_09_April_2016
 ============================================
 open Format
 module P = Bean_parse
@@ -448,27 +355,8 @@ let main () =
 
 let _ = main ()
 ============================================
-src/Makefile.depend
-14:59:44_Saturday_09_April_2016
-============================================
-bean.cmo : bean_pprint.cmi bean_parse.cmi bean_lex.cmo
-bean.cmx : bean_pprint.cmx bean_parse.cmx bean_lex.cmx
-bean_ast.cmi :
-bean_parse.cmi : bean_ast.cmi
-bean_pprint.cmi : bean_ast.cmi
-bean_ast.cmo : bean_ast.cmi
-bean_ast.cmx : bean_ast.cmi
-bean_lex.cmo : bean_parse.cmi
-bean_lex.cmx : bean_parse.cmx
-bean_parse.cmo : bean_ast.cmi bean_parse.cmi
-bean_parse.cmx : bean_ast.cmx bean_parse.cmi
-bean_pprint.cmo : bean_ast.cmi bean_pprint.cmi
-bean_pprint.cmx : bean_ast.cmx bean_pprint.cmi
-bean.cmo : bean_pprint.cmi bean_parse.cmi bean_lex.cmo
-bean.cmx : bean_pprint.cmx bean_parse.cmx bean_lex.cmx
-============================================
 src/bean_pprint.ml
-14:59:44_Saturday_09_April_2016
+15:38:08_Saturday_09_April_2016
 ============================================
 open Bean_ast
 open Format
@@ -815,8 +703,100 @@ let print_program fmt prog =
   print_typedef_list prog.typedefs;
   print_proc_list prog.procs
 ============================================
+src/bean_lex.mll
+15:38:08_Saturday_09_April_2016
+============================================
+{
+open Bean_parse
+
+(* Define helpful error messages *)
+exception Syntax_error of string
+}
+
+let digit  = ['0' - '9']
+let alpha  = ['a' - 'z' 'A' - 'Z' '_']
+let alprime  = alpha | '\''
+let ident  = alpha alprime*
+
+rule token = parse
+    [' ' '\t']            { token lexbuf }     (* skip blanks *)
+  | '#'[^'\n']*           { token lexbuf }     (* ignore comments *)
+  | '\n'                  { Lexing.new_line lexbuf ; token lexbuf }
+  | '-'?['0'-'9']+ as lxm { INT_CONST(int_of_string lxm) }
+
+  (* keywords *)
+  | "bool"    { BOOL }
+  | "int"     { INT }
+  | "true"    { BOOL_CONST true }
+  | "false"   { BOOL_CONST false }
+  | "read"    { READ }
+  | "write"   { WRITE }
+  | "if"      { IF }
+  | "then"    { THEN }
+  | "else"    { ELSE }
+  | "fi"      { FI }
+  | "while"   { WHILE }
+  | "do"      { DO }
+  | "od"      { OD }
+  | "val"     { VAL }
+  | "ref"     { REF }
+  | "proc"    { PROC }
+  | "end"     { END }
+  | "typedef" { TYPEDEF }
+  | "and"     { AND }
+  | "or"      { OR }
+  | "not"     { NOT }
+
+  (* Begin a string -- see second lex rule *)
+  | '"'  { read_string (Buffer.create 20) lexbuf }
+  | ','  { COMMA }
+  | '.'  { DOT }
+  | ":=" { ASSIGN }
+  | '('  { LPAREN }
+  | ')'  { RPAREN }
+  | '{'  { LBRACE }
+  | '}'  { RBRACE }
+
+  (* Operators *)
+  | '='  { EQ }
+  | "!=" { NEQ }
+  | '<'  { LT }
+  | "<=" { LEQ }
+  | '>'  { GT }
+  | ">=" { GEQ }
+  | '+'  { PLUS }
+  | '-'  { MINUS }
+  | '*'  { MUL }
+  | '/'  { DIV }
+  | ':'  { COLON }
+  | ';'  { SEMICOLON }
+
+  (* Idents have a low rule to not conflict with keywords *)
+  | ident as lxm { IDENT lxm }
+  | eof          { EOF }
+  | _            { raise (Syntax_error
+                          ("Unknown symbol \""^(Lexing.lexeme lexbuf)^"\"")) }
+
+(* String parsing, with escaped characters*)
+(* This is largely inspired by the JSON string parsing chapter in
+ * Real World OCaml -- there aren't many different ways to do it  *)
+and read_string buf =
+  parse
+  (* Terminate string *)
+  | '"'           { STR_CONST (Buffer.contents buf) }
+  (* Other characters *)
+  | [^ '"' '\n']  { Buffer.add_string buf (Lexing.lexeme lexbuf);
+                      read_string buf lexbuf }
+  (* Weird characters are rejected *)
+  | '\n' { raise (Syntax_error ("Illegal newline in string")) }
+  | '\t' { raise (Syntax_error ("Illegal tab character in string")) }
+  | _    { raise (Syntax_error
+                ("Illegal string character: \""^(Lexing.lexeme lexbuf)^"\"")) }
+  (* Programs can't terminate with an open string *)
+  | eof  { raise (Syntax_error "End of file reached before string terminated") }
+============================================
 src/bean_ast.ml
-14:59:44_Saturday_09_April_2016
+15:38:08_Saturday_09_April_2016
 ============================================
 (* Specification of an AST for bean *)
 type ident = string
@@ -908,12 +888,99 @@ type program = {
 type t = program
 ============================================
 src/bean_pprint.mli
-14:59:44_Saturday_09_April_2016
+15:38:08_Saturday_09_April_2016
 ============================================
 val print_program : Format.formatter -> Bean_ast.t -> unit
 ============================================
+src/bean_ast.mli
+15:38:08_Saturday_09_April_2016
+============================================
+(* Specification of an AST for bean *)
+type ident = string
+ 
+(* Define types and typedefs as mutually recusive so *)
+(* typedefs can contain themselves                   *)
+type beantype =
+  | TBool
+  | TInt
+
+type definedtype = ident
+
+type field = (ident * typespec)
+
+and
+field_struct = field list
+
+and
+typespec =
+  | TSBeantype of beantype
+  | TSDefinedtype of definedtype
+  | TSFieldStruct of field_struct
+
+type typedef = (typespec * ident)
+
+type lvalue =
+  | LId of ident
+  | LField of (lvalue * ident)
+
+type binop =
+  (* Arithmetic operations *)
+  | Op_add | Op_sub | Op_mul | Op_div
+  (* Integer comparator operations (int -> int -> bool) *)
+  | Op_eq | Op_neq | Op_lt | Op_leq | Op_gt | Op_geq
+  (* Boolean operations *)
+  | Op_and | Op_or
+
+type unop =
+  | Op_minus
+  | Op_not
+
+type expr =
+  | Ebool of bool
+  | Eint of int
+  | Elval of lvalue
+  | Ebinop of (expr * binop * expr)
+  | Eunop of (unop * expr)
+
+type writeable =
+  | WExpr of expr
+  | WString of string
+
+(* Will need to AST elements with additional data.  *)
+type struct_init = (ident * rvalue) list
+
+and rvalue =
+  | Rexpr of expr
+  | Rstruct of struct_init
+
+type pass_type =
+  | Pval
+  | Pref
+
+type proc_param = (pass_type * typespec * ident)
+
+type stmt = 
+  | Assign of (lvalue * rvalue)
+  | Read of lvalue
+  | Write of writeable
+  | If of (expr * stmt list)
+  | IfElse of (expr * stmt list * stmt list)
+  | While of (expr * stmt list)
+  | ProcCall of (ident * expr list)
+
+type decl = (ident * typespec)
+
+type proc = (ident * proc_param list * decl list * stmt list)
+
+type program = {
+  typedefs : typedef list;
+  procs : proc list
+}
+ 
+type t = program
+============================================
 src/bean_parse.mly
-14:59:44_Saturday_09_April_2016
+15:38:08_Saturday_09_April_2016
 ============================================
 /* ocamlyacc parser for bean */
 /* See the AST for better structural definitions of a bean program */
@@ -938,8 +1005,10 @@ open Bean_ast
 %token COMMA
 %token LPAREN RPAREN
 %token LBRACE RBRACE
+%token OR
+%token AND
+%token NOT
 %token EQ NEQ LT LEQ GT GEQ
-%token AND OR NOT
 %token PLUS MINUS MUL DIV
 %token COLON
 %token SEMICOLON
@@ -1095,89 +1164,21 @@ writeable:
   | expr      { WExpr   $1 }
   | STR_CONST { WString $1 }
 ============================================
-src/bean_ast.mli
-14:59:44_Saturday_09_April_2016
+src/Makefile.depend
+15:38:08_Saturday_09_April_2016
 ============================================
-(* Specification of an AST for bean *)
-type ident = string
- 
-(* Define types and typedefs as mutually recusive so *)
-(* typedefs can contain themselves                   *)
-type beantype =
-  | TBool
-  | TInt
-
-type definedtype = ident
-
-type field = (ident * typespec)
-
-and
-field_struct = field list
-
-and
-typespec =
-  | TSBeantype of beantype
-  | TSDefinedtype of definedtype
-  | TSFieldStruct of field_struct
-
-type typedef = (typespec * ident)
-
-type lvalue =
-  | LId of ident
-  | LField of (lvalue * ident)
-
-type binop =
-  (* Arithmetic operations *)
-  | Op_add | Op_sub | Op_mul | Op_div
-  (* Integer comparator operations (int -> int -> bool) *)
-  | Op_eq | Op_neq | Op_lt | Op_leq | Op_gt | Op_geq
-  (* Boolean operations *)
-  | Op_and | Op_or
-
-type unop =
-  | Op_minus
-  | Op_not
-
-type expr =
-  | Ebool of bool
-  | Eint of int
-  | Elval of lvalue
-  | Ebinop of (expr * binop * expr)
-  | Eunop of (unop * expr)
-
-type writeable =
-  | WExpr of expr
-  | WString of string
-
-(* Will need to AST elements with additional data.  *)
-type struct_init = (ident * rvalue) list
-
-and rvalue =
-  | Rexpr of expr
-  | Rstruct of struct_init
-
-type pass_type =
-  | Pval
-  | Pref
-
-type proc_param = (pass_type * typespec * ident)
-
-type stmt = 
-  | Assign of (lvalue * rvalue)
-  | Read of lvalue
-  | Write of writeable
-  | If of (expr * stmt list)
-  | IfElse of (expr * stmt list * stmt list)
-  | While of (expr * stmt list)
-  | ProcCall of (ident * expr list)
-
-type decl = (ident * typespec)
-
-type proc = (ident * proc_param list * decl list * stmt list)
-
-type program = {
-  typedefs : typedef list;
-  procs : proc list
-}
- 
-type t = program
+bean.cmo : bean_pprint.cmi bean_parse.cmi bean_lex.cmo
+bean.cmx : bean_pprint.cmx bean_parse.cmx bean_lex.cmx
+bean_ast.cmi :
+bean_parse.cmi : bean_ast.cmi
+bean_pprint.cmi : bean_ast.cmi
+bean_ast.cmo : bean_ast.cmi
+bean_ast.cmx : bean_ast.cmi
+bean_lex.cmo : bean_parse.cmi
+bean_lex.cmx : bean_parse.cmx
+bean_parse.cmo : bean_ast.cmi bean_parse.cmi
+bean_parse.cmx : bean_ast.cmx bean_parse.cmi
+bean_pprint.cmo : bean_ast.cmi bean_pprint.cmi
+bean_pprint.cmx : bean_ast.cmx bean_pprint.cmi
+bean.cmo : bean_pprint.cmi bean_parse.cmi bean_lex.cmo
+bean.cmx : bean_pprint.cmx bean_parse.cmx bean_lex.cmx

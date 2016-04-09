@@ -50,28 +50,28 @@ let string_of_binop binop =
   | Op_gt   -> ">"
   | Op_geq  -> ">="
 
-(* Unary operator string representations *)
-let string_of_unop unop =
-  match unop with
-  | Op_minus  -> "-"
-  | Op_not    -> "not"
-
 (* Place parentheses around a string *)
 let parenthesise str =
   String.concat str ["(";")"]
 
 (* String representation of a unary operator expression *)
 let rec string_of_unop_expr unop subexpr =
-  let preserve_precedence_repr expr =
+  let not_parens expr =
     match expr with
-    | Ebinop _ -> parenthesise (string_of_expr expr)
-    | _        -> string_of_expr expr
+    | Ebinop (_, binop, _) ->
+        if isAndOr binop
+        then parenthesise (string_of_expr expr)
+        else string_of_expr expr
+    | _                    -> string_of_expr expr
   in
-  let sep = match unop with
-  | Op_minus -> ""
-  | Op_not   -> " "
+  let umin_parens expr =
+    match expr with
+    | Ebinop _              -> parenthesise (string_of_expr expr)
+    | _                     -> string_of_expr expr
   in
-    String.concat sep [string_of_unop unop; preserve_precedence_repr subexpr]
+  match unop with
+  | Op_not   -> String.concat " " ["not"; not_parens subexpr]
+  | Op_minus -> String.concat ""  ["-";   umin_parens subexpr]
 
 (* String representation of a binary operator expression *)
 and
@@ -80,6 +80,10 @@ string_of_binop_expr binop lexpr rexpr =
     match expr with
     | Ebinop (_, subop, _) ->
         if needs_parens op subop ~isRHS:isRHS
+        then parenthesise (string_of_expr expr)
+        else string_of_expr expr
+    | Eunop (unop, _)      ->
+        if unop = Op_not
         then parenthesise (string_of_expr expr)
         else string_of_expr expr
     | _                    -> string_of_expr expr
