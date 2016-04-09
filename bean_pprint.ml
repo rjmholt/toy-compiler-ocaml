@@ -15,9 +15,11 @@ let isComparator op = List.mem op [ Op_eq  ; Op_neq ;
 let is_higher_precedence binop1 binop2 =
   match binop1 with
   | Op_mul | Op_div -> not (isMulDiv binop2)
-  | Op_add | Op_sub -> not (isMulDiv binop2)
-                       || isComparator binop2
-  | _               -> false
+  | Op_add | Op_sub -> isComparator binop2 || isAndOr binop2
+  | Op_eq  | Op_neq
+  | Op_lt  | Op_leq
+  | Op_gt  | Op_geq -> isAndOr binop2
+  | Op_and | Op_or  -> false
 
 (* ---- STRING CONVERSION FUNCTIONS FOR AST LEAVES ---- *)
 
@@ -196,7 +198,7 @@ let print_var_decl indent (ident, typespec) =
 (* Print declarations by printing the first one, then the rest *)
 let rec print_decl_list indent dlist =
   match dlist with
-  | [decl]      -> print_var_decl indent decl; printf "\n"; ()
+  | [decl]      -> print_var_decl indent decl
   | vdecl :: ds -> print_var_decl indent vdecl; print_decl_list indent ds
   | []          -> ()
 
