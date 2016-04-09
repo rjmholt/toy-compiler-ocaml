@@ -5,21 +5,23 @@ open Format
  *     arithmetic: [* /] > [+ -] > [= != < <= > >=]
  *     boolean:    [and or] > [= != < <= > >=]              *)
 let isMulDiv     op = List.mem op [ Op_mul ; Op_div ]
-let isAddSub     op = List.mem op [ Op_and ; Op_sub ]
+let isAddSub     op = List.mem op [ Op_add ; Op_sub ]
 let isAndOr      op = List.mem op [ Op_and ; Op_or  ]
 let isComparator op = List.mem op [ Op_eq  ; Op_neq ;
                                     Op_lt  ; Op_leq ;
                                     Op_gt  ; Op_geq ]
 
-(* True if binop1 is higher precedence than binop2 *)
-let is_higher_precedence binop1 binop2 =
-  match binop1 with
-  | Op_mul | Op_div -> not (isMulDiv binop2)
-  | Op_add | Op_sub -> isComparator binop2 || isAndOr binop2
-  | Op_eq  | Op_neq
-  | Op_lt  | Op_leq
-  | Op_gt  | Op_geq -> isAndOr binop2
-  | Op_and | Op_or  -> false
+(* True if the lower operation (subop) in the AST needs to
+ * be printed with parens to preserve its precedence against
+ * the higher operation (binop) in the printed bean program  *)
+let needs_parens binop ?isRHS:(isRHS = false) subop =
+  match binop with
+  | Op_div -> not (isMulDiv subop) || isRHS
+  | Op_mul -> not (isMulDiv subop)
+  | Op_sub -> not (isMulDiv subop) && (not (isAddSub subop) || isRHS)
+  | Op_add -> not (isMulDiv subop || isAddSub subop)
+  | Op_eq | Op_neq | Op_gt | Op_geq | Op_lt | Op_leq -> isAndOr subop
+  | Op_and | Op_or -> false
 
 (* ---- STRING CONVERSION FUNCTIONS FOR AST LEAVES ---- *)
 
@@ -73,17 +75,17 @@ let rec string_of_unop_expr unop subexpr =
 (* String representation of a binary operator expression *)
 and
 string_of_binop_expr binop lexpr rexpr =
-  let preserve_precedence_repr op expr =
+  let preserve_precedence_repr op ?isRHS:(isRHS=false) expr =
     match expr with
     | Ebinop (_, subop, _) ->
-        if is_higher_precedence op subop
+        if needs_parens op subop ~isRHS:isRHS
         then parenthesise (string_of_expr expr)
         else string_of_expr expr
     | _                    -> string_of_expr expr
   in
   String.concat " " [preserve_precedence_repr binop lexpr;
                      string_of_binop binop;
-                     preserve_precedence_repr binop rexpr]
+                     preserve_precedence_repr binop rexpr ~isRHS:true]
 (* String representation of expressions.
  * Expressions can be lvals, unary operations, binary operations,
  * or literals. When they are complex, precedence matters and
