@@ -11,3 +11,4 @@ bean_lex.ml
 Members.txt
 beanCore/
 *.zip
+name.sh
