@@ -5,7 +5,8 @@ set -e
 BEANFLD="beanCore"
 BEANZIP="bean.zip"
 
-BEANFILES="bean_ast.ml \
+BEANFILES="bean.ml
+           bean_ast.ml \
            bean_ast.mli \
            bean_lex.mll \
            bean_parse.mly \

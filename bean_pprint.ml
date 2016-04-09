@@ -64,14 +64,11 @@ let rec string_of_unop_expr unop subexpr =
     | Eunop _ | Ebinop _ -> parenthesise (string_of_expr expr)
     | _                  -> string_of_expr expr
   in
-  match subexpr with
-  | Eint i ->
-      (match unop with
-        | Op_minus -> String.concat "" [string_of_unop unop; string_of_int i]
-        | _        -> String.concat " "
-                        [string_of_unop unop; preserve_precedence_repr subexpr])
-  | _      -> String.concat " "
-                [string_of_unop unop; preserve_precedence_repr subexpr]
+  let sep = match unop with
+  | Op_minus -> ""
+  | Op_not   -> " "
+  in
+    String.concat sep [string_of_unop unop; preserve_precedence_repr subexpr]
 
 (* String representation of a binary operator expression *)
 and

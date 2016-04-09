@@ -10,6 +10,7 @@ proc f(ref int x, val a_record y)
     int x;
 
     x := 2 + 1 - 1 * 1;
+    X := - ( 5 - 2 - 1 );
 
     write (1 + (2 - 3) + 4 - 3) * 2 * -1;
 end

@@ -1,5 +1,1127 @@
 ============================================
 vis/rholt.out
+13:09:03_Saturday_09_April_2016
+============================================
+COMP90045 project - Test of parser and pretty-printer
+User:  rholt
+
+--- Makefile found ---
+--- Running Makefile ---
+ocamlc  -c bean_ast.mli
+ocamlopt  -g -c bean_ast.ml
+ocamlyacc -v bean_parse.mly
+ocamlc  -c bean_parse.mli
+ocamlopt  -g -c bean_parse.ml
+ocamllex bean_lex.mll
+99 states, 5825 transitions, table size 23894 bytes
+ocamlopt  -g -c bean_lex.ml
+ocamlc  -c bean_pprint.mli
+ocamlopt  -g -c bean_pprint.ml
+ocamlopt  -g -c bean.ml
+ocamlopt -g -o bean bean_ast.cmx bean_lex.cmx bean_parse.cmx bean_pprint.cmx bean.cmx
+
+--- Succeeded ---
+
+******************************************   Parsing lex01.bean:
+
+Mismatch:
+4d3
+< 
+
+******************************************   Parsing lex02.bean:
+
+Mismatch:
+6d5
+< 
+
+******************************************   Parsing lex03.bean:
+
+Mismatch:
+6d5
+< 
+
+******************************************   Parsing lex04.bean:
+
+Mismatch:
+5d4
+< 
+
+******************************************   Parsing syn01.bean:
+
+Mismatch:
+4d3
+< 
+
+******************************************   Parsing syn02.bean:
+
+Mismatch:
+4d3
+< 
+
+******************************************   Parsing prpr1.bean:
+
+Mismatch:
+6d5
+< 
+18d16
+<         p(a);
+19a18
+>         p(a);
+
+******************************************   Parsing prpr2.bean:
+
+Mismatch:
+4d3
+< 
+6c5
+<     x := -(5 - 2 - 1);
+---
+>     x := - (5 - 2 - 1);
+
+******************************************   Parsing prpr3.bean:
+
+Mismatch:
+4d3
+< 
+
+******************************************   Parsing prpr4.bean:
+
+Mismatch:
+5d4
+< 
+8d6
+<         m := n;
+11,12d8
+<                 n := n - 1;
+<                 m := m - 1;
+17a14,15
+>                 m := m - 1;
+>                 n := n - 1;
+19a18
+>         m := n;
+
+******************************************   Parsing prpr5.bean:
+
+Mismatch:
+4d3
+< 
+9d7
+<             p(x, x);
+14a13
+>             p(x, x);
+15a15
+>             p(x, x);
+18a19
+>                 p(x, x);
+23d23
+<                 p(x, x);
+25d24
+<             p(x, x);
+28,31d26
+<         while x do
+<             p(x, x);
+<             p(x, x);
+<         od
+36a32,35
+>         while x do
+>             p(x, x);
+>             p(x, x);
+>         od
+41d39
+< 
+
+******************************************   Parsing prpr6.bean:
+
+Mismatch:
+3d2
+< 
+11d9
+< 
+15,20d12
+<         diff := 0;
+<         while m * n > 0 do
+<             m := m - 1;
+<             n := n - 1;
+<             diff := diff + 1;
+<         od
+25a18,23
+>         while m * n > 0 do
+>             diff := diff + 1;
+>             n := n - 1;
+>             m := m - 1;
+>         od
+>         diff := 0;
+32d29
+< 
+38d34
+< 
+
+******************************************   Parsing bell.bean:
+
+Mismatch:
+5d4
+< 
+17d15
+< 
+25,26d22
+<         bell(n, m - 1, res1);
+<         bell(n - 1, m - 1, res2);
+27a24,25
+>         bell(n - 1, m - 1, res2);
+>         bell(n, m - 1, res1);
+
+******************************************   Parsing fib.bean:
+
+Mismatch:
+5d4
+< 
+16d14
+< 
+20,21d17
+<         fib(n - 2, f1);
+<         fib(n - 1, f2);
+22a19,20
+>         fib(n - 1, f2);
+>         fib(n - 2, f1);
+
+******************************************   Parsing gcd.bean:
+
+Mismatch:
+8d7
+< 
+14,15d12
+<         temp := x;
+<         x := y;
+16a14,15
+>         x := y;
+>         temp := x;
+26,28d24
+<         x := y;
+<         y := remainder;
+<         quotient := x / y;
+29a26,28
+>         quotient := x / y;
+>         y := remainder;
+>         x := y;
+
+******************************************   Parsing hail.bean:
+
+Mismatch:
+5d4
+< 
+8,10d6
+<         hail(n, result);
+<         write result;
+<         write " ";
+11a8,10
+>         write " ";
+>         write result;
+>         hail(n, result);
+18d16
+< 
+22a21
+>         out := count + 1;
+28d26
+<         out := count + 1;
+
+******************************************   Parsing power.bean:
+
+Mismatch:
+6d5
+< 
+19d17
+< 
+23d20
+<         power(x * x, n / 2, res);
+28a26
+>         power(x * x, n / 2, res);
+
+******************************************   Parsing stddev.bean:
+
+Mismatch:
+9d8
+< 
+14,17d12
+<         count := count + 1;
+<         sum := sum + x;
+<         sumsq := sumsq + x * x;
+<         read x;
+18a14,17
+>         read x;
+>         sumsq := sumsq + x * x;
+>         sum := sum + x;
+>         count := count + 1;
+
+******************************************   Parsing strange.bean:
+
+Mismatch:
+8d7
+< 
+14d12
+< 
+21d18
+< 
+24d20
+<         m := n;
+27,28d22
+<                 n := n - 1;
+<                 m := m - 1;
+31a26,27
+>                 m := m - 1;
+>                 n := n - 1;
+33d28
+<                 m := n - m;
+34a30
+>                 m := n - m;
+36a33
+>         m := n;
+
+******************************************   Parsing lex11.bad.bean:
+proc main()
+int x;
+  x := @ ;
+end
+Result:
+Unknown symbol "@" at line 3, column 9 in file "../data/lex11.bad.bean"
+
+******************************************   Parsing lex12.bad.bean:
+proc main()
+int x;
+int xyz_ab$;
+bool z;
+    x := 3;
+    z := true;
+    write z;
+end
+Result:
+Unknown symbol "$" at line 3, column 12 in file "../data/lex12.bad.bean"
+
+******************************************   Parsing lex13.bad.bean:
+proc main()
+    int int; int := 0;
+end
+Result:
+Parse error at line 2, column 12 in file "../data/lex13.bad.bean"
+
+******************************************   Parsing syn12.bad.bean:
+proc main ()
+    bool test; 
+end
+
+proc fib(int val n, ref int ref out)
+    int f1;
+    int f2;
+
+    out := n;
+}
+
+Result:
+Parse error at line 3, column 4 in file "../data/syn12.bad.bean"
+
+******************************************   Parsing syn13.bad.bean:
+proc main()
+int x;
+int y;
+# Sequence of statements cannot be empty
+end
+
+Result:
+Parse error at line 5, column 4 in file "../data/syn13.bad.bean"
+
+******************************************   Parsing syn14.bad.bean:
+proc main()
+int m;
+int n;
+    read n;
+    while n>1 do
+        m := ( n;
+        while m := m do
+            if then
+                n := n - 1;
+                m := m - 1
+                if true then m := m - 1; else n := 6*n + 4;
+                fi
+             fi
+        od
+    od
+end
+Result:
+Parse error at line 6, column 18 in file "../data/syn14.bad.bean"
+
+******************************************   Parsing syn15.bad.bean:
+proc main()
+    int x; x := 0; x := 1
+end
+Result:
+Parse error at line 3, column 4 in file "../data/syn15.bad.bean"
+
+******************************************   Parsing syn16.bad.bean:
+proc main()
+typedef {b: int} t
+
+t a;
+    t.b := 0;
+end
+Result:
+Parse error at line 2, column 8 in file "../data/syn16.bad.bean"
+
+******************************************   Parsing syn17.bad.bean:
+proc main()
+int n;
+    n := 0;
+end
+    n := 1;
+Result:
+Parse error at line 5, column 6 in file "../data/syn17.bad.bean"
+
+******************************************   Parsing syn18.bad.bean:
+proc main()
+int m;
+int n;
+    read m;
+    write if m=n then
+end
+Result:
+Parse error at line 5, column 13 in file "../data/syn18.bad.bean"
+
+******************************************   Parsing syn19.bad.bean:
+proc main(val int a, ref)
+int m; read m;
+end
+Result:
+Parse error at line 1, column 26 in file "../data/syn19.bad.bean"
+
+
+--- End of testing for rholt ---\n
+
+============================================
+src/bean_pprint.mli
+13:09:00_Saturday_09_April_2016
+============================================
+val print_program : Format.formatter -> Bean_ast.t -> unit
+============================================
+src/bean.ml
+13:09:00_Saturday_09_April_2016
+============================================
+open Format
+module P = Bean_parse
+module L = Lexing
+
+(* Argument parsing code *)
+let infile_name = ref None
+
+type compiler_mode = PrettyPrint | Compile
+let mode = ref Compile
+
+(* --------------------------------------------- *)
+(*  Specification for command-line options       *)
+(* --------------------------------------------- *)
+let (speclist:(Arg.key * Arg.spec * Arg.doc) list) =
+  ["-p",
+     Arg.Unit(fun () -> mode := PrettyPrint),
+     " Run the compiler in pretty-printer mode"
+  ]
+
+(* --------------------------------------------- *)
+(*  Lexer/Parser error tracking functions        *)
+(* --------------------------------------------- *)
+
+(* Get's the lexer's position for error reporting *)
+let get_lex_pos lexbuf =
+  let pos = lexbuf.Lexing.lex_curr_p in
+  let fname = pos.L.pos_fname in
+  let line = pos.L.pos_lnum in
+  let col = pos.L.pos_cnum - pos.L.pos_bol + 1 in
+  (fname, line, col)
+
+(* Set the lexer filename to the one passed in *)
+let set_lex_file filename lexbuf =
+  lexbuf.L.lex_curr_p <- { lexbuf.L.lex_curr_p with
+                           L.pos_fname = filename }
+
+(* MAIN FUNCTION *)
+let main () =
+  (* Parse the command-line arguments *)
+  Arg.parse speclist
+      (begin fun fname -> infile_name := Some fname end)
+      "bean [-p] [bean source]" ;
+  (* Open the input file *)
+  let infile = match !infile_name with
+  | None -> stdin
+  | Some fname -> open_in fname in
+  (* Initialize lexing buffer *)
+  let lexbuf = Lexing.from_channel infile in
+  let filename =
+    match !infile_name with
+    | None -> "\"stdin\""
+    | Some fname -> String.concat "" ["\"";fname;"\""]
+  in
+  (* Assume bean doesn't link -- so the file being lexed
+   * is always the one the compiler was called on...     *)
+  set_lex_file filename lexbuf;
+  (* Call the parser *)
+  try
+    (* Parsing happens here *)
+    let prog = Bean_parse.program Bean_lex.token lexbuf in
+    match !mode with
+    | PrettyPrint ->
+      Bean_pprint.print_program Format.std_formatter prog 
+    | Compile -> ()
+  with
+  | Bean_lex.Syntax_error msg ->
+      let (fname, ln, col) = get_lex_pos lexbuf in
+      printf "%s at line %i, column %i in file %s\n"
+         msg ln col fname
+  | Parsing.Parse_error ->
+      let (fname, ln, col) = get_lex_pos lexbuf in
+      printf "%s at line %i, column %i in file %s\n"
+        "Parse error" ln col fname
+
+let _ = main ()
+============================================
+src/bean_pprint.ml
+13:09:00_Saturday_09_April_2016
+============================================
+open Bean_ast
+open Format
+
+(* binary operators follow the following precedence order:
+ *     arithmetic: [* /] > [+ -] > [= != < <= > >=]
+ *     boolean:    [and or] > [= != < <= > >=]              *)
+let isMulDiv     op = List.mem op [ Op_mul ; Op_div ]
+let isAddSub     op = List.mem op [ Op_and ; Op_sub ]
+let isAndOr      op = List.mem op [ Op_and ; Op_or  ]
+let isComparator op = List.mem op [ Op_eq  ; Op_neq ;
+                                    Op_lt  ; Op_leq ;
+                                    Op_gt  ; Op_geq ]
+
+(* True if binop1 is higher precedence than binop2 *)
+let is_higher_precedence binop1 binop2 =
+  match binop1 with
+  | Op_mul | Op_div -> not (isMulDiv binop2)
+  | Op_add | Op_sub -> isComparator binop2 || isAndOr binop2
+  | Op_eq  | Op_neq
+  | Op_lt  | Op_leq
+  | Op_gt  | Op_geq -> isAndOr binop2
+  | Op_and | Op_or  -> false
+
+(* ---- STRING CONVERSION FUNCTIONS FOR AST LEAVES ---- *)
+
+(* Lvalues look like:
+ *   - LId -> "x"
+ *   - LField -> "x.y.z"   *)
+let rec string_of_lval lval =
+  match lval with
+  | LId     ident           -> ident
+  | LField  (lval, ident)   -> String.concat "." [ident; string_of_lval lval]
+
+(* Binary operator string representations *)
+let string_of_binop binop =
+  match binop with
+  | Op_add  -> "+"
+  | Op_sub  -> "-"
+  | Op_mul  -> "*"
+  | Op_div  -> "/"
+  | Op_and  -> "and"
+  | Op_or   -> "or"
+  | Op_eq   -> "="
+  | Op_neq  -> "!="
+  | Op_lt   -> "<"
+  | Op_leq  -> "<="
+  | Op_gt   -> ">"
+  | Op_geq  -> ">="
+
+(* Unary operator string representations *)
+let string_of_unop unop =
+  match unop with
+  | Op_minus  -> "-"
+  | Op_not    -> "not"
+
+(* Place parentheses around a string *)
+let parenthesise str =
+  String.concat str ["(";")"]
+
+(* String representation of a unary operator expression *)
+let rec string_of_unop_expr unop subexpr =
+  let preserve_precedence_repr expr =
+    match expr with
+    | Eunop _ | Ebinop _ -> parenthesise (string_of_expr expr)
+    | _                  -> string_of_expr expr
+  in
+  match subexpr with
+  | Eint i ->
+      (match unop with
+        | Op_minus -> String.concat "" [string_of_unop unop; string_of_int i]
+        | _        -> String.concat " "
+                        [string_of_unop unop; preserve_precedence_repr subexpr])
+  | _      -> String.concat " "
+                [string_of_unop unop; preserve_precedence_repr subexpr]
+
+(* String representation of a binary operator expression *)
+and
+string_of_binop_expr binop lexpr rexpr =
+  let preserve_precedence_repr op expr =
+    match expr with
+    | Ebinop (_, subop, _) ->
+        if is_higher_precedence op subop
+        then parenthesise (string_of_expr expr)
+        else string_of_expr expr
+    | _                    -> string_of_expr expr
+  in
+  String.concat " " [preserve_precedence_repr binop lexpr;
+                     string_of_binop binop;
+                     preserve_precedence_repr binop rexpr]
+(* String representation of expressions.
+ * Expressions can be lvals, unary operations, binary operations,
+ * or literals. When they are complex, precedence matters and
+ * parentheses are important, so parentheses are dealt with here   *)
+and
+string_of_expr expr =
+  (* unary operators bind tightest -- all non-trivial subexpressions
+   * need parentheses *)
+  match expr with
+  | Ebool  ebool                 -> string_of_bool ebool
+  | Eint   eint                  -> string_of_int  eint
+  | Elval  lval                  -> string_of_lval lval
+  | Eunop  (unop, subexpr)       -> string_of_unop_expr unop subexpr
+  | Ebinop (lexpr, binop, rexpr) -> string_of_binop_expr binop lexpr rexpr
+
+(* Rval struct assignments look like:
+ *     {x = true, y = {a = 8+10, b = true or v}}    *)
+let rec string_of_struct_assign rstruct =
+  let struct_body =
+    String.concat ", " (List.map string_of_struct_entry rstruct)
+  in
+  String.concat struct_body ["{"; "}"]
+
+(* Rval struct fields look like:
+ *     x = 3 | y = true           *)
+and
+string_of_struct_entry (ident, rvalue) =
+  String.concat " = " [ident; string_of_rval rvalue]
+
+(* Rvals are either an expression or a struct init *)
+and
+string_of_rval rval =
+  match rval with
+  | Rexpr expr      -> string_of_expr expr
+  | Rstruct rstruct -> string_of_struct_assign rstruct
+
+(* Native bean type representations *)
+let string_of_beantype bt =
+  match bt with
+  | TBool -> "bool"
+  | TInt  -> "int"
+
+(* Typespecs are either native bean types, user-defined, or structs (like in C):
+ *   - bean types         -> "int" or "bool"
+ *   - user-defined types -> <ident>
+ *   - type specification -> {<field>, ...}                                 *)
+let rec string_of_typespec ts =
+  match ts with
+  | TSBeantype bt        -> string_of_beantype bt
+  | TSDefinedtype dt     -> dt
+  | TSFieldStruct fields ->
+      let fstrs = List.map string_of_field fields in
+      let body = String.concat ", " fstrs in
+      String.concat body ["{";"}"]
+
+(* Each field looks like:
+ *     <ident> : <typespec>  *)
+and
+string_of_field (ident, typespec) =
+  String.concat " : " [ident; string_of_typespec typespec]
+
+(* Declarations look like:
+ *   <type> <ident>;       *)
+let string_of_typedecl (id, beantype) =
+    let bt_string = string_of_beantype beantype in
+    String.concat "" [bt_string; " "; id; ";"]
+
+(* Pass types are either "val" or "ref" *)
+let string_of_pass pass_type =
+  match pass_type with
+  | Pval -> "val"
+  | Pref -> "ref"
+
+(* ---- PRINTING HELPER FUNCTIONS ---- *)
+
+(* Print an ident of level n by printing 2*n spaces *)
+let print_indent indent_level =
+  for i = 1 to indent_level do
+    printf "    "
+  done
+
+(* TYPEDEF PRINTING FUNCTIONS *)
+
+(* Print a typedef:
+ *   - print the "typedef" keyword
+ *   - print the string representation of the typespec the typedef
+ *     will represent
+ *   - print the ident of the typedef                               *)
+let print_typedef (typespec, ident) =
+  printf "typedef ";
+  printf "%s" (string_of_typespec typespec);
+  printf " %s\n" ident
+
+(* Print a typedef list by printing the first one, then the rest *)
+let rec print_typedef_list typedefs =
+  match typedefs with
+  | []        -> printf "\n"
+  | td :: tds -> print_typedef td; print_typedef_list tds
+
+(* ---- DECLARATION PRINTING FUNCTIONS ---- *)
+
+(* Print a variable declaration:
+ *   - print the string representation of the typespec of the variable
+ *   - print the ident of the variable                                  *)
+let print_var_decl indent (ident, typespec) =
+  print_indent indent;
+  printf "%s %s;\n" (string_of_typespec typespec) ident
+
+(* Print declarations by printing the first one, then the rest *)
+let rec print_decl_list indent dlist =
+  match dlist with
+  | [decl]      -> print_var_decl indent decl
+  | vdecl :: ds -> print_var_decl indent vdecl; print_decl_list indent ds
+  | []          -> ()
+
+(* ---- STATEMENT PRINTING FUNCTIONS ---- *)
+
+(* Print an assignment statement:
+ *   - print the lvalue being assigned to
+ *   - print the ":=" operator
+ *   - print the rvalue being assigned     *)
+let print_assign indent lval rval =
+  print_indent indent;
+  printf "%s := %s;\n" (string_of_lval lval) (string_of_rval rval)
+
+(* Print a read statement:
+ *   - print "read"
+ *   - print the string represenation of the lvalue *)
+let print_read indent lval =
+  print_indent indent;
+  printf "read %s;\n" (string_of_lval lval)
+
+(* Print write:
+ *   - print "write"
+ *   - if it's an expression:
+ *       print the string representation of the expression
+ *   - if it's a string:
+ *       print the escaped string literal *)
+let print_write indent writeable =
+  print_indent indent;
+  match writeable with
+  | WExpr expr  -> printf "write %s;\n" (string_of_expr expr)
+  | WString str ->
+      printf "write %s;\n" (String.concat "" ["\"";str;"\""])
+
+(* Print a procedure call:
+ *   - print the procedure ident
+ *   - print the expressions passed to the procedure in the call *)
+let print_proc_call indent pname exprs =
+  print_indent indent;
+  printf "%s(%s);\n" pname (String.concat ", " (List.map string_of_expr exprs))
+
+(* Print an if statement:
+ *   - print "if"
+ *   - print the boolean guard expression
+ *   - print "then"
+ *   - print body statements
+ *   - if there are else body statements:
+ *     + print "else"
+ *     + print the else body statements
+ *   - print "fi"                          *)
+let rec print_if indent expr ?elses:(slist=[]) stmts =
+  print_indent indent;
+  printf "if %s then\n" (string_of_expr expr);
+  print_stmt_list (indent+1) stmts;
+  match slist with
+  | [] -> print_indent indent ; printf "fi\n" ; ()
+  | _ ->
+    print_indent indent;
+    printf "else\n";
+    print_stmt_list (indent+1) slist;
+  print_indent indent;
+  printf "fi\n"
+
+(* Print a while statement:
+ *   - print "while"
+ *   - print the boolean guard expression
+ *   - print the body statements
+ *   - print "od"                         *)
+and
+print_while indent expr stmts =
+  print_indent indent;
+  printf "while %s do\n" (string_of_expr expr);
+  print_stmt_list (indent+1) stmts;
+  print_indent indent;
+  printf "od\n";
+
+(* Print a statement list:
+ *   - work out the type of the first statement
+ *   - print it with the appropriate function
+ *   - print the rest of the statements          *)
+and
+print_stmt_list indent stmt_list =
+  let print_stmt stmt =
+    match stmt with
+    | Assign   (lval, rval)   -> print_assign indent lval rval
+    | Read     lval           -> print_read indent lval
+    | Write    writeable      -> print_write indent writeable
+    | If       (expr, stmts)  -> print_if indent expr stmts
+    | While    (expr, stmts)  -> print_while indent expr stmts
+    | ProcCall (ident, exprs) -> print_proc_call indent ident exprs
+    | IfElse (expr, if_stmts, else_stmts) ->
+        print_if indent expr if_stmts ~elses:else_stmts
+  in
+  match stmt_list with
+  | stmt :: slist   -> print_stmt stmt; print_stmt_list indent slist
+  | []              -> ()
+
+(* --- PROCEDURE PRINTING FUNCTIONS --- *)
+
+(* Print a parameter:
+ *   - print the pass type
+ *   - print the typespec
+ *   - print the parameter ident *)
+let print_proc_param (pass_type, typespec, ident) =
+  printf "%s " (string_of_pass pass_type);
+  printf "%s " (string_of_typespec typespec);
+  printf "%s"  ident
+
+(* Print parameters by printing one, then a comma, then the rest *)
+let rec print_proc_param_list param_list =
+  match param_list with
+  | []          -> ()
+  | [param]     -> print_proc_param param
+  | param :: ps -> print_proc_param param; printf ", ";
+                   print_proc_param_list ps
+
+(* Print a procedure:
+ *   - print the "proc" keyword
+ *   - print the parameters in the header
+ *   - print the declarations in the body
+ *   - print the statements in the body
+ *   - print the "end" keyword             *)
+let print_proc (ident, proc_params, proc_decls, body_stmts) =
+  printf "proc %s(" ident;
+  print_proc_param_list proc_params;
+  printf ")\n";
+  print_decl_list 1 proc_decls;
+  print_stmt_list 1 body_stmts;
+  printf "end"
+
+(* Print procedures by printing one, then the rest *)
+let rec print_proc_list plist =
+  match plist with
+  | []          -> ();
+  | [proc]      -> print_proc proc; printf "\n"
+  | proc :: ps  -> print_proc proc; printf "\n\n"; print_proc_list ps
+
+(* --- BEAN PROGRAM PRINTING FUNCTION --- *)
+
+(* Print a bean program by printing the typedefs then the procedures *)
+let print_program fmt prog =
+  print_typedef_list prog.typedefs;
+  print_proc_list prog.procs
+============================================
+src/bean_lex.mll
+13:09:00_Saturday_09_April_2016
+============================================
+{
+open Bean_parse
+
+(* Define helpful error messages *)
+exception Syntax_error of string
+}
+
+let digit  = ['0' - '9']
+let alpha  = ['a' - 'z' 'A' - 'Z' '_']
+let alnum  = alpha | digit | '\''
+let digits = digit+
+let ident  = alpha alnum*
+
+rule token = parse
+    [' ' '\t']            { token lexbuf }     (* skip blanks *)
+  | '#'[^'\n']*           { token lexbuf }     (* ignore comments *)
+  | '\n'                  { Lexing.new_line lexbuf ; token lexbuf }
+  | '-'?['0'-'9']+ as lxm { INT_CONST(int_of_string lxm) }
+
+  (* keywords *)
+  | "bool"    { BOOL }
+  | "int"     { INT }
+  | "true"    { BOOL_CONST true }
+  | "false"   { BOOL_CONST false }
+  | "read"    { READ }
+  | "write"   { WRITE }
+  | "if"      { IF }
+  | "then"    { THEN }
+  | "else"    { ELSE }
+  | "fi"      { FI }
+  | "while"   { WHILE }
+  | "do"      { DO }
+  | "od"      { OD }
+  | "val"     { VAL }
+  | "ref"     { REF }
+  | "proc"    { PROC }
+  | "end"     { END }
+  | "typedef" { TYPEDEF }
+  | "and"     { AND }
+  | "or"      { OR }
+  | "not"     { NOT }
+
+  (* Begin a string -- see second lex rule *)
+  | '"'  { read_string (Buffer.create 20) lexbuf }
+  | ','  { COMMA }
+  | '.'  { DOT }
+  | ":=" { ASSIGN }
+  | '('  { LPAREN }
+  | ')'  { RPAREN }
+  | '{'  { LBRACE }
+  | '}'  { RBRACE }
+
+  (* Operators *)
+  | '='  { EQ }
+  | "!=" { NEQ }
+  | '<'  { LT }
+  | "<=" { LEQ }
+  | '>'  { GT }
+  | ">=" { GEQ }
+  | '+'  { PLUS }
+  | '-'  { MINUS }
+  | '*'  { MUL }
+  | '/'  { DIV }
+  | ':'  { COLON }
+  | ';'  { SEMICOLON }
+
+  (* Idents have a low rule to not conflict with keywords *)
+  | ident as lxm { IDENT lxm }
+  | eof          { EOF }
+  | _            { raise (Syntax_error
+                          ("Unknown symbol \""^(Lexing.lexeme lexbuf)^"\"")) }
+
+(* String parsing, with escaped characters*)
+(* This is largely inspired by the JSON string parsing chapter in
+ * Real World OCaml -- there aren't many different ways to do it  *)
+and read_string buf =
+  parse
+  (* Terminate string *)
+  | '"'           { STR_CONST (Buffer.contents buf) }
+  (* Other characters *)
+  | [^ '"' '\n']  { Buffer.add_string buf (Lexing.lexeme lexbuf);
+                      read_string buf lexbuf }
+  (* Weird characters are rejected *)
+  | '\n' { raise (Syntax_error ("Illegal newline in string")) }
+  | '\t' { raise (Syntax_error ("Illegal tab character in string")) }
+  | _    { raise (Syntax_error
+                ("Illegal string character: \""^(Lexing.lexeme lexbuf)^"\"")) }
+  (* Programs can't terminate with an open string *)
+  | eof  { raise (Syntax_error "End of file reached before string terminated") }
+============================================
+src/Makefile.depend
+13:09:00_Saturday_09_April_2016
+============================================
+bean.cmo : bean_pprint.cmi bean_parse.cmi bean_lex.cmo
+bean.cmx : bean_pprint.cmx bean_parse.cmx bean_lex.cmx
+bean_ast.cmi :
+bean_parse.cmi : bean_ast.cmi
+bean_pprint.cmi : bean_ast.cmi
+bean_ast.cmo : bean_ast.cmi
+bean_ast.cmx : bean_ast.cmi
+bean_lex.cmo : bean_parse.cmi
+bean_lex.cmx : bean_parse.cmx
+bean_parse.cmo : bean_ast.cmi bean_parse.cmi
+bean_parse.cmx : bean_ast.cmx bean_parse.cmi
+bean_pprint.cmo : bean_ast.cmi bean_pprint.cmi
+bean_pprint.cmx : bean_ast.cmx bean_pprint.cmi
+bean.cmo : bean_pprint.cmi bean_parse.cmi bean_lex.cmo
+bean.cmx : bean_pprint.cmx bean_parse.cmx bean_lex.cmx
+============================================
+src/bean_ast.mli
+13:09:00_Saturday_09_April_2016
+============================================
+(* Specification of an AST for bean *)
+type ident = string
+ 
+(* Define types and typedefs as mutually recusive so *)
+(* typedefs can contain themselves                   *)
+type beantype =
+  | TBool
+  | TInt
+
+type definedtype = ident
+
+type field = (ident * typespec)
+
+and
+field_struct = field list
+
+and
+typespec =
+  | TSBeantype of beantype
+  | TSDefinedtype of definedtype
+  | TSFieldStruct of field_struct
+
+type typedef = (typespec * ident)
+
+type lvalue =
+  | LId of ident
+  | LField of (lvalue * ident)
+
+type binop =
+  (* Arithmetic operations *)
+  | Op_add | Op_sub | Op_mul | Op_div
+  (* Integer comparator operations (int -> int -> bool) *)
+  | Op_eq | Op_neq | Op_lt | Op_leq | Op_gt | Op_geq
+  (* Boolean operations *)
+  | Op_and | Op_or
+
+type unop =
+  | Op_minus
+  | Op_not
+
+type expr =
+  | Ebool of bool
+  | Eint of int
+  | Elval of lvalue
+  | Ebinop of (expr * binop * expr)
+  | Eunop of (unop * expr)
+
+type writeable =
+  | WExpr of expr
+  | WString of string
+
+(* Will need to AST elements with additional data.  *)
+type struct_init = (ident * rvalue) list
+
+and rvalue =
+  | Rexpr of expr
+  | Rstruct of struct_init
+
+type pass_type =
+  | Pval
+  | Pref
+
+type proc_param = (pass_type * typespec * ident)
+
+type stmt = 
+  | Assign of (lvalue * rvalue)
+  | Read of lvalue
+  | Write of writeable
+  | If of (expr * stmt list)
+  | IfElse of (expr * stmt list * stmt list)
+  | While of (expr * stmt list)
+  | ProcCall of (ident * expr list)
+
+type decl = (ident * typespec)
+
+type proc = (ident * proc_param list * decl list * stmt list)
+
+type program = {
+  typedefs : typedef list;
+  procs : proc list
+}
+ 
+type t = program
+============================================
+src/bean_ast.ml
+13:09:00_Saturday_09_April_2016
+============================================
+(* Specification of an AST for bean *)
+type ident = string
+
+type beantype =
+  | TBool
+  | TInt
+
+type definedtype = ident
+
+(* Fields and typespecs are mutually recursive, as in:
+ *     {x : int, y : {a : int, b : bool}}              *)
+type field = (ident * typespec)
+
+and
+field_struct = field list
+
+and
+typespec =
+  | TSBeantype    of beantype
+  | TSDefinedtype of definedtype
+  | TSFieldStruct of field_struct
+
+type typedef = (typespec * ident)
+
+type lvalue =
+  | LId    of ident
+  | LField of (lvalue * ident)
+
+type binop =
+  (* Arithmetic operations *)
+  | Op_add | Op_sub | Op_mul | Op_div
+  (* Integer comparator operations (int -> int -> bool) *)
+  | Op_eq  | Op_neq | Op_lt  | Op_leq | Op_gt | Op_geq
+  (* Boolean operations *)
+  | Op_and | Op_or
+
+type unop =
+  | Op_minus
+  | Op_not
+
+type expr =
+  | Ebool  of bool
+  | Eint   of int
+  | Elval  of lvalue
+  | Ebinop of (expr * binop * expr)
+  | Eunop  of (unop * expr)
+
+type writeable =
+  | WExpr   of expr
+  | WString of string
+
+(* A struct/field initialisation rvalue, like:
+ *     var := {x = 3, y = {a = (7+3)*12, b = true}}   *)
+type struct_init = (ident * rvalue) list
+
+and rvalue =
+  | Rexpr   of expr
+  | Rstruct of struct_init
+
+(* Proc parameter pass type:
+ *   - "val" -> by value
+ *   - "ref" -> by reference *)
+type pass_type =
+  | Pval
+  | Pref
+
+(* Parameters in a proc header *)
+type proc_param = (pass_type * typespec * ident)
+
+type stmt =
+  | Assign   of (lvalue * rvalue)
+  | Read     of lvalue
+  | Write    of writeable
+  | If       of (expr * stmt list)
+  | IfElse   of (expr * stmt list * stmt list)
+  | While    of (expr * stmt list)
+  | ProcCall of (ident * expr list)
+
+type decl = (ident * typespec)
+
+type proc = (ident * proc_param list * decl list * stmt list)
+
+type program = {
+  typedefs : typedef list;
+  procs    : proc    list
+}
+
+type t = program
+============================================
+src/feedback.txt
+13:09:00_Saturday_09_April_2016
+============================================
+============================================
+vis/rholt.out
 12:42:06_Saturday_09_April_2016
 ============================================
 COMP90045 project - Test of parser and pretty-printer
@@ -3181,3 +4303,2098 @@ let main () =
         "Parse error" ln col fname
 
 let _ = main ()
+============================================
+src/Makefile
+13:09:00_Saturday_09_April_2016
+============================================
+TARGETS = bean
+TARGETS_BYTE=$(TARGETS:%=%.byte)
+
+MODULES = bean_ast bean_lex bean_parse bean_pprint
+MLFILES = $(addsuffix .ml, $(MODULES))
+CMOFILES = $(addsuffix .cmo, $(MODULES))
+CMXFILES = $(addsuffix .cmx, $(MODULES))
+
+ALLMODULES = $(MODULES) bean
+
+OCAMLLEX = ocamllex
+OCAMLYACC = ocamlyacc -v
+OCAMLDEP = ocamldep
+
+OCAMLFLAGS =
+
+all : opt byte
+byte: $(TARGETS_BYTE)
+opt: $(TARGETS)
+
+%.cmi: %.mli
+	ocamlc $(OCAMLFLAGS) -c $<
+
+%.cmo: %.ml
+	ocamlc $(OCAMLFLAGS) -g -c $<
+
+%.cmx: %.ml
+	ocamlopt $(OCAMLOPTFLAGS) -g -c $<
+
+%.ml: %.mll
+	$(OCAMLLEX) $^
+
+%.ml %.mli: %.mly
+	$(OCAMLYACC) $^
+
+bean.byte : $(CMOFILES) bean.cmo
+	ocamlc -g -o $@ $^
+
+bean : $(CMXFILES) bean.cmx
+	ocamlopt -g -o $@ $^
+
+clean :
+	rm -f *.cmo *.cmi *.cmx *.o
+	rm -f bean_lex.ml bean_parse.ml bean_parse.mli
+
+clobber : clean
+	rm -f $(TARGETS) $(TARGETS_BYTE)
+
+.PHONY : clean clobber depend
+
+# include depend
+depend: bean_lex.ml bean_parse.ml
+	$(OCAMLDEP) bean.ml bean.mli $(ALLMODULES:%=%.mli) $(ALLMODULES:%=%.ml) >Makefile.depend
+
+-include Makefile.depend
+============================================
+src/bean_parse.output
+13:09:00_Saturday_09_April_2016
+============================================
+   0  $accept : %entry% $end
+
+   1  program : typedefs procs
+
+   2  typedefs : typedefs typedef
+   3           |
+
+   4  beantype : BOOL
+   5           | INT
+
+   6  definedtype : IDENT
+
+   7  typedef : TYPEDEF typespec IDENT
+
+   8  typespec : beantype
+   9           | definedtype
+  10           | LBRACE fields RBRACE
+
+  11  fields : fields COMMA field
+  12         | field
+
+  13  field : IDENT COLON typespec
+
+  14  procs : procs proc
+  15        |
+
+  16  proc : PROC IDENT LPAREN proc_params RPAREN decls stmts END
+
+  17  proc_params : proc_params COMMA proc_param
+  18              | proc_param
+  19              |
+
+  20  proc_param : pass_type typespec IDENT
+
+  21  pass_type : VAL
+  22            | REF
+
+  23  decls : decls decl
+  24        |
+
+  25  decl : typespec IDENT SEMICOLON
+
+  26  stmts : stmt stmts
+  27        | stmt
+
+  28  stmt : stmt_body SEMICOLON
+  29       | IF expr THEN stmts FI
+  30       | IF expr THEN stmts ELSE stmts FI
+  31       | WHILE expr DO stmts OD
+
+  32  stmt_body : proc_call
+  33            | READ lvalue
+  34            | WRITE writeable
+  35            | lvalue ASSIGN rvalue
+
+  36  proc_call : IDENT LPAREN exprs RPAREN
+
+  37  exprs : exprs COMMA expr
+  38        | expr
+  39        |
+
+  40  rvalue : expr
+  41         | struct_init
+
+  42  lvalue : IDENT DOT lvalue
+  43         | IDENT
+
+  44  struct_init : LBRACE struct_assigns RBRACE
+
+  45  struct_assigns : struct_assigns COMMA struct_assign
+  46                 | struct_assign
+
+  47  struct_assign : IDENT EQ rvalue
+
+  48  expr : literal
+  49       | lvalue
+  50       | binop
+  51       | unop
+  52       | LPAREN expr RPAREN
+
+  53  literal : BOOL_CONST
+  54          | INT_CONST
+
+  55  binop : expr PLUS expr
+  56        | expr MINUS expr
+  57        | expr MUL expr
+  58        | expr DIV expr
+  59        | expr AND expr
+  60        | expr OR expr
+  61        | expr EQ expr
+  62        | expr NEQ expr
+  63        | expr LT expr
+  64        | expr LEQ expr
+  65        | expr GT expr
+  66        | expr GEQ expr
+
+  67  unop : MINUS expr
+  68       | NOT expr
+
+  69  writeable : expr
+  70            | STR_CONST
+
+  71  %entry% : '\001' program
+
+state 0
+	$accept : . %entry% $end  (0)
+
+	'\001'  shift 1
+	.  error
+
+	%entry%  goto 2
+
+
+state 1
+	%entry% : '\001' . program  (71)
+	typedefs : .  (3)
+
+	.  reduce 3
+
+	program  goto 3
+	typedefs  goto 4
+
+
+state 2
+	$accept : %entry% . $end  (0)
+
+	$end  accept
+
+
+state 3
+	%entry% : '\001' program .  (71)
+
+	.  reduce 71
+
+
+state 4
+	program : typedefs . procs  (1)
+	typedefs : typedefs . typedef  (2)
+	procs : .  (15)
+
+	TYPEDEF  shift 5
+	$end  reduce 15
+	PROC  reduce 15
+
+	procs  goto 6
+	typedef  goto 7
+
+
+state 5
+	typedef : TYPEDEF . typespec IDENT  (7)
+
+	IDENT  shift 8
+	BOOL  shift 9
+	INT  shift 10
+	LBRACE  shift 11
+	.  error
+
+	beantype  goto 12
+	definedtype  goto 13
+	typespec  goto 14
+
+
+state 6
+	program : typedefs procs .  (1)
+	procs : procs . proc  (14)
+
+	PROC  shift 15
+	$end  reduce 1
+
+	proc  goto 16
+
+
+state 7
+	typedefs : typedefs typedef .  (2)
+
+	.  reduce 2
+
+
+state 8
+	definedtype : IDENT .  (6)
+
+	.  reduce 6
+
+
+state 9
+	beantype : BOOL .  (4)
+
+	.  reduce 4
+
+
+state 10
+	beantype : INT .  (5)
+
+	.  reduce 5
+
+
+state 11
+	typespec : LBRACE . fields RBRACE  (10)
+
+	IDENT  shift 17
+	.  error
+
+	fields  goto 18
+	field  goto 19
+
+
+state 12
+	typespec : beantype .  (8)
+
+	.  reduce 8
+
+
+state 13
+	typespec : definedtype .  (9)
+
+	.  reduce 9
+
+
+state 14
+	typedef : TYPEDEF typespec . IDENT  (7)
+
+	IDENT  shift 20
+	.  error
+
+
+state 15
+	proc : PROC . IDENT LPAREN proc_params RPAREN decls stmts END  (16)
+
+	IDENT  shift 21
+	.  error
+
+
+state 16
+	procs : procs proc .  (14)
+
+	.  reduce 14
+
+
+state 17
+	field : IDENT . COLON typespec  (13)
+
+	COLON  shift 22
+	.  error
+
+
+state 18
+	typespec : LBRACE fields . RBRACE  (10)
+	fields : fields . COMMA field  (11)
+
+	COMMA  shift 23
+	RBRACE  shift 24
+	.  error
+
+
+state 19
+	fields : field .  (12)
+
+	.  reduce 12
+
+
+state 20
+	typedef : TYPEDEF typespec IDENT .  (7)
+
+	.  reduce 7
+
+
+state 21
+	proc : PROC IDENT . LPAREN proc_params RPAREN decls stmts END  (16)
+
+	LPAREN  shift 25
+	.  error
+
+
+state 22
+	field : IDENT COLON . typespec  (13)
+
+	IDENT  shift 8
+	BOOL  shift 9
+	INT  shift 10
+	LBRACE  shift 11
+	.  error
+
+	beantype  goto 12
+	definedtype  goto 13
+	typespec  goto 26
+
+
+state 23
+	fields : fields COMMA . field  (11)
+
+	IDENT  shift 17
+	.  error
+
+	field  goto 27
+
+
+state 24
+	typespec : LBRACE fields RBRACE .  (10)
+
+	.  reduce 10
+
+
+state 25
+	proc : PROC IDENT LPAREN . proc_params RPAREN decls stmts END  (16)
+	proc_params : .  (19)
+
+	VAL  shift 28
+	REF  shift 29
+	COMMA  reduce 19
+	RPAREN  reduce 19
+
+	proc_params  goto 30
+	proc_param  goto 31
+	pass_type  goto 32
+
+
+state 26
+	field : IDENT COLON typespec .  (13)
+
+	.  reduce 13
+
+
+state 27
+	fields : fields COMMA field .  (11)
+
+	.  reduce 11
+
+
+state 28
+	pass_type : VAL .  (21)
+
+	.  reduce 21
+
+
+state 29
+	pass_type : REF .  (22)
+
+	.  reduce 22
+
+
+state 30
+	proc : PROC IDENT LPAREN proc_params . RPAREN decls stmts END  (16)
+	proc_params : proc_params . COMMA proc_param  (17)
+
+	COMMA  shift 33
+	RPAREN  shift 34
+	.  error
+
+
+state 31
+	proc_params : proc_param .  (18)
+
+	.  reduce 18
+
+
+state 32
+	proc_param : pass_type . typespec IDENT  (20)
+
+	IDENT  shift 8
+	BOOL  shift 9
+	INT  shift 10
+	LBRACE  shift 11
+	.  error
+
+	beantype  goto 12
+	definedtype  goto 13
+	typespec  goto 35
+
+
+state 33
+	proc_params : proc_params COMMA . proc_param  (17)
+
+	VAL  shift 28
+	REF  shift 29
+	.  error
+
+	proc_param  goto 36
+	pass_type  goto 32
+
+
+state 34
+	proc : PROC IDENT LPAREN proc_params RPAREN . decls stmts END  (16)
+	decls : .  (24)
+
+	.  reduce 24
+
+	decls  goto 37
+
+
+state 35
+	proc_param : pass_type typespec . IDENT  (20)
+
+	IDENT  shift 38
+	.  error
+
+
+state 36
+	proc_params : proc_params COMMA proc_param .  (17)
+
+	.  reduce 17
+
+
+state 37
+	proc : PROC IDENT LPAREN proc_params RPAREN decls . stmts END  (16)
+	decls : decls . decl  (23)
+
+	IDENT  shift 39
+	BOOL  shift 9
+	INT  shift 10
+	WRITE  shift 40
+	READ  shift 41
+	IF  shift 42
+	WHILE  shift 43
+	LBRACE  shift 11
+	.  error
+
+	beantype  goto 12
+	definedtype  goto 13
+	typespec  goto 44
+	stmts  goto 45
+	decl  goto 46
+	stmt  goto 47
+	stmt_body  goto 48
+	proc_call  goto 49
+	lvalue  goto 50
+
+
+state 38
+	proc_param : pass_type typespec IDENT .  (20)
+
+	.  reduce 20
+
+
+state 39
+	definedtype : IDENT .  (6)
+	proc_call : IDENT . LPAREN exprs RPAREN  (36)
+	lvalue : IDENT . DOT lvalue  (42)
+	lvalue : IDENT .  (43)
+
+	DOT  shift 51
+	LPAREN  shift 52
+	IDENT  reduce 6
+	ASSIGN  reduce 43
+
+
+state 40
+	stmt_body : WRITE . writeable  (34)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	STR_CONST  shift 55
+	IDENT  shift 56
+	LPAREN  shift 57
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 60
+	lvalue  goto 61
+	writeable  goto 62
+	literal  goto 63
+	binop  goto 64
+	unop  goto 65
+
+
+state 41
+	stmt_body : READ . lvalue  (33)
+
+	IDENT  shift 56
+	.  error
+
+	lvalue  goto 66
+
+
+state 42
+	stmt : IF . expr THEN stmts FI  (29)
+	stmt : IF . expr THEN stmts ELSE stmts FI  (30)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 67
+	lvalue  goto 61
+	literal  goto 63
+	binop  goto 64
+	unop  goto 65
+
+
+state 43
+	stmt : WHILE . expr DO stmts OD  (31)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 68
+	lvalue  goto 61
+	literal  goto 63
+	binop  goto 64
+	unop  goto 65
+
+
+state 44
+	decl : typespec . IDENT SEMICOLON  (25)
+
+	IDENT  shift 69
+	.  error
+
+
+state 45
+	proc : PROC IDENT LPAREN proc_params RPAREN decls stmts . END  (16)
+
+	END  shift 70
+	.  error
+
+
+state 46
+	decls : decls decl .  (23)
+
+	.  reduce 23
+
+
+state 47
+	stmts : stmt . stmts  (26)
+	stmts : stmt .  (27)
+
+	IDENT  shift 71
+	WRITE  shift 40
+	READ  shift 41
+	IF  shift 42
+	WHILE  shift 43
+	ELSE  reduce 27
+	FI  reduce 27
+	OD  reduce 27
+	END  reduce 27
+
+	stmts  goto 72
+	stmt  goto 47
+	stmt_body  goto 48
+	proc_call  goto 49
+	lvalue  goto 50
+
+
+state 48
+	stmt : stmt_body . SEMICOLON  (28)
+
+	SEMICOLON  shift 73
+	.  error
+
+
+state 49
+	stmt_body : proc_call .  (32)
+
+	.  reduce 32
+
+
+state 50
+	stmt_body : lvalue . ASSIGN rvalue  (35)
+
+	ASSIGN  shift 74
+	.  error
+
+
+state 51
+	lvalue : IDENT DOT . lvalue  (42)
+
+	IDENT  shift 56
+	.  error
+
+	lvalue  goto 75
+
+
+state 52
+	proc_call : IDENT LPAREN . exprs RPAREN  (36)
+	exprs : .  (39)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	NOT  shift 58
+	MINUS  shift 59
+	COMMA  reduce 39
+	RPAREN  reduce 39
+
+	expr  goto 76
+	lvalue  goto 61
+	exprs  goto 77
+	literal  goto 63
+	binop  goto 64
+	unop  goto 65
+
+
+state 53
+	literal : BOOL_CONST .  (53)
+
+	.  reduce 53
+
+
+state 54
+	literal : INT_CONST .  (54)
+
+	.  reduce 54
+
+
+state 55
+	writeable : STR_CONST .  (70)
+
+	.  reduce 70
+
+
+state 56
+	lvalue : IDENT . DOT lvalue  (42)
+	lvalue : IDENT .  (43)
+
+	DOT  shift 51
+	ASSIGN  reduce 43
+	THEN  reduce 43
+	DO  reduce 43
+	COMMA  reduce 43
+	RPAREN  reduce 43
+	RBRACE  reduce 43
+	EQ  reduce 43
+	NEQ  reduce 43
+	LT  reduce 43
+	LEQ  reduce 43
+	GT  reduce 43
+	GEQ  reduce 43
+	AND  reduce 43
+	OR  reduce 43
+	PLUS  reduce 43
+	MINUS  reduce 43
+	MUL  reduce 43
+	DIV  reduce 43
+	SEMICOLON  reduce 43
+
+
+state 57
+	expr : LPAREN . expr RPAREN  (52)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 78
+	lvalue  goto 61
+	literal  goto 63
+	binop  goto 64
+	unop  goto 65
+
+
+state 58
+	unop : NOT . expr  (68)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 79
+	lvalue  goto 61
+	literal  goto 63
+	binop  goto 64
+	unop  goto 65
+
+
+state 59
+	unop : MINUS . expr  (67)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 80
+	lvalue  goto 61
+	literal  goto 63
+	binop  goto 64
+	unop  goto 65
+
+
+state 60
+	binop : expr . PLUS expr  (55)
+	binop : expr . MINUS expr  (56)
+	binop : expr . MUL expr  (57)
+	binop : expr . DIV expr  (58)
+	binop : expr . AND expr  (59)
+	binop : expr . OR expr  (60)
+	binop : expr . EQ expr  (61)
+	binop : expr . NEQ expr  (62)
+	binop : expr . LT expr  (63)
+	binop : expr . LEQ expr  (64)
+	binop : expr . GT expr  (65)
+	binop : expr . GEQ expr  (66)
+	writeable : expr .  (69)
+
+	EQ  shift 81
+	NEQ  shift 82
+	LT  shift 83
+	LEQ  shift 84
+	GT  shift 85
+	GEQ  shift 86
+	AND  shift 87
+	OR  shift 88
+	PLUS  shift 89
+	MINUS  shift 90
+	MUL  shift 91
+	DIV  shift 92
+	SEMICOLON  reduce 69
+
+
+state 61
+	expr : lvalue .  (49)
+
+	.  reduce 49
+
+
+state 62
+	stmt_body : WRITE writeable .  (34)
+
+	.  reduce 34
+
+
+state 63
+	expr : literal .  (48)
+
+	.  reduce 48
+
+
+state 64
+	expr : binop .  (50)
+
+	.  reduce 50
+
+
+state 65
+	expr : unop .  (51)
+
+	.  reduce 51
+
+
+state 66
+	stmt_body : READ lvalue .  (33)
+
+	.  reduce 33
+
+
+state 67
+	stmt : IF expr . THEN stmts FI  (29)
+	stmt : IF expr . THEN stmts ELSE stmts FI  (30)
+	binop : expr . PLUS expr  (55)
+	binop : expr . MINUS expr  (56)
+	binop : expr . MUL expr  (57)
+	binop : expr . DIV expr  (58)
+	binop : expr . AND expr  (59)
+	binop : expr . OR expr  (60)
+	binop : expr . EQ expr  (61)
+	binop : expr . NEQ expr  (62)
+	binop : expr . LT expr  (63)
+	binop : expr . LEQ expr  (64)
+	binop : expr . GT expr  (65)
+	binop : expr . GEQ expr  (66)
+
+	THEN  shift 93
+	EQ  shift 81
+	NEQ  shift 82
+	LT  shift 83
+	LEQ  shift 84
+	GT  shift 85
+	GEQ  shift 86
+	AND  shift 87
+	OR  shift 88
+	PLUS  shift 89
+	MINUS  shift 90
+	MUL  shift 91
+	DIV  shift 92
+	.  error
+
+
+state 68
+	stmt : WHILE expr . DO stmts OD  (31)
+	binop : expr . PLUS expr  (55)
+	binop : expr . MINUS expr  (56)
+	binop : expr . MUL expr  (57)
+	binop : expr . DIV expr  (58)
+	binop : expr . AND expr  (59)
+	binop : expr . OR expr  (60)
+	binop : expr . EQ expr  (61)
+	binop : expr . NEQ expr  (62)
+	binop : expr . LT expr  (63)
+	binop : expr . LEQ expr  (64)
+	binop : expr . GT expr  (65)
+	binop : expr . GEQ expr  (66)
+
+	DO  shift 94
+	EQ  shift 81
+	NEQ  shift 82
+	LT  shift 83
+	LEQ  shift 84
+	GT  shift 85
+	GEQ  shift 86
+	AND  shift 87
+	OR  shift 88
+	PLUS  shift 89
+	MINUS  shift 90
+	MUL  shift 91
+	DIV  shift 92
+	.  error
+
+
+state 69
+	decl : typespec IDENT . SEMICOLON  (25)
+
+	SEMICOLON  shift 95
+	.  error
+
+
+state 70
+	proc : PROC IDENT LPAREN proc_params RPAREN decls stmts END .  (16)
+
+	.  reduce 16
+
+
+state 71
+	proc_call : IDENT . LPAREN exprs RPAREN  (36)
+	lvalue : IDENT . DOT lvalue  (42)
+	lvalue : IDENT .  (43)
+
+	DOT  shift 51
+	LPAREN  shift 52
+	ASSIGN  reduce 43
+
+
+state 72
+	stmts : stmt stmts .  (26)
+
+	.  reduce 26
+
+
+state 73
+	stmt : stmt_body SEMICOLON .  (28)
+
+	.  reduce 28
+
+
+state 74
+	stmt_body : lvalue ASSIGN . rvalue  (35)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	LBRACE  shift 96
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 97
+	lvalue  goto 61
+	rvalue  goto 98
+	struct_init  goto 99
+	literal  goto 63
+	binop  goto 64
+	unop  goto 65
+
+
+state 75
+	lvalue : IDENT DOT lvalue .  (42)
+
+	.  reduce 42
+
+
+state 76
+	exprs : expr .  (38)
+	binop : expr . PLUS expr  (55)
+	binop : expr . MINUS expr  (56)
+	binop : expr . MUL expr  (57)
+	binop : expr . DIV expr  (58)
+	binop : expr . AND expr  (59)
+	binop : expr . OR expr  (60)
+	binop : expr . EQ expr  (61)
+	binop : expr . NEQ expr  (62)
+	binop : expr . LT expr  (63)
+	binop : expr . LEQ expr  (64)
+	binop : expr . GT expr  (65)
+	binop : expr . GEQ expr  (66)
+
+	EQ  shift 81
+	NEQ  shift 82
+	LT  shift 83
+	LEQ  shift 84
+	GT  shift 85
+	GEQ  shift 86
+	AND  shift 87
+	OR  shift 88
+	PLUS  shift 89
+	MINUS  shift 90
+	MUL  shift 91
+	DIV  shift 92
+	COMMA  reduce 38
+	RPAREN  reduce 38
+
+
+state 77
+	proc_call : IDENT LPAREN exprs . RPAREN  (36)
+	exprs : exprs . COMMA expr  (37)
+
+	COMMA  shift 100
+	RPAREN  shift 101
+	.  error
+
+
+state 78
+	expr : LPAREN expr . RPAREN  (52)
+	binop : expr . PLUS expr  (55)
+	binop : expr . MINUS expr  (56)
+	binop : expr . MUL expr  (57)
+	binop : expr . DIV expr  (58)
+	binop : expr . AND expr  (59)
+	binop : expr . OR expr  (60)
+	binop : expr . EQ expr  (61)
+	binop : expr . NEQ expr  (62)
+	binop : expr . LT expr  (63)
+	binop : expr . LEQ expr  (64)
+	binop : expr . GT expr  (65)
+	binop : expr . GEQ expr  (66)
+
+	RPAREN  shift 102
+	EQ  shift 81
+	NEQ  shift 82
+	LT  shift 83
+	LEQ  shift 84
+	GT  shift 85
+	GEQ  shift 86
+	AND  shift 87
+	OR  shift 88
+	PLUS  shift 89
+	MINUS  shift 90
+	MUL  shift 91
+	DIV  shift 92
+	.  error
+
+
+state 79
+	binop : expr . PLUS expr  (55)
+	binop : expr . MINUS expr  (56)
+	binop : expr . MUL expr  (57)
+	binop : expr . DIV expr  (58)
+	binop : expr . AND expr  (59)
+	binop : expr . OR expr  (60)
+	binop : expr . EQ expr  (61)
+	binop : expr . NEQ expr  (62)
+	binop : expr . LT expr  (63)
+	binop : expr . LEQ expr  (64)
+	binop : expr . GT expr  (65)
+	binop : expr . GEQ expr  (66)
+	unop : NOT expr .  (68)
+
+	.  reduce 68
+
+
+state 80
+	binop : expr . PLUS expr  (55)
+	binop : expr . MINUS expr  (56)
+	binop : expr . MUL expr  (57)
+	binop : expr . DIV expr  (58)
+	binop : expr . AND expr  (59)
+	binop : expr . OR expr  (60)
+	binop : expr . EQ expr  (61)
+	binop : expr . NEQ expr  (62)
+	binop : expr . LT expr  (63)
+	binop : expr . LEQ expr  (64)
+	binop : expr . GT expr  (65)
+	binop : expr . GEQ expr  (66)
+	unop : MINUS expr .  (67)
+
+	.  reduce 67
+
+
+state 81
+	binop : expr EQ . expr  (61)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 103
+	lvalue  goto 61
+	literal  goto 63
+	binop  goto 64
+	unop  goto 65
+
+
+state 82
+	binop : expr NEQ . expr  (62)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 104
+	lvalue  goto 61
+	literal  goto 63
+	binop  goto 64
+	unop  goto 65
+
+
+state 83
+	binop : expr LT . expr  (63)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 105
+	lvalue  goto 61
+	literal  goto 63
+	binop  goto 64
+	unop  goto 65
+
+
+state 84
+	binop : expr LEQ . expr  (64)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 106
+	lvalue  goto 61
+	literal  goto 63
+	binop  goto 64
+	unop  goto 65
+
+
+state 85
+	binop : expr GT . expr  (65)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 107
+	lvalue  goto 61
+	literal  goto 63
+	binop  goto 64
+	unop  goto 65
+
+
+state 86
+	binop : expr GEQ . expr  (66)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 108
+	lvalue  goto 61
+	literal  goto 63
+	binop  goto 64
+	unop  goto 65
+
+
+state 87
+	binop : expr AND . expr  (59)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 109
+	lvalue  goto 61
+	literal  goto 63
+	binop  goto 64
+	unop  goto 65
+
+
+state 88
+	binop : expr OR . expr  (60)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 110
+	lvalue  goto 61
+	literal  goto 63
+	binop  goto 64
+	unop  goto 65
+
+
+state 89
+	binop : expr PLUS . expr  (55)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 111
+	lvalue  goto 61
+	literal  goto 63
+	binop  goto 64
+	unop  goto 65
+
+
+state 90
+	binop : expr MINUS . expr  (56)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 112
+	lvalue  goto 61
+	literal  goto 63
+	binop  goto 64
+	unop  goto 65
+
+
+state 91
+	binop : expr MUL . expr  (57)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 113
+	lvalue  goto 61
+	literal  goto 63
+	binop  goto 64
+	unop  goto 65
+
+
+state 92
+	binop : expr DIV . expr  (58)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 114
+	lvalue  goto 61
+	literal  goto 63
+	binop  goto 64
+	unop  goto 65
+
+
+state 93
+	stmt : IF expr THEN . stmts FI  (29)
+	stmt : IF expr THEN . stmts ELSE stmts FI  (30)
+
+	IDENT  shift 71
+	WRITE  shift 40
+	READ  shift 41
+	IF  shift 42
+	WHILE  shift 43
+	.  error
+
+	stmts  goto 115
+	stmt  goto 47
+	stmt_body  goto 48
+	proc_call  goto 49
+	lvalue  goto 50
+
+
+state 94
+	stmt : WHILE expr DO . stmts OD  (31)
+
+	IDENT  shift 71
+	WRITE  shift 40
+	READ  shift 41
+	IF  shift 42
+	WHILE  shift 43
+	.  error
+
+	stmts  goto 116
+	stmt  goto 47
+	stmt_body  goto 48
+	proc_call  goto 49
+	lvalue  goto 50
+
+
+state 95
+	decl : typespec IDENT SEMICOLON .  (25)
+
+	.  reduce 25
+
+
+state 96
+	struct_init : LBRACE . struct_assigns RBRACE  (44)
+
+	IDENT  shift 117
+	.  error
+
+	struct_assigns  goto 118
+	struct_assign  goto 119
+
+
+state 97
+	rvalue : expr .  (40)
+	binop : expr . PLUS expr  (55)
+	binop : expr . MINUS expr  (56)
+	binop : expr . MUL expr  (57)
+	binop : expr . DIV expr  (58)
+	binop : expr . AND expr  (59)
+	binop : expr . OR expr  (60)
+	binop : expr . EQ expr  (61)
+	binop : expr . NEQ expr  (62)
+	binop : expr . LT expr  (63)
+	binop : expr . LEQ expr  (64)
+	binop : expr . GT expr  (65)
+	binop : expr . GEQ expr  (66)
+
+	EQ  shift 81
+	NEQ  shift 82
+	LT  shift 83
+	LEQ  shift 84
+	GT  shift 85
+	GEQ  shift 86
+	AND  shift 87
+	OR  shift 88
+	PLUS  shift 89
+	MINUS  shift 90
+	MUL  shift 91
+	DIV  shift 92
+	COMMA  reduce 40
+	RBRACE  reduce 40
+	SEMICOLON  reduce 40
+
+
+state 98
+	stmt_body : lvalue ASSIGN rvalue .  (35)
+
+	.  reduce 35
+
+
+state 99
+	rvalue : struct_init .  (41)
+
+	.  reduce 41
+
+
+state 100
+	exprs : exprs COMMA . expr  (37)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 120
+	lvalue  goto 61
+	literal  goto 63
+	binop  goto 64
+	unop  goto 65
+
+
+state 101
+	proc_call : IDENT LPAREN exprs RPAREN .  (36)
+
+	.  reduce 36
+
+
+state 102
+	expr : LPAREN expr RPAREN .  (52)
+
+	.  reduce 52
+
+
+state 103
+	binop : expr . PLUS expr  (55)
+	binop : expr . MINUS expr  (56)
+	binop : expr . MUL expr  (57)
+	binop : expr . DIV expr  (58)
+	binop : expr . AND expr  (59)
+	binop : expr . OR expr  (60)
+	binop : expr . EQ expr  (61)
+	binop : expr EQ expr .  (61)
+	binop : expr . NEQ expr  (62)
+	binop : expr . LT expr  (63)
+	binop : expr . LEQ expr  (64)
+	binop : expr . GT expr  (65)
+	binop : expr . GEQ expr  (66)
+
+	PLUS  shift 89
+	MINUS  shift 90
+	MUL  shift 91
+	DIV  shift 92
+	THEN  reduce 61
+	DO  reduce 61
+	COMMA  reduce 61
+	RPAREN  reduce 61
+	RBRACE  reduce 61
+	AND  reduce 61
+	OR  reduce 61
+	SEMICOLON  reduce 61
+
+
+state 104
+	binop : expr . PLUS expr  (55)
+	binop : expr . MINUS expr  (56)
+	binop : expr . MUL expr  (57)
+	binop : expr . DIV expr  (58)
+	binop : expr . AND expr  (59)
+	binop : expr . OR expr  (60)
+	binop : expr . EQ expr  (61)
+	binop : expr . NEQ expr  (62)
+	binop : expr NEQ expr .  (62)
+	binop : expr . LT expr  (63)
+	binop : expr . LEQ expr  (64)
+	binop : expr . GT expr  (65)
+	binop : expr . GEQ expr  (66)
+
+	PLUS  shift 89
+	MINUS  shift 90
+	MUL  shift 91
+	DIV  shift 92
+	THEN  reduce 62
+	DO  reduce 62
+	COMMA  reduce 62
+	RPAREN  reduce 62
+	RBRACE  reduce 62
+	AND  reduce 62
+	OR  reduce 62
+	SEMICOLON  reduce 62
+
+
+state 105
+	binop : expr . PLUS expr  (55)
+	binop : expr . MINUS expr  (56)
+	binop : expr . MUL expr  (57)
+	binop : expr . DIV expr  (58)
+	binop : expr . AND expr  (59)
+	binop : expr . OR expr  (60)
+	binop : expr . EQ expr  (61)
+	binop : expr . NEQ expr  (62)
+	binop : expr . LT expr  (63)
+	binop : expr LT expr .  (63)
+	binop : expr . LEQ expr  (64)
+	binop : expr . GT expr  (65)
+	binop : expr . GEQ expr  (66)
+
+	PLUS  shift 89
+	MINUS  shift 90
+	MUL  shift 91
+	DIV  shift 92
+	THEN  reduce 63
+	DO  reduce 63
+	COMMA  reduce 63
+	RPAREN  reduce 63
+	RBRACE  reduce 63
+	AND  reduce 63
+	OR  reduce 63
+	SEMICOLON  reduce 63
+
+
+state 106
+	binop : expr . PLUS expr  (55)
+	binop : expr . MINUS expr  (56)
+	binop : expr . MUL expr  (57)
+	binop : expr . DIV expr  (58)
+	binop : expr . AND expr  (59)
+	binop : expr . OR expr  (60)
+	binop : expr . EQ expr  (61)
+	binop : expr . NEQ expr  (62)
+	binop : expr . LT expr  (63)
+	binop : expr . LEQ expr  (64)
+	binop : expr LEQ expr .  (64)
+	binop : expr . GT expr  (65)
+	binop : expr . GEQ expr  (66)
+
+	PLUS  shift 89
+	MINUS  shift 90
+	MUL  shift 91
+	DIV  shift 92
+	THEN  reduce 64
+	DO  reduce 64
+	COMMA  reduce 64
+	RPAREN  reduce 64
+	RBRACE  reduce 64
+	AND  reduce 64
+	OR  reduce 64
+	SEMICOLON  reduce 64
+
+
+state 107
+	binop : expr . PLUS expr  (55)
+	binop : expr . MINUS expr  (56)
+	binop : expr . MUL expr  (57)
+	binop : expr . DIV expr  (58)
+	binop : expr . AND expr  (59)
+	binop : expr . OR expr  (60)
+	binop : expr . EQ expr  (61)
+	binop : expr . NEQ expr  (62)
+	binop : expr . LT expr  (63)
+	binop : expr . LEQ expr  (64)
+	binop : expr . GT expr  (65)
+	binop : expr GT expr .  (65)
+	binop : expr . GEQ expr  (66)
+
+	PLUS  shift 89
+	MINUS  shift 90
+	MUL  shift 91
+	DIV  shift 92
+	THEN  reduce 65
+	DO  reduce 65
+	COMMA  reduce 65
+	RPAREN  reduce 65
+	RBRACE  reduce 65
+	AND  reduce 65
+	OR  reduce 65
+	SEMICOLON  reduce 65
+
+
+state 108
+	binop : expr . PLUS expr  (55)
+	binop : expr . MINUS expr  (56)
+	binop : expr . MUL expr  (57)
+	binop : expr . DIV expr  (58)
+	binop : expr . AND expr  (59)
+	binop : expr . OR expr  (60)
+	binop : expr . EQ expr  (61)
+	binop : expr . NEQ expr  (62)
+	binop : expr . LT expr  (63)
+	binop : expr . LEQ expr  (64)
+	binop : expr . GT expr  (65)
+	binop : expr . GEQ expr  (66)
+	binop : expr GEQ expr .  (66)
+
+	PLUS  shift 89
+	MINUS  shift 90
+	MUL  shift 91
+	DIV  shift 92
+	THEN  reduce 66
+	DO  reduce 66
+	COMMA  reduce 66
+	RPAREN  reduce 66
+	RBRACE  reduce 66
+	AND  reduce 66
+	OR  reduce 66
+	SEMICOLON  reduce 66
+
+
+state 109
+	binop : expr . PLUS expr  (55)
+	binop : expr . MINUS expr  (56)
+	binop : expr . MUL expr  (57)
+	binop : expr . DIV expr  (58)
+	binop : expr . AND expr  (59)
+	binop : expr AND expr .  (59)
+	binop : expr . OR expr  (60)
+	binop : expr . EQ expr  (61)
+	binop : expr . NEQ expr  (62)
+	binop : expr . LT expr  (63)
+	binop : expr . LEQ expr  (64)
+	binop : expr . GT expr  (65)
+	binop : expr . GEQ expr  (66)
+
+	EQ  shift 81
+	NEQ  shift 82
+	LT  shift 83
+	LEQ  shift 84
+	GT  shift 85
+	GEQ  shift 86
+	PLUS  shift 89
+	MINUS  shift 90
+	MUL  shift 91
+	DIV  shift 92
+	THEN  reduce 59
+	DO  reduce 59
+	COMMA  reduce 59
+	RPAREN  reduce 59
+	RBRACE  reduce 59
+	AND  reduce 59
+	OR  reduce 59
+	SEMICOLON  reduce 59
+
+
+state 110
+	binop : expr . PLUS expr  (55)
+	binop : expr . MINUS expr  (56)
+	binop : expr . MUL expr  (57)
+	binop : expr . DIV expr  (58)
+	binop : expr . AND expr  (59)
+	binop : expr . OR expr  (60)
+	binop : expr OR expr .  (60)
+	binop : expr . EQ expr  (61)
+	binop : expr . NEQ expr  (62)
+	binop : expr . LT expr  (63)
+	binop : expr . LEQ expr  (64)
+	binop : expr . GT expr  (65)
+	binop : expr . GEQ expr  (66)
+
+	EQ  shift 81
+	NEQ  shift 82
+	LT  shift 83
+	LEQ  shift 84
+	GT  shift 85
+	GEQ  shift 86
+	PLUS  shift 89
+	MINUS  shift 90
+	MUL  shift 91
+	DIV  shift 92
+	THEN  reduce 60
+	DO  reduce 60
+	COMMA  reduce 60
+	RPAREN  reduce 60
+	RBRACE  reduce 60
+	AND  reduce 60
+	OR  reduce 60
+	SEMICOLON  reduce 60
+
+
+state 111
+	binop : expr . PLUS expr  (55)
+	binop : expr PLUS expr .  (55)
+	binop : expr . MINUS expr  (56)
+	binop : expr . MUL expr  (57)
+	binop : expr . DIV expr  (58)
+	binop : expr . AND expr  (59)
+	binop : expr . OR expr  (60)
+	binop : expr . EQ expr  (61)
+	binop : expr . NEQ expr  (62)
+	binop : expr . LT expr  (63)
+	binop : expr . LEQ expr  (64)
+	binop : expr . GT expr  (65)
+	binop : expr . GEQ expr  (66)
+
+	MUL  shift 91
+	DIV  shift 92
+	THEN  reduce 55
+	DO  reduce 55
+	COMMA  reduce 55
+	RPAREN  reduce 55
+	RBRACE  reduce 55
+	EQ  reduce 55
+	NEQ  reduce 55
+	LT  reduce 55
+	LEQ  reduce 55
+	GT  reduce 55
+	GEQ  reduce 55
+	AND  reduce 55
+	OR  reduce 55
+	PLUS  reduce 55
+	MINUS  reduce 55
+	SEMICOLON  reduce 55
+
+
+state 112
+	binop : expr . PLUS expr  (55)
+	binop : expr . MINUS expr  (56)
+	binop : expr MINUS expr .  (56)
+	binop : expr . MUL expr  (57)
+	binop : expr . DIV expr  (58)
+	binop : expr . AND expr  (59)
+	binop : expr . OR expr  (60)
+	binop : expr . EQ expr  (61)
+	binop : expr . NEQ expr  (62)
+	binop : expr . LT expr  (63)
+	binop : expr . LEQ expr  (64)
+	binop : expr . GT expr  (65)
+	binop : expr . GEQ expr  (66)
+
+	MUL  shift 91
+	DIV  shift 92
+	THEN  reduce 56
+	DO  reduce 56
+	COMMA  reduce 56
+	RPAREN  reduce 56
+	RBRACE  reduce 56
+	EQ  reduce 56
+	NEQ  reduce 56
+	LT  reduce 56
+	LEQ  reduce 56
+	GT  reduce 56
+	GEQ  reduce 56
+	AND  reduce 56
+	OR  reduce 56
+	PLUS  reduce 56
+	MINUS  reduce 56
+	SEMICOLON  reduce 56
+
+
+state 113
+	binop : expr . PLUS expr  (55)
+	binop : expr . MINUS expr  (56)
+	binop : expr . MUL expr  (57)
+	binop : expr MUL expr .  (57)
+	binop : expr . DIV expr  (58)
+	binop : expr . AND expr  (59)
+	binop : expr . OR expr  (60)
+	binop : expr . EQ expr  (61)
+	binop : expr . NEQ expr  (62)
+	binop : expr . LT expr  (63)
+	binop : expr . LEQ expr  (64)
+	binop : expr . GT expr  (65)
+	binop : expr . GEQ expr  (66)
+
+	.  reduce 57
+
+
+state 114
+	binop : expr . PLUS expr  (55)
+	binop : expr . MINUS expr  (56)
+	binop : expr . MUL expr  (57)
+	binop : expr . DIV expr  (58)
+	binop : expr DIV expr .  (58)
+	binop : expr . AND expr  (59)
+	binop : expr . OR expr  (60)
+	binop : expr . EQ expr  (61)
+	binop : expr . NEQ expr  (62)
+	binop : expr . LT expr  (63)
+	binop : expr . LEQ expr  (64)
+	binop : expr . GT expr  (65)
+	binop : expr . GEQ expr  (66)
+
+	.  reduce 58
+
+
+state 115
+	stmt : IF expr THEN stmts . FI  (29)
+	stmt : IF expr THEN stmts . ELSE stmts FI  (30)
+
+	ELSE  shift 121
+	FI  shift 122
+	.  error
+
+
+state 116
+	stmt : WHILE expr DO stmts . OD  (31)
+
+	OD  shift 123
+	.  error
+
+
+state 117
+	struct_assign : IDENT . EQ rvalue  (47)
+
+	EQ  shift 124
+	.  error
+
+
+state 118
+	struct_init : LBRACE struct_assigns . RBRACE  (44)
+	struct_assigns : struct_assigns . COMMA struct_assign  (45)
+
+	COMMA  shift 125
+	RBRACE  shift 126
+	.  error
+
+
+state 119
+	struct_assigns : struct_assign .  (46)
+
+	.  reduce 46
+
+
+state 120
+	exprs : exprs COMMA expr .  (37)
+	binop : expr . PLUS expr  (55)
+	binop : expr . MINUS expr  (56)
+	binop : expr . MUL expr  (57)
+	binop : expr . DIV expr  (58)
+	binop : expr . AND expr  (59)
+	binop : expr . OR expr  (60)
+	binop : expr . EQ expr  (61)
+	binop : expr . NEQ expr  (62)
+	binop : expr . LT expr  (63)
+	binop : expr . LEQ expr  (64)
+	binop : expr . GT expr  (65)
+	binop : expr . GEQ expr  (66)
+
+	EQ  shift 81
+	NEQ  shift 82
+	LT  shift 83
+	LEQ  shift 84
+	GT  shift 85
+	GEQ  shift 86
+	AND  shift 87
+	OR  shift 88
+	PLUS  shift 89
+	MINUS  shift 90
+	MUL  shift 91
+	DIV  shift 92
+	COMMA  reduce 37
+	RPAREN  reduce 37
+
+
+state 121
+	stmt : IF expr THEN stmts ELSE . stmts FI  (30)
+
+	IDENT  shift 71
+	WRITE  shift 40
+	READ  shift 41
+	IF  shift 42
+	WHILE  shift 43
+	.  error
+
+	stmts  goto 127
+	stmt  goto 47
+	stmt_body  goto 48
+	proc_call  goto 49
+	lvalue  goto 50
+
+
+state 122
+	stmt : IF expr THEN stmts FI .  (29)
+
+	.  reduce 29
+
+
+state 123
+	stmt : WHILE expr DO stmts OD .  (31)
+
+	.  reduce 31
+
+
+state 124
+	struct_assign : IDENT EQ . rvalue  (47)
+
+	BOOL_CONST  shift 53
+	INT_CONST  shift 54
+	IDENT  shift 56
+	LPAREN  shift 57
+	LBRACE  shift 96
+	NOT  shift 58
+	MINUS  shift 59
+	.  error
+
+	expr  goto 97
+	lvalue  goto 61
+	rvalue  goto 128
+	struct_init  goto 99
+	literal  goto 63
+	binop  goto 64
+	unop  goto 65
+
+
+state 125
+	struct_assigns : struct_assigns COMMA . struct_assign  (45)
+
+	IDENT  shift 117
+	.  error
+
+	struct_assign  goto 129
+
+
+state 126
+	struct_init : LBRACE struct_assigns RBRACE .  (44)
+
+	.  reduce 44
+
+
+state 127
+	stmt : IF expr THEN stmts ELSE stmts . FI  (30)
+
+	FI  shift 130
+	.  error
+
+
+state 128
+	struct_assign : IDENT EQ rvalue .  (47)
+
+	.  reduce 47
+
+
+state 129
+	struct_assigns : struct_assigns COMMA struct_assign .  (45)
+
+	.  reduce 45
+
+
+state 130
+	stmt : IF expr THEN stmts ELSE stmts FI .  (30)
+
+	.  reduce 30
+
+
+48 terminals, 32 nonterminals
+72 grammar rules, 131 states
+============================================
+src/bean_parse.mly
+13:09:00_Saturday_09_April_2016
+============================================
+/* ocamlyacc parser for bean */
+/* See the AST for better structural definitions of a bean program */
+%{
+open Bean_ast
+%}
+
+%token <bool>   BOOL_CONST
+%token <int>    INT_CONST
+%token <string> STR_CONST
+%token <string> IDENT
+
+%token BOOL INT
+%token WRITE READ
+%token ASSIGN
+%token IF THEN ELSE FI
+%token WHILE DO OD
+%token PROC END
+%token TYPEDEF
+%token DOT
+%token VAL REF
+%token COMMA
+%token LPAREN RPAREN
+%token LBRACE RBRACE
+%token EQ NEQ LT LEQ GT GEQ
+%token AND OR NOT
+%token PLUS MINUS MUL DIV
+%token COLON
+%token SEMICOLON
+%token EOF
+
+%left     AND OR
+%nonassoc EQ NEQ LT LEQ GT GEQ
+%left     PLUS MINUS
+%left     MUL DIV
+%nonassoc UMINUS
+%nonassoc UNOT
+
+%type <Bean_ast.program> program
+
+%start program
+%%
+
+program:
+  typedefs procs { { typedefs = List.rev $1 ; procs = List.rev $2 } }
+
+typedefs:
+  | typedefs typedef { $2 :: $1 }
+  |                  { [] }
+
+beantype:
+  | BOOL { TBool }
+  | INT  { TInt  }
+
+definedtype:
+  IDENT { $1 }
+
+typedef:
+  TYPEDEF typespec IDENT { ($2, $3) }
+
+typespec:
+  | beantype             { TSBeantype    $1 }
+  | definedtype          { TSDefinedtype $1 }
+  | LBRACE fields RBRACE { TSFieldStruct (List.rev $2) }
+
+fields:
+  | fields COMMA field { $3 :: $1 }
+  | field              { [$1] }
+
+field:
+  IDENT COLON typespec { ($1, $3) }
+
+procs:
+  | procs proc { $2 :: $1 }
+  |            { [] }
+
+proc:
+  PROC IDENT LPAREN proc_params RPAREN decls stmts END { ($2,
+                                                          List.rev $4,
+                                                          List.rev $6,
+                                                          $7) }
+
+proc_params:
+  | proc_params COMMA proc_param { $3 :: $1 }
+  | proc_param                   { [$1] }
+  |                              { [] }
+
+proc_param:
+  pass_type typespec IDENT { ($1, $2, $3) }
+
+pass_type:
+  | VAL { Pval }
+  | REF { Pref }
+
+decls:
+  | decls decl { $2 :: $1 }
+  |            { [] }
+
+decl:
+  typespec IDENT SEMICOLON { ($2, $1) }
+
+/* Builds stmts in non-reverse, right-recursive order */
+/* This is to eliminate a parser conflict error, but ideally
+   the grammar could be restructured to eliminate it         */
+stmts:
+  | stmt stmts { $1 :: $2 }
+  | stmt       { [$1] }
+
+stmt:
+  | stmt_body SEMICOLON              { $1 }
+  | IF expr THEN stmts FI            { If ($2, List.rev $4) }
+  | IF expr THEN stmts ELSE stmts FI { IfElse ($2, List.rev $4, List.rev $6) }
+  | WHILE expr DO stmts OD           { While ($2, List.rev $4) }
+
+stmt_body:
+  | proc_call            { ProcCall $1 }
+  | READ lvalue          { Read     $2 }
+  | WRITE writeable      { Write    $2 }
+  | lvalue ASSIGN rvalue { Assign ($1, $3) }
+
+proc_call:
+  IDENT LPAREN exprs RPAREN { ($1, List.rev $3) }
+
+exprs:
+  | exprs COMMA expr { $3 :: $1 }
+  | expr             { [$1] }
+  |                  { [] }
+
+rvalue:
+  | expr        { Rexpr   $1 }
+  | struct_init { Rstruct $1 }
+
+lvalue:
+  | IDENT DOT lvalue { LField ($3, $1) }
+  | IDENT            { LId $1 }
+
+struct_init:
+  LBRACE struct_assigns RBRACE { List.rev $2 }
+
+struct_assigns:
+  | struct_assigns COMMA struct_assign  { $3 :: $1 }
+  | struct_assign                       { [$1] }
+
+struct_assign:
+  IDENT EQ rvalue { ($1, $3) }
+
+expr:
+  | literal            { $1 }
+  | lvalue             { Elval $1 }
+  | binop              { $1 }
+  | unop               { $1 }
+  | LPAREN expr RPAREN { $2 }
+
+literal:
+  | BOOL_CONST { Ebool $1 }
+  | INT_CONST  { Eint  $1 }
+
+binop:
+  | expr PLUS  expr { Ebinop ($1, Op_add, $3) }
+  | expr MINUS expr { Ebinop ($1, Op_sub, $3) }
+  | expr MUL   expr { Ebinop ($1, Op_mul, $3) }
+  | expr DIV   expr { Ebinop ($1, Op_div, $3) }
+  | expr AND   expr { Ebinop ($1, Op_and, $3) }
+  | expr OR    expr { Ebinop ($1, Op_or,  $3) }
+  | expr EQ    expr { Ebinop ($1, Op_eq,  $3) }
+  | expr NEQ   expr { Ebinop ($1, Op_neq, $3) }
+  | expr LT    expr { Ebinop ($1, Op_lt,  $3) }
+  | expr LEQ   expr { Ebinop ($1, Op_leq, $3) }
+  | expr GT    expr { Ebinop ($1, Op_gt,  $3) }
+  | expr GEQ   expr { Ebinop ($1, Op_geq, $3) }
+
+unop:
+  | MINUS expr %prec UMINUS { Eunop (Op_minus, $2) }
+  | NOT   expr %prec UNOT   { Eunop (Op_not,   $2) }
+
+ /* Deal with 'write' being able to print strings too */
+writeable:
+  | expr      { WExpr   $1 }
+  | STR_CONST { WString $1 }
