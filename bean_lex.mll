@@ -82,6 +82,7 @@ and read_string buf =
                       read_string buf lexbuf }
   (* Weird characters are rejected *)
   | '\n' { raise (Syntax_error ("Illegal newline in string")) }
+  | '\t' { raise (Syntax_error ("Illegal tab character in string")) }
   | _    { raise (Syntax_error
                 ("Illegal string character: \""^(Lexing.lexeme lexbuf)^"\"")) }
   (* Programs can't terminate with an open string *)
