@@ -14,10 +14,10 @@ let isComparator op = List.mem op [ Op_eq  ; Op_neq ;
 (* True if binop1 is higher precedence than binop2 *)
 let is_higher_precedence binop1 binop2 =
   match binop1 with
-  | Op_mul | Op_div | Op_and | Op_or -> not (isMulDiv binop2)
-  | Op_add | Op_sub                  -> not (isMulDiv binop2)
-                                        || isComparator binop2
-  | _                                -> false
+  | Op_mul | Op_div -> not (isMulDiv binop2)
+  | Op_add | Op_sub -> not (isMulDiv binop2)
+                       || isComparator binop2
+  | _               -> false
 
 (* ---- STRING CONVERSION FUNCTIONS FOR AST LEAVES ---- *)
 
