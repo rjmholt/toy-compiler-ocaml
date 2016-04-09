@@ -63,8 +63,8 @@ let parenthesise str =
 let rec string_of_unop_expr unop subexpr =
   let preserve_precedence_repr expr =
     match expr with
-    | Eunop _ | Ebinop _ -> parenthesise (string_of_expr expr)
-    | _                  -> string_of_expr expr
+    | Ebinop _ -> parenthesise (string_of_expr expr)
+    | _        -> string_of_expr expr
   in
   let sep = match unop with
   | Op_minus -> ""
@@ -324,6 +324,7 @@ let print_proc (ident, proc_params, proc_decls, body_stmts) =
   print_proc_param_list proc_params;
   printf ")\n";
   print_decl_list 1 proc_decls;
+  printf "\n";
   print_stmt_list 1 body_stmts;
   printf "end"
 

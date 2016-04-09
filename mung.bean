@@ -12,6 +12,12 @@ proc f(ref int x, val a_record y)
     x := 2 + 1 - 1 * 1;
     x := - ( 5 - 2 - 1 );
 
+    x := - (- 1);
+    x := -(-1);
+
+    y := not (not true);
+    y := not not true;
+
     write (1 - (2 - 3) + 4 - 3) * 2 * -1;
 
     x := 3 / (4 / 7);
