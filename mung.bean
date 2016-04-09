@@ -12,7 +12,17 @@ proc f(ref int x, val a_record y)
     x := 2 + 1 - 1 * 1;
     X := - ( 5 - 2 - 1 );
 
-    write (1 + (2 - 3) + 4 - 3) * 2 * -1;
+    write (1 - (2 - 3) + 4 - 3) * 2 * -1;
+
+    while 8 < 7 and not false do
+        x := 3;
+        x := 4;
+        if x > 8 then
+            x := 9;
+            x := 10;
+        fi
+        y := 10;
+    od
 end
 
 proc main()

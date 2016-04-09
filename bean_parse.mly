@@ -107,9 +107,9 @@ stmts:
 
 stmt:
   | stmt_body SEMICOLON              { $1 }
-  | IF expr THEN stmts FI            { If ($2, List.rev $4) }
-  | IF expr THEN stmts ELSE stmts FI { IfElse ($2, List.rev $4, List.rev $6) }
-  | WHILE expr DO stmts OD           { While ($2, List.rev $4) }
+  | IF expr THEN stmts FI            { If ($2, $4) }
+  | IF expr THEN stmts ELSE stmts FI { IfElse ($2, $4, $6) }
+  | WHILE expr DO stmts OD           { While ($2, $4) }
 
 stmt_body:
   | proc_call            { ProcCall $1 }
