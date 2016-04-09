@@ -228,8 +228,7 @@ let print_write indent writeable =
   match writeable with
   | WExpr expr  -> printf "write %s;\n" (string_of_expr expr)
   | WString str ->
-      let estr = String.escaped str in
-      printf "write %s;\n" (String.concat "" ["\"";estr;"\""])
+      printf "write %s;\n" (String.concat "" ["\"";str;"\""])
 
 (* Print a procedure call:
  *   - print the procedure ident

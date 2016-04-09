@@ -77,20 +77,8 @@ and read_string buf =
   parse
   (* Terminate string *)
   | '"'           { STR_CONST (Buffer.contents buf) }
-  (* NOTE: Not allowed in the spec
-  (* Escaped string delimiter *)
-  | '\\' '"'      { Buffer.add_char buf '"';  read_string buf lexbuf }
-  *)
-  (* New line *)
-  | '\\' 'n'      { Buffer.add_char buf '\n'; read_string buf lexbuf }
-  (* Carriage return *)
-  | '\\' 'r'      { Buffer.add_char buf '\r'; read_string buf lexbuf }
-  (* Tab *)
-  | '\\' 't'      { Buffer.add_char buf '\t'; read_string buf lexbuf }
-  (* Backslash *)
-  | '\\' '\\'     { Buffer.add_char buf '\\'; read_string buf lexbuf }
-  (* Other non-special characters *)
-  | [^ '"' '\\' '\n']  { Buffer.add_string buf (Lexing.lexeme lexbuf);
+  (* Other characters *)
+  | [^ '"' '\n']  { Buffer.add_string buf (Lexing.lexeme lexbuf);
                       read_string buf lexbuf }
   (* Weird characters are rejected *)
   | '\n' { raise (Syntax_error ("Illegal newline in string")) }
