@@ -21,8 +21,10 @@ open Bean_ast
 %token COMMA
 %token LPAREN RPAREN
 %token LBRACE RBRACE
+%token OR
+%token AND
+%token NOT
 %token EQ NEQ LT LEQ GT GEQ
-%token AND OR NOT
 %token PLUS MINUS MUL DIV
 %token COLON
 %token SEMICOLON

@@ -1,4 +1,4 @@
-typedef { f1: int, f2: {g1: bool, g2: bool}} a_record
+typedef { a: int, b: {f: bool, g: bool}} a_record
 
 typedef {a : int, b : int, c : bool} my_record
 
@@ -15,11 +15,16 @@ proc f(ref int x, val a_record y)
 
     x := - (- 1);
     x := -(-1);
+    x := 1 + 1 + 1;
 
     y := not (not true);
     y := not not true;
 
     y := (true or false) and true;
+    y := (false and true) or true;
+    y := false and (true or true);
+    y := (not true) != true;
+    y := not (true != true);
 
     write (1 - (2 - 3) + 4 - 3) * 2 * -1;
 
@@ -50,7 +55,7 @@ proc main()
         fi
     od
     read mung;
-    m := {g1 = 12, duck = true};
+    m := {g = 12, duck = true};
     l := 3 < 4/2 and true;
     l := 3 < 2 and 2 < 3;
     f(x);
