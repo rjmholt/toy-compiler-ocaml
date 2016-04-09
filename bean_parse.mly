@@ -60,7 +60,7 @@ typedef:
 typespec:
   | beantype             { TSBeantype    $1 }
   | definedtype          { TSDefinedtype $1 }
-  | LBRACE fields RBRACE { TSFieldStruct $2 }
+  | LBRACE fields RBRACE { TSFieldStruct (List.rev $2) }
 
 fields:
   | fields COMMA field { $3 :: $1 }

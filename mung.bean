@@ -1,9 +1,17 @@
 typedef { f1: int, f2: {g1: bool, g2: bool}} a_record
 
+typedef {a : int, b : int, c : bool} my_record
+
 typedef bool myBool
 
 proc f(ref int x, val a_record y)
-    write "Hello";
+    int m;
+    int n;
+    int x;
+
+    x := 2 + 1 - 1 * 1;
+
+    write (1 + (2 - 3) + 4 - 3) * 2 * -1;
 end
 
 proc main()
