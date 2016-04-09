@@ -975,7 +975,24 @@ state 79
 	binop : expr . GEQ expr  (66)
 	unop : NOT expr .  (68)
 
-	.  reduce 68
+	EQ  shift 81
+	NEQ  shift 82
+	LT  shift 83
+	LEQ  shift 84
+	GT  shift 85
+	GEQ  shift 86
+	PLUS  shift 89
+	MINUS  shift 90
+	MUL  shift 91
+	DIV  shift 92
+	THEN  reduce 68
+	DO  reduce 68
+	COMMA  reduce 68
+	RPAREN  reduce 68
+	RBRACE  reduce 68
+	AND  reduce 68
+	OR  reduce 68
+	SEMICOLON  reduce 68
 
 
 state 80
@@ -1567,6 +1584,7 @@ state 110
 	LEQ  shift 84
 	GT  shift 85
 	GEQ  shift 86
+	AND  shift 87
 	PLUS  shift 89
 	MINUS  shift 90
 	MUL  shift 91
@@ -1576,7 +1594,6 @@ state 110
 	COMMA  reduce 60
 	RPAREN  reduce 60
 	RBRACE  reduce 60
-	AND  reduce 60
 	OR  reduce 60
 	SEMICOLON  reduce 60
 

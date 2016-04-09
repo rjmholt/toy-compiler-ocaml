@@ -21,7 +21,8 @@ let needs_parens binop ?isRHS:(isRHS = false) subop =
   | Op_sub -> not (isMulDiv subop) && (not (isAddSub subop) || isRHS)
   | Op_add -> not (isMulDiv subop || isAddSub subop)
   | Op_eq | Op_neq | Op_gt | Op_geq | Op_lt | Op_leq -> isAndOr subop
-  | Op_and | Op_or -> false
+  | Op_and -> subop = Op_or
+  | Op_or  -> false
 
 (* ---- STRING CONVERSION FUNCTIONS FOR AST LEAVES ---- *)
 

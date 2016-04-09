@@ -28,12 +28,13 @@ open Bean_ast
 %token SEMICOLON
 %token EOF
 
-%left     AND OR
+%left     OR
+%left     AND 
+%nonassoc UNOT
 %nonassoc EQ NEQ LT LEQ GT GEQ
 %left     PLUS MINUS
 %left     MUL DIV
 %nonassoc UMINUS
-%nonassoc UNOT
 
 %type <Bean_ast.program> program
 

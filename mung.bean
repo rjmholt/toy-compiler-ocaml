@@ -8,6 +8,7 @@ proc f(ref int x, val a_record y)
     int m;
     int n;
     int x;
+    bool y;
 
     x := 2 + 1 - 1 * 1;
     x := - ( 5 - 2 - 1 );
@@ -17,6 +18,8 @@ proc f(ref int x, val a_record y)
 
     y := not (not true);
     y := not not true;
+
+    y := (true or false) and true;
 
     write (1 - (2 - 3) + 4 - 3) * 2 * -1;
 
