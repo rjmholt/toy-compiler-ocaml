@@ -28,16 +28,17 @@ let string_of_binop binop =
   | Op_gt   -> " > "
   | Op_geq  -> " >= "
 
+(* String representations of unary operators *)
 let string_of_unop unop =
   match unop with
   | Op_minus -> "-"
-  | Op_not   -> "not "
+  | Op_not   -> "not"
 
 (* Place parentheses around a string *)
 let parenthesise str =
   String.concat str ["(";")"]
 
-
+(* Binding precedences of operators *)
 let op_binding expr =
   match expr with
   | Ebinop (_, Op_or,   _) -> 1
@@ -57,47 +58,75 @@ let op_binding expr =
   | _                      -> 8 (* all other exprs bind tighter*)
 
 
+(* String representation of a whole expression *)
 let rec string_of_expr expr =
   match expr with
-  | Ebool  ebool -> string_of_bool ebool
-  | Eint   eint  -> string_of_int  eint
-  | Elval  lval  -> string_of_lval lval
-  | _            -> string_of_op   expr (*op is either a unop or binop*)
+  | Ebool  ebool                 -> string_of_bool ebool
+  | Eint   eint                  -> string_of_int  eint
+  | Elval  lval                  -> string_of_lval lval
+  | Eunop  (unop, subexpr)       -> string_of_unop_expr unop subexpr
+  | Ebinop (lexpr, binop, rexpr) -> string_of_binop_expr binop lexpr rexpr
 
+(* String of a unary operator application expression *)
 and
-string_of_op expr =
-  match expr with
-  | Eunop  (unop, r)     -> String.concat "" [ string_of_unop   unop   ;
-                                               print_paren_unop expr r ]
-  | Ebinop (l, binop, r) -> String.concat "" [ print_paren     expr l false ;
-                                               string_of_binop binop        ;
-                                               print_paren     expr r true  ]
-  | _ -> "" (* unreachable, but supresses stupid warnings *)
+string_of_unop_expr unop subexpr =
+  let concat =
+    match unop with
+    | Op_minus -> String.concat ""
+    | Op_not   -> String.concat " "
+  in
+  concat [string_of_unop unop; paren_string_unop (Eunop (unop, subexpr)) subexpr]
 
+(* String of a binary operator application expression *)
 and
-print_paren_unop expr subexpr =
-  if    (op_binding subexpr) < (op_binding expr)
+string_of_binop_expr binop lexpr rexpr =
+  String.concat ""
+    [paren_string (Ebinop (lexpr, binop, rexpr)) lexpr;
+     string_of_binop binop;
+     paren_string (Ebinop (lexpr, binop, rexpr)) rexpr ~isRHS:true]
+
+(* Returns the string of the subexpression of a unary
+ * operator, surrounded with parentheses if they are required
+ * to preserve the order of operations in the AST             *)
+and
+paren_string_unop expr subexpr =
+  if   (op_binding subexpr) < (op_binding expr)
   then parenthesise (string_of_expr subexpr)
   else string_of_expr subexpr
 
+(* Returns the string of the subexpression of a binary
+ * operation, surrounded with parentheses if they are required,
+ * as in the following circumstances:
+ *   - the precedence of the subexpression operator is lower
+ *   - the precedence of the subexpression operator is the
+ *     same, the binary operator is not commutative, and
+ *     the subexpression is on the right hand side               *)
 and
-print_paren expr subexpr isRHS =
-  let is_commutative (Ebinop (_, binop, _)) =
+paren_string expr ?isRHS:(isRHS=false) subexpr =
+  let is_commutative binop =
       match binop with
       | Op_and | Op_or  | Op_eq
       | Op_neq | Op_add | Op_mul -> true
       | _                        -> false
   in
-  if (op_binding subexpr) < (op_binding expr)
-  then parenthesise (string_of_expr subexpr)
-  else match (op_binding subexpr) = (op_binding expr),
-             is_commutative expr,
-             isRHS
-       with
-       | true, false, true -> parenthesise (string_of_expr subexpr)
-       | _ , _ , _         -> string_of_expr subexpr
-
-
+  (* Parens if subex is of lower precedence *)
+  if (op_binding subexpr) < (op_binding expr) then
+    parenthesise (string_of_expr subexpr)
+  (* Parens for right hand side of same precedence non-commutative operators *)
+  else
+    let paren_if_rhs binop =
+      let rhsNeedsParens = (op_binding subexpr = op_binding expr)
+        && not (is_commutative binop)
+        && isRHS
+      in
+      if rhsNeedsParens then
+        parenthesise (string_of_expr subexpr)
+      else
+        string_of_expr subexpr
+    in
+    match expr with
+    | Ebinop (_, binop, _) -> paren_if_rhs binop
+    | _                    -> string_of_expr subexpr
 
 (* Rval struct assignments look like:
  *     {x = true, y = {a = 8+10, b = true or v}}    *)
