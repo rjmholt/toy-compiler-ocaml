@@ -75,21 +75,21 @@ string_of_unop_expr unop subexpr =
     | Op_minus -> String.concat ""
     | Op_not   -> String.concat " "
   in
-  concat [string_of_unop unop; paren_string_unop (Eunop (unop, subexpr)) subexpr]
+  concat [string_of_unop unop; paren_unop_string (Eunop (unop, subexpr)) subexpr]
 
 (* String of a binary operator application expression *)
 and
 string_of_binop_expr binop lexpr rexpr =
   String.concat ""
-    [paren_string (Ebinop (lexpr, binop, rexpr)) lexpr;
+    [paren_binop_string (Ebinop (lexpr, binop, rexpr)) lexpr;
      string_of_binop binop;
-     paren_string (Ebinop (lexpr, binop, rexpr)) rexpr ~isRHS:true]
+     paren_binop_string (Ebinop (lexpr, binop, rexpr)) rexpr ~isRHS:true]
 
 (* Returns the string of the subexpression of a unary
  * operator, surrounded with parentheses if they are required
  * to preserve the order of operations in the AST             *)
 and
-paren_string_unop expr subexpr =
+paren_unop_string expr subexpr =
   if   (op_binding subexpr) < (op_binding expr)
   then parenthesise (string_of_expr subexpr)
   else string_of_expr subexpr
@@ -102,7 +102,7 @@ paren_string_unop expr subexpr =
  *     same, the binary operator is not commutative, and
  *     the subexpression is on the right hand side               *)
 and
-paren_string expr ?isRHS:(isRHS=false) subexpr =
+paren_binop_string expr ?isRHS:(isRHS=false) subexpr =
   let is_commutative binop =
       match binop with
       | Op_and | Op_or  | Op_eq
