@@ -15,18 +15,18 @@ let rec string_of_lval lval =
 (* Binary operator string representations *)
 let string_of_binop binop =
   match binop with
-  | Op_add  -> " + "
-  | Op_sub  -> " - "
-  | Op_mul  -> " * "
-  | Op_div  -> " / "
-  | Op_and  -> " and "
-  | Op_or   -> " or "
-  | Op_eq   -> " = "
-  | Op_neq  -> " != "
-  | Op_lt   -> " < "
-  | Op_leq  -> " <= "
-  | Op_gt   -> " > "
-  | Op_geq  -> " >= "
+  | Op_add  -> "+"
+  | Op_sub  -> "-"
+  | Op_mul  -> "*"
+  | Op_div  -> "/"
+  | Op_and  -> "and"
+  | Op_or   -> "or"
+  | Op_eq   -> "="
+  | Op_neq  -> "!="
+  | Op_lt   -> "<"
+  | Op_leq  -> "<="
+  | Op_gt   -> ">"
+  | Op_geq  -> ">="
 
 (* String representations of unary operators *)
 let string_of_unop unop =
@@ -80,7 +80,7 @@ string_of_unop_expr unop subexpr =
 (* String of a binary operator application expression *)
 and
 string_of_binop_expr binop lexpr rexpr =
-  String.concat ""
+  String.concat " "
     [paren_binop_string (Ebinop (lexpr, binop, rexpr)) lexpr;
      string_of_binop binop;
      paren_binop_string (Ebinop (lexpr, binop, rexpr)) rexpr ~isRHS:true]
