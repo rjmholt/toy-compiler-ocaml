@@ -63,9 +63,9 @@ let main () =
       Bean_pprint.print_program Format.std_formatter prog 
     | Compile -> ()
   with
-  | Bean_lex.Syntax_error msg ->
+  | Bean_lex.Lex_error msg ->
       let (fname, ln, col) = get_lex_pos lexbuf in
-      printf "%s at line %i, column %i in file %s\n"
+      printf "Lexer error: %s at line %i, column %i in file %s\n"
          msg ln col fname
   | Parsing.Parse_error ->
       let (fname, ln, col) = get_lex_pos lexbuf in

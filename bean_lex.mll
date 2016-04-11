@@ -7,7 +7,7 @@
 open Bean_parse
 
 (* Defines helpful error messages *)
-exception Syntax_error of string
+exception Lex_error of string
 }
 
 let digit   = ['0' - '9']
@@ -47,6 +47,8 @@ rule token = parse
 
   (* Begin a string -- see second lex rule *)
   | '"'  { read_string (Buffer.create 20) lexbuf }
+
+  (* Other syntactic elements *)
   | ','  { COMMA }
   | '.'  { DOT }
   | '('  { LPAREN }
@@ -72,12 +74,11 @@ rule token = parse
   (* Idents have a low rule to not conflict with keywords *)
   | ident as lxm { IDENT lxm }
   | eof          { EOF }
-  | _            { raise (Syntax_error
+  | _            { raise (Lex_error
                           ("Unknown symbol \""^(Lexing.lexeme lexbuf)^"\"")) }
 
 (* read_string processes strings to ensure that contain only legal characters
-   and that they are terminated, then returns them as a STR_CONST.
-  *)
+   and that they are terminated, then returns them as a STR_CONST.            *)
 and read_string buf =
   parse
   (* Terminate string *)
@@ -86,9 +87,9 @@ and read_string buf =
   | [^ '"' '\n' '\t']  { Buffer.add_string buf (Lexing.lexeme lexbuf);
                          read_string buf lexbuf }
   (* Weird characters are rejected *)
-  | '\n' { raise (Syntax_error ("Illegal newline in string")) }
-  | '\t' { raise (Syntax_error ("Illegal tab character in string")) }
-  | _    { raise (Syntax_error
+  | '\n' { raise (Lex_error ("Illegal newline in string")) }
+  | '\t' { raise (Lex_error ("Illegal tab character in string")) }
+  | _    { raise (Lex_error
                 ("Illegal string character: \""^(Lexing.lexeme lexbuf)^"\"")) }
   (* Programs can't terminate with an open string *)
-  | eof  { raise (Syntax_error "End of file reached before string terminated") }
+  | eof  { raise (Lex_error "End of file reached before string terminated") }
