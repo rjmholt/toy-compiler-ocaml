@@ -83,8 +83,8 @@ and read_string buf =
   (* Terminate string *)
   | '"'           { STR_CONST (Buffer.contents buf) }
   (* Legal characters *)
-  | [^ '"' '\n']  { Buffer.add_string buf (Lexing.lexeme lexbuf);
-                      read_string buf lexbuf }
+  | [^ '"' '\n' '\t']  { Buffer.add_string buf (Lexing.lexeme lexbuf);
+                         read_string buf lexbuf }
   (* Weird characters are rejected *)
   | '\n' { raise (Syntax_error ("Illegal newline in string")) }
   | '\t' { raise (Syntax_error ("Illegal tab character in string")) }
