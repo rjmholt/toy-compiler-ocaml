@@ -103,30 +103,18 @@ paren_unop_string expr subexpr =
  *     the subexpression is on the right hand side               *)
 and
 paren_binop_string expr ?isRHS:(isRHS=false) subexpr =
-  let is_commutative binop =
-      match binop with
-      | Op_and | Op_or  | Op_eq
-      | Op_neq | Op_add | Op_mul -> true
-      | _                        -> false
-  in
   (* Parens if subex is of lower precedence *)
   if (op_binding subexpr) < (op_binding expr) then
     parenthesise (string_of_expr subexpr)
   (* Parens for right hand side of same precedence non-commutative operators *)
   else
-    let paren_if_rhs binop =
-      let rhsNeedsParens = (op_binding subexpr = op_binding expr)
-        && not (is_commutative binop)
-        && isRHS
-      in
-      if rhsNeedsParens then
-        parenthesise (string_of_expr subexpr)
-      else
-        string_of_expr subexpr
-    in
     match expr with
-    | Ebinop (_, binop, _) -> paren_if_rhs binop
-    | _                    -> string_of_expr subexpr
+    | Ebinop _ ->
+        if (op_binding subexpr = op_binding expr) && isRHS then
+          parenthesise (string_of_expr subexpr)
+        else
+          string_of_expr subexpr
+    | _         -> string_of_expr subexpr
 
 (* Rval struct assignments look like:
  *     {x = true, y = {a = 8+10, b = true or v}}    *)
