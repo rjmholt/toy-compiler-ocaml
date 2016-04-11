@@ -1,3 +1,10 @@
+(* ==================================================================== *)
+(* Pretty Printer for the Bean Language                                 *)
+(* ------------------------------------                                 *)
+(* This module reads a Bean program as stored in a Bean AST, of type    *)
+(* Bean_ast.t, and prints it prettily and correctly, demonstrating the  *)
+(* parser and lexer that works to populate the AST                      *)
+
 open Bean_ast
 open Format
 
