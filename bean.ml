@@ -1,3 +1,19 @@
+(* ------------------------ *)
+(* Team BUFFALO:            *)
+(*   Andrew Morton: 522139  *)
+(*   Leon Drygala:  772207  *)
+(*   Robert Holt:   388648  *)
+(* ------------------------ *)
+
+(* ============================================== *)
+(* Main Module of the Bean Compiler               *)
+(* --------------------------------               *)
+(* This module orchestrates the Bean compiler.    *)
+(* It reads in a file or from stdin, and          *)
+(* and depending on the flag, either compiles or  *)
+(* pretty prints a Bean program                   *)
+(* ============================================== *)
+
 open Format
 module P = Bean_parse
 module L = Lexing
