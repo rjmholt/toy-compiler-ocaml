@@ -34,11 +34,11 @@ let string_of_unop unop =
   | Op_minus -> "-"
   | Op_not   -> "not"
 
-(* Place parentheses around a string *)
+(* Places parentheses around a string *)
 let parenthesise str =
   String.concat str ["(";")"]
 
-(* Binding precedences of operators *)
+(* Binding precedences of operators in the bean grammar *)
 let op_binding expr =
   match expr with
   | Ebinop (_, Op_or,   _) -> 1
@@ -75,9 +75,10 @@ string_of_unop_expr unop subexpr =
     | Op_minus -> String.concat ""
     | Op_not   -> String.concat " "
   in
-  concat [string_of_unop unop; paren_unop_string (Eunop (unop, subexpr)) subexpr]
+  concat [string_of_unop unop;
+          paren_unop_string (Eunop (unop, subexpr)) subexpr]
 
-(* String of a binary operator application expression *)
+(* returns the string of a binary operation with its subexpressions *)
 and
 string_of_binop_expr binop lexpr rexpr =
   String.concat " "
@@ -151,10 +152,9 @@ let rec string_of_typespec ts =
   match ts with
   | TSBeantype bt        -> string_of_beantype bt
   | TSDefinedtype dt     -> dt
-  | TSFieldStruct fields ->
-      let fstrs = List.map string_of_field fields in
-      let body = String.concat ", " fstrs in
-      String.concat body ["{";"}"]
+  | TSFieldStruct fields -> let fstrs = List.map string_of_field fields in
+                            let body = String.concat ", " fstrs in
+                            String.concat body ["{";"}"]
 
 (* Each field looks like:
  *     <ident> : <typespec>  *)
@@ -176,7 +176,7 @@ let string_of_pass pass_type =
 
 (* ---- PRINTING HELPER FUNCTIONS ---- *)
 
-(* Print an ident of level n by printing 2*n spaces *)
+(* Print an indent of level n by printing 4*n spaces *)
 let print_indent indent_level =
   for i = 1 to indent_level do
     printf "    "
