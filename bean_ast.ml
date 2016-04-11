@@ -91,7 +91,10 @@ type proc_param = (pass_type * typespec * ident)
 
 (* Statements can be:
  *   - assignment: using ":="
- *   - read:                     *)
+ *   - read: where bean reads from stdin into an lvalue
+ *   - write: print a writeable
+ *   - if, if-else, while: conditional statements
+ *   - proc-call: calling a procedure                    *)
 type stmt =
   | Assign   of (lvalue * rvalue)
   | Read     of lvalue
@@ -101,13 +104,18 @@ type stmt =
   | While    of (expr * stmt list)
   | ProcCall of (ident * expr list)
 
+(* A declaration declares an ident as having a type *)
 type decl = (ident * typespec)
 
+(* A procedure has an ident, a list of parameters and a body
+ * composed of declarations followed by statements           *)
 type proc = (ident * proc_param list * decl list * stmt list)
 
+(* A bean program is typedefs followed by procedure definitions *)
 type program = {
   typedefs : typedef list;
   procs    : proc    list
 }
 
+(* Convenient top level type alias to pass to other modules *)
 type t = program
