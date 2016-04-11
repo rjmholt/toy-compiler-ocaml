@@ -1,7 +1,13 @@
-/* ocamlyacc parser for bean */
-/* See the AST for better structural definitions of a bean program */
+/* =========================================================== */
+/* Ocamlyacc parser for the Bean Language                      */
+/* ----------------------------------------------------------- */
+/* Parser used by the Bean Lexer (bean_lex.mll) in order to    */
+/* run semantic anaylses on the generated tokens. Opens        */
+/* bean_ast.ml to convert parsed language to an abstract       */
+/* syntax tree                                                 */
+/* =========================================================== */
 %{
-open Bean_ast
+  open Bean_ast
 %}
 
 %token <bool>   BOOL_CONST
@@ -42,13 +48,17 @@ open Bean_ast
 
 %start program
 %%
+/* Grammer Rules for the parser follow */
 
+/* Start symbol for the entire Bean program */
 program:
   typedefs procs { { typedefs = List.rev $1 ; procs = List.rev $2 } }
 
+/* rule set for all type definitions */
 typedefs:
   | typedefs typedef { $2 :: $1 }
   |                  { [] }
+
 
 beantype:
   | BOOL { TBool }
@@ -101,7 +111,7 @@ decls:
 decl:
   typespec IDENT SEMICOLON { ($2, $1) }
 
-/* Builds stmts in non-reverse, right-recursive order */
+(/*/ Builds stmts in non-reverse, right-recursive order */
 /* This is to eliminate a parser conflict error, but ideally
    the grammar could be restructured to eliminate it         */
 stmts:
