@@ -13,7 +13,8 @@ BEANFILES="bean.ml
            bean_pprint.ml \
            bean_pprint.mli \
            Makefile \
-           Makefile.depend"
+           Makefile.depend \
+           README.txt"
 
 
 if [ -e $BEANFLD ]; then
@@ -31,3 +32,5 @@ for file in $BEANFILES; do
 done
 
 zip -r -o $BEANZIP $BEANFLD
+
+rm -rf $BEANFLD

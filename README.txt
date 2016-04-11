@@ -1,60 +1,54 @@
+Simple Bean Compiler
+====================
 
-With this README file you should also have found these:
+With this README should be the following files:
 
-Makefile:  
-    A makefile for the COMP90045 project 2016
+    * bean.ml
+    * bean_lex.mll
+    * bean_parse.mly
+    * bean_ast.ml
+    * bean_ast.mli
+    * bean_pprint.ml
+    * bean_pprint.mli
+    * Makefile
 
-Makefile.depend:
-    A listing of the file dependencies
+These files compose the Bean compiler source code (so far).
 
-sprout.ml:
-    The main module
+Building Bean
+-------------
+If your working directory is otherwise empty, run:
+    "make"
+to construct the Bean compiler executable ("bean").
 
-sprout_ast.ml:
-    The data structures that make up the (currently limited) AST
+If you wish to recompile it, run:
+    "make clobber"
+first to clean the directory of old intermediary OCaml files
+before running "make" again. Other Makefile commands are documented
+in that file.
 
-sprout_ast.mli:
-    The interface file for sprout_ast.ml
+Running the Bean Compiler
+-------------------------
+To run the Bean compiler, execute like so:
+    "bean [-p] <bean-filepath>"
+Or, if the Bean executable is not on your $PATH, but in your local
+directory:
+    "./bean [-p] <bean-filepath>"
+For example:
+    "./bean mung.bean"
+will compile the file "mung.bean" in the current directory.
 
-sprout_lex.mll:
-    An ocamllex specification for sprout
+No flag will call the Bean compiler. This currently compiles very minimal
+programs that compromise heavily on execution functionality, and is not
+recommended for use.
 
-sprout_parse.mly:
-    An ocamlyacc specification for sprout
+The "-p" flag will call the Bean pretty printer on the program specified.
+This option is currently well-supported.
 
-sprout_pprint.ml:
-    A pretty-printer - well, not really; for now this is just a stub
-
-sprout_pprint.mli:
-    The interface file for sprout_pprint.ml
-
-To get started, study these files, in particular sprout_ast.ml,
-sprout_lex.mll, and sprout_parse.mly.  On a Unix machine you should 
-be able to just type
-
-    make
-
-and that should generate some files for you, including the executable
-sprout. 
-
-Write a small sprout program, like this:
-
-int mung;
-read mung;
-mung := 2*mung + 42;
-write mung;
-
-Say this program is in file mung.bean; now you should be able to run
-
-    sprout -p mung.bean
-
-and something will happen (actually nothing very interesting, since
-there is no real pretty-printer yet).  But at least you should not 
-get error messages.
-
-If your Unix system doesn't seem to recognise `sprout', that
-could be because your PATH variable hasn't been set correctly.
-For now, just try instead
-
-    ./sprout -p mung.bean
-
+Not specifiying a file will cause Bean to compile whatever is passed to it
+over stdin. This may be useful if you are a power-user or don't like text
+editors, and instead prefer to write programs like this:
+    "cat <<EOF | ./bean
+    proc main()
+        write "Hello, World!";
+    end
+    EOF"
