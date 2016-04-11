@@ -10,11 +10,15 @@
   open Bean_ast
 %}
 
+/* Literal tokens */
 %token <bool>   BOOL_CONST
 %token <int>    INT_CONST
 %token <string> STR_CONST
+
+/* Identifier token */
 %token <string> IDENT
 
+/* Other language tokens */
 %token BOOL INT
 %token WRITE READ
 %token ASSIGN
@@ -36,6 +40,7 @@
 %token SEMICOLON
 %token EOF
 
+/* Operator precedence in increasing order */
 %left     OR
 %left     AND 
 %nonassoc UNOT
@@ -44,118 +49,155 @@
 %left     MUL DIV
 %nonassoc UMINUS
 
+/* Final type of bean parse tree at top level */
 %type <Bean_ast.program> program
 
 %start program
 %%
-/* Grammer Rules for the parser follow */
 
-/* Start symbol for the entire Bean program */
+/* ---- Parser Grammar Rules ---- */
+
+/* Start symbol for Bean program production */
 program:
   typedefs procs { { typedefs = List.rev $1 ; procs = List.rev $2 } }
 
-/* rule set for all type definitions */
+/* Type definition list rule */
 typedefs:
   | typedefs typedef { $2 :: $1 }
   |                  { [] }
 
+/* Single typedef rule */
+typedef:
+  TYPEDEF typespec IDENT { ($2, $3) }
 
+
+/* Native bean type rules */
 beantype:
   | BOOL { TBool }
   | INT  { TInt  }
 
+/* User defined types -- equivalent to idents */
 definedtype:
   IDENT { $1 }
 
-typedef:
-  TYPEDEF typespec IDENT { ($2, $3) }
-
+/* Bean type specifiers */
 typespec:
   | beantype             { TSBeantype    $1 }
   | definedtype          { TSDefinedtype $1 }
   | LBRACE fields RBRACE { TSFieldStruct (List.rev $2) }
 
+/* Fields of a struct-like type specifier */
 fields:
   | fields COMMA field { $3 :: $1 }
   | field              { [$1] }
 
+/* A single struct field */
 field:
   IDENT COLON typespec { ($1, $3) }
 
+/* Bean procedure list rule */
 procs:
   | procs proc { $2 :: $1 }
   |            { [] }
 
+/* Rule for producing a single procedure */
 proc:
   PROC IDENT LPAREN proc_params RPAREN decls stmts END { ($2,
                                                           List.rev $4,
                                                           List.rev $6,
                                                           $7) }
 
+/* Parameter list in a procedure header (between the parentheses) */
 proc_params:
   | proc_params COMMA proc_param { $3 :: $1 }
   | proc_param                   { [$1] }
   |                              { [] }
 
+/* Individual parameter */
 proc_param:
   pass_type typespec IDENT { ($1, $2, $3) }
 
+/* The way a parameter is passed to the procedure,
+   either by value or by reference                 */
 pass_type:
   | VAL { Pval }
   | REF { Pref }
 
+/* A list of declarations in a bean procedure */
 decls:
   | decls decl { $2 :: $1 }
   |            { [] }
 
+/* A single declaration in the list of declarations */
 decl:
   typespec IDENT SEMICOLON { ($2, $1) }
 
-(/*/ Builds stmts in non-reverse, right-recursive order */
+/* The list of statements in a bean procedure */
+/* Builds stmts in non-reverse, right-recursive order */
 /* This is to eliminate a parser conflict error, but ideally
    the grammar could be restructured to eliminate it         */
 stmts:
   | stmt stmts { $1 :: $2 }
   | stmt       { [$1] }
 
+/* A single statement is either a semi-colon terminated statement,
+   or a conditional, being if, if-else or while                    */
 stmt:
   | stmt_body SEMICOLON              { $1 }
   | IF expr THEN stmts FI            { If ($2, $4) }
   | IF expr THEN stmts ELSE stmts FI { IfElse ($2, $4, $6) }
   | WHILE expr DO stmts OD           { While ($2, $4) }
 
+/* A statement that precedes a semicolon */
 stmt_body:
   | proc_call            { ProcCall $1 }
   | READ lvalue          { Read     $2 }
   | WRITE writeable      { Write    $2 }
   | lvalue ASSIGN rvalue { Assign ($1, $3) }
 
+/* A procedure call, that takes a named function and
+   a list of expressions to pass in                   */
 proc_call:
   IDENT LPAREN exprs RPAREN { ($1, List.rev $3) }
 
+/* A list of expressions, being the expressions passed in to
+   a bean procedure, separated by a comma                    */
 exprs:
   | exprs COMMA expr { $3 :: $1 }
   | expr             { [$1] }
   |                  { [] }
 
+/* An rvalue for assignment, can be a simple expression or
+   a struct field initialiser                              */
 rvalue:
   | expr        { Rexpr   $1 }
   | struct_init { Rstruct $1 }
 
-lvalue:
-  | IDENT DOT lvalue { LField ($3, $1) }
-  | IDENT            { LId $1 }
-
+/* A struct initialiser, like "{x = 1, y = true}", sets the
+   fields of an lvalue that denotes a structured type       */
 struct_init:
   LBRACE struct_assigns RBRACE { List.rev $2 }
 
+/* The list of field assignments in a struct initialiser */
 struct_assigns:
   | struct_assigns COMMA struct_assign  { $3 :: $1 }
   | struct_assign                       { [$1] }
 
+/* A single field assignment in a struct initialiser */
 struct_assign:
   IDENT EQ rvalue { ($1, $3) }
 
+/* An lvalue is either a simple identifier for a simply typed
+   identifier, or a field accessor like "x.y.z", which denotes
+   a field of a higher lvalue                                  */
+lvalue:
+  | IDENT DOT lvalue { LField ($3, $1) }
+  | IDENT            { LId $1 }
+
+/* A bean expression, being either a literal, an lvalue,
+   a binary operator applied to two subexpressions, a unary operator
+   applied to a subexpression, or an expression in parentheses
+   to denote increased precedence of the expression within           */
 expr:
   | literal            { $1 }
   | lvalue             { Elval $1 }
@@ -163,10 +205,13 @@ expr:
   | unop               { $1 }
   | LPAREN expr RPAREN { $2 }
 
+/* A literal is either a boolean or integer literal,
+   such as "true" or "8123"                          */
 literal:
   | BOOL_CONST { Ebool $1 }
   | INT_CONST  { Eint  $1 }
 
+/* A binary operation, applied to two subexpressions */
 binop:
   | expr PLUS  expr { Ebinop ($1, Op_add, $3) }
   | expr MINUS expr { Ebinop ($1, Op_sub, $3) }
@@ -181,11 +226,12 @@ binop:
   | expr GT    expr { Ebinop ($1, Op_gt,  $3) }
   | expr GEQ   expr { Ebinop ($1, Op_geq, $3) }
 
+/* A unary operator, applied to a single subexpression */
 unop:
   | MINUS expr %prec UMINUS { Eunop (Op_minus, $2) }
   | NOT   expr %prec UNOT   { Eunop (Op_not,   $2) }
 
- /* Deal with 'write' being able to print strings too */
+/* Either a bean expression or a string literal */
 writeable:
   | expr      { WExpr   $1 }
   | STR_CONST { WString $1 }

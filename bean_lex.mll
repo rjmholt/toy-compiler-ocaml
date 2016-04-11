@@ -1,7 +1,9 @@
-(* Lexer for the bean language specification *)
-
-(* Reads from an OCaml in_channel and returns a       *)
-(* tokenised version for processing by bean_parse.mly *)
+(* =========================================================== *)
+(* Lexer for the bean language specification                   *)
+(* -----------------------------------------                   *)
+(* Reads from an OCaml in_channel and returns a                *)
+(* tokenised version for processing by bean_parse.mly          *)
+(* =========================================================== *)
 
 {
 open Bean_parse
