@@ -2,10 +2,11 @@
 
 set -e
 
-BEANFLD="beanCore"
-BEANZIP="bean.zip"
+BEAN_ARCHIVE="parser.tar.gz"
 
-BEANFILES="bean.ml
+BEANFLD="beanCore"
+
+BEANFILES="bean.ml \
            bean_ast.ml \
            bean_ast.mli \
            bean_lex.mll \
@@ -31,6 +32,8 @@ for file in $BEANFILES; do
   cp $file $BEANFLD
 done
 
-zip -r -o $BEANZIP $BEANFLD
-
+cd $BEANFLD
+tar cvzf $BEAN_ARCHIVE --owner=root --group=student $BEANFILES
+cd ..
+mv $BEANFLD/$BEAN_ARCHIVE .
 rm -rf $BEANFLD

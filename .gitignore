@@ -12,3 +12,5 @@ Members.txt
 beanCore/
 *.zip
 name.sh
+*.tar
+*.gz
