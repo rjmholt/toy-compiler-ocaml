@@ -1,8 +1,8 @@
 (* Specification of an AST for bean *)
+(* SEE bean_ast.ml FOR FULL DOCUMENTATION *)
+
 type ident = string
  
-(* Define types and typedefs as mutually recusive so *)
-(* typedefs can contain themselves                   *)
 type beantype =
   | TBool
   | TInt
@@ -49,7 +49,6 @@ type writeable =
   | WExpr of expr
   | WString of string
 
-(* Will need to AST elements with additional data.  *)
 type struct_init = (ident * rvalue) list
 
 and rvalue =
