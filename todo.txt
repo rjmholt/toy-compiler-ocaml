@@ -1,0 +1,9 @@
+not (true or false)  -->   not true or false
+(Currently prints as "not (true or false)")
+
+proc f(, val int x)
+is a valid proc header. Need to fix the parser
+
+Fix the proc grammar so that proc body is separate. Then
+we can hopefully remove the shift-reduce error in stmts decls.
+This will require changing the AST

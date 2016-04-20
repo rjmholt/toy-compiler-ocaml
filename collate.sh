@@ -22,10 +22,6 @@ if [ -e $BEANFLD ]; then
   rm -rf $BEANFLD
 fi
 
-if [ -f $BEANZIP ]; then
-  rm -f $BEANZIP
-fi
-
 mkdir $BEANFLD
 
 for file in $BEANFILES; do
