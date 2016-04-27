@@ -1,5 +1,8 @@
 not (true or false)  -->   not true or false
 (Currently prints as "not (true or false)")
+	Leon: I think this keeping brackets is correct. "not" binds 
+	tigher than "or" thus removing brackets will change the meaning 
+	of "not (true or false)"
 
 proc f(, val int x)
 is a valid proc header. Need to fix the parser
@@ -7,3 +10,18 @@ is a valid proc header. Need to fix the parser
 Fix the proc grammar so that proc body is separate. Then
 we can hopefully remove the shift-reduce error in stmts decls.
 This will require changing the AST
+
+Running programm without -p does not print error message "Sorry, 
+cannot generate code yet"
+
+Giving arguments in main does not error
+
+If a program does not contain main it does not error
+
+should_remove := 3 * (3 * 3); but does not. (It should remove this 
+right?)
+
+should_remove := 3 + (3 + 3); but does not
+
+should_keep := (5 < 3) < k; but does not. (Is this too hard 
+for parser?)
