@@ -88,7 +88,7 @@ definedtype:
 /* Bean type specifiers */
 typespec:
   | beantype             { TSBeantype    $1 }
-  | definedtype          { TSDefinedtype $1 }
+  | definedtype          { TSDefinedtype ($1, sym_pos ()) }
   | LBRACE fields RBRACE { TSFieldStruct (List.rev $2) }
 
 /* Fields of a struct-like type specifier */

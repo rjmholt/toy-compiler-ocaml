@@ -33,7 +33,7 @@ field_struct = field list
 and
 typespec =
   | TSBeantype    of beantype
-  | TSDefinedtype of definedtype
+  | TSDefinedtype of (definedtype * pos)
   | TSFieldStruct of field_struct
 
 (* A bean type definition, mapping a type specification to an ident *)

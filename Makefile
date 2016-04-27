@@ -29,7 +29,7 @@
 TARGETS = bean
 TARGETS_BYTE=$(TARGETS:%=%.byte)
 
-MODULES = bean_ast bean_lex bean_parse bean_pprint
+MODULES = bean_ast bean_lex bean_parse bean_pprint bean_symtbl
 MLFILES = $(addsuffix .ml, $(MODULES))
 CMOFILES = $(addsuffix .cmo, $(MODULES))
 CMXFILES = $(addsuffix .cmx, $(MODULES))

@@ -158,11 +158,11 @@ let string_of_beantype bt =
  *   - type specification -> {<field>, ...}                                 *)
 let rec string_of_typespec ts =
   match ts with
-  | TSBeantype bt        -> string_of_beantype bt
-  | TSDefinedtype dt     -> dt
-  | TSFieldStruct fields -> let fstrs = List.map string_of_field fields in
-                            let body = String.concat ", " fstrs in
-                            String.concat body ["{";"}"]
+  | TSBeantype bt         -> string_of_beantype bt
+  | TSDefinedtype (dt, _) -> dt
+  | TSFieldStruct fields  -> let fstrs = List.map string_of_field fields in
+                             let body = String.concat ", " fstrs in
+                             String.concat body ["{";"}"]
 
 (* Each field looks like:
  *     <ident> : <typespec>  *)

@@ -1,168 +1,192 @@
 (* Bean Symbol Table *)
 
-module AST = Sprout_ast
+module AST = Bean_ast
 
 (* Symbol table data structure definitions *)
 
+(* Keep identities using whatever the AST is using *)
 type ident = AST.ident
-type pos = Lexing.position
 
-and fielddecl =
-  { field_pos: pos;
-    field_type: beantype;
+(* The parser records positions at both the start and end of the
+ * symbol. We can use this to generate very descriptive error messages *)
+type pos = (Lexing.position * Lexing.position)
+
+(* A type specification may be either:
+ *   - a vanilla bean type
+ *   - a more chocolatey user-defined type
+ *   - a rather nutty compound struct-like type *)
+type typespec =
+  | TSBeantype    of AST.beantype
+  | TSDefinedtype of typedef
+  | TSFieldStruct of field_struct
+
+(* A field type declaration is composed of a position
+ * and a type specification                               *)
+and field_decl =
+  { field_pos:  pos;
+    field_type: typespec;
   }
 
-and typedef =
-  { td_pos: pos;
-    td_fields: (ident, fielddecl) Hashtbl.t;
-  }
+(* A field struct (C-struct-like compound type) becomes a 
+ * lookup table for fields, each having an
+ * identifier and a type declaration                       *)
+and field_struct = (ident, field_decl) Hashtbl.t
 
+(* A typedef, composed of:
+ *   - a type
+ *   - a position          *)
+and typedef = (typespec * pos)
+
+(* Vestigial type for initialising variables in the symbol table.
+ * This is now deferred to code generation time, since optimisation
+ * will be done there                                             
 type beanval =
   | VBool of bool
   | VInt of int
   | VStruct of (ident, beanval) Hashtbl.t
+*)
 
-type head =
-  { head_pass: AST.pass_type;
-    head_type: beantype;
-    head_pos: pos;
+(* Procedure header parameter, made up of:
+ *   - a pass-type indicator
+ *   - a type
+ *   - a position                          *)
+type param =
+  { param_pass: AST.pass_type;
+    param_type: typespec;
+    param_pos:  pos;
   }
 
+(* Type declaration, composed of a type and a position *)
 type decl =
-  { decl_val: beanval;
-    decl_type: beantype;
-    decl_pos: pos;
+  { decl_type: typespec;
+    decl_pos:  pos;
   }
 
+(* Procedure symbol table, composed of:
+ *   - a parameter hashtable
+ *   - a declaration hashtable
+ *   - a position (for error messages)   *)
 type proc =
-  { proc_heads: (ident, head) Hashtbl.t;
-    proc_decls: (ident, decl) Hashtbl.t;
-    proc_pos: pos;
+  { proc_params: (ident, param) Hashtbl.t;
+    proc_decls:  (ident, decl) Hashtbl.t;
+    proc_pos:    pos;
   }
 
+(* Symbol (lookup) table, composed of:
+ *   - a typedef hashtable
+ *   - a procedure hashtable            *)
 type symtbl =
-  { sym_tds: (ident, typedef) Hashtbl.t;
+  { sym_tds:   (ident, typedef) Hashtbl.t;
     sym_procs: (ident, proc) Hashtbl.t;
   }
 
+(* Symbol table convenience type alias,
+ * allows other modules to use `Bean_symtbl.t` *)
 type t = symtbl
 
 (* ---- SYMBOL TABLE CONSTRUCTOR FUNCTIONS ---- *)
 
 (* Exception if the user has tried to set a type
  * they have not defined                         *)
-exception Undefined_type of (string * int * int)
+exception Undefined_type of (Lexing.position * Lexing.position)
 
-let get_typedef pos tdtbl id =
-  try Hashtbl.find tdtbl id
+(* Attempt to find a typedef based on the identifier.
+ * If no such type is defined, an error is raised     *)
+let get_typedef td_tbl (deftype_id, pos) =
+  try Hashtbl.find td_tbl deftype_id
   with
   | Not_found ->
-      let loc = AST.get_lex_pos pos in
-      raise (Undefined_type loc)
+      raise (Undefined_type pos)
 
-(* Convert between the AST's hack types and a more
- * unified type understanding                      *)
-let symtbl_t_of_ast_t pos tdtbl ast_type =
-  match ast_type with
-  | AST.Bool -> TBool
-  | AST.Int  -> TInt
-  | AST.NamedTypedef id -> TTypedef (id, get_typedef pos tdtbl id)
+(* Add a struct field type to a struct type lookup table *)
+let rec add_field_to_tbl td_tbl (id, typespec, pos) tbl =
+  let field_decl =
+    { field_pos = pos;
+      field_type = sym_tbl_t_of_ast_t td_tbl typespec
+    }
+  in
+  Hashtbl.add tbl id field_decl;
+  tbl
 
-(* WARNING: Giant mutual recursion to build nested field tables*)
-let rec symtbl_t_of_ast_td_t pos tdtbl ast_td_type =
-  match ast_td_type with
-  | AST.Beantype bt -> symtbl_t_of_ast_t pos tdtbl bt
-  | AST.AnonTypedef fields ->
-      TAnonTypedef ({td_pos = pos;
-                 td_fields = build_fieldtbl tdtbl fields})
-
+(* Make a type lookup table for the fields from
+ * a struct-like typespec                        *)
 and
-add_field tdtbl fieldtbl (field_pos, id, ast_td_type) =
-  let field_type = symtbl_t_of_ast_td_t field_pos tdtbl ast_td_type in
-  Hashtbl.add fieldtbl id { field_pos; field_type }
+sym_type_of_struct td_tbl fields =
+  let struct_tbl = Hashtbl.create 5 in
+  List.fold_right (add_field_to_tbl td_tbl) fields struct_tbl
 
+(* Turn an AST type into an O(1) lookup table type,
+ * so that typedefs refer to their contents, rather than
+ * just being names                                       *)
 and
-add_fields tdtbl fieldtbl fields =
-  match fields with
-  | [] -> fieldtbl
-  | f :: fs -> add_field tdtbl fieldtbl f; add_fields tdtbl fieldtbl fs
+sym_tbl_t_of_ast_t td_tbl typespec =
+  match typespec with
+  | AST.TSBeantype    bt -> TSBeantype bt
+  | AST.TSDefinedtype dt -> TSDefinedtype (get_typedef td_tbl dt)
+  | AST.TSFieldStruct fs -> TSFieldStruct (sym_type_of_struct td_tbl fs)
 
-and
-build_fieldtbl tdtbl fields =
-  let fieldtbl = Hashtbl.create 5 in
-  add_fields tdtbl fieldtbl fields
+(* Add a single typedef into the lookup table *)
+let add_typedef td_tbl (typespec, id, pos) =
+  let sym_type = sym_tbl_t_of_ast_t td_tbl typespec in
+  Hashtbl.add td_tbl id (sym_type, pos)
 
-(* Add typedef symbols to table *)
-let add_typedef tdtbl (td_pos, fields, ident) =
-  let td_fields = build_fieldtbl tdtbl fields in
-  Hashtbl.add tdtbl ident { td_pos; td_fields }
+(* Add typedefs into the lookup table *)
+let rec add_typedefs td_tbl typedefs =
+  match typedefs with
+  | td :: tds -> add_typedef td_tbl td; add_typedefs td_tbl tds
+  | []        -> ()
 
-let rec add_typedefs tdtbl tds =
-  match tds with
-  | td :: tds -> add_typedef tdtbl td; add_typedefs tdtbl tds
-  | [] -> ()
+(* Add a single declaration to the lookup table *)
+let add_decl td_tbl decl_tbl (id, decl_ast_type, decl_pos) =
+  let decl_type = sym_tbl_t_of_ast_t td_tbl decl_ast_type in
+  Hashtbl.add decl_tbl id { decl_type; decl_pos }
 
-(* Initialise declared values recursively:
- * int -> 0, bool -> false, structs have fields set *)
-let rec init_val_of_type decl_type =
-  match decl_type with
-  | TBool   -> VBool false
-  | TInt    -> VInt  0
-  | TTypedef (_, typedef) -> init_typedef typedef
-  | TAnonTypedef typedef  -> init_typedef typedef
-
-and init_typedef {td_pos = _; td_fields } =
-    let valtbl = Hashtbl.create 5 in
-    let setval id {field_pos=_;field_type} =
-      Hashtbl.add valtbl id (init_val_of_type field_type)
-    in
-    Hashtbl.iter setval td_fields;
-    VStruct valtbl
-
-(* Add declaration symbols to table *)
-let add_decl tdtbl decltbl (decl_pos, id, decl_ast_type) =
-  let decl_type = symtbl_t_of_ast_t decl_pos tdtbl decl_ast_type in
-  let decl_val = init_val_of_type decl_type in
-  Hashtbl.add decltbl id { decl_val; decl_type; decl_pos }
-
-let rec add_decls tdtbl decltbl decls =
+(* Add declarations to a procedure's lookup table *)
+let rec add_decls td_tbl decl_tbl decls =
   match decls with
-  | [] -> decltbl
-  | d :: ds -> add_decl tdtbl decltbl d; add_decls tdtbl decltbl ds
+  | [] -> decl_tbl
+  | d :: ds -> add_decl td_tbl decl_tbl d; add_decls td_tbl decl_tbl ds
 
-let build_decltbl tdtbl decls =
-  let decltbl = Hashtbl.create 10 in
-  add_decls tdtbl decltbl decls
+(* Create the declaration lookup table for a procedure *)
+let build_decl_tbl td_tbl decls =
+  let decl_tbl = Hashtbl.create 10 in
+  add_decls td_tbl decl_tbl decls
 
-(* Add proc header symbols to table *)
-let add_head tdtbl headtbl (head_pos, head_pass, head_ast_type, id) =
-  let head_type = symtbl_t_of_ast_t head_pos tdtbl head_ast_type in
-  Hashtbl.add headtbl id { head_pass; head_type; head_pos }
+(* Add a single proc parameter into the lookup table *)
+let add_param td_tbl param_tbl (param_pass, param_ast_type, id, param_pos) =
+  let param_type = sym_tbl_t_of_ast_t td_tbl param_ast_type in
+  Hashtbl.add param_tbl id { param_pass; param_type; param_pos }
 
-let rec add_heads tdtbl headtbl heads =
-  match heads with
-  | []  -> headtbl
-  | h :: hs -> add_head tdtbl headtbl h; add_heads tdtbl headtbl hs
+(* Add proc parameters from a list into the parameter table for that proc *)
+let rec add_params td_tbl param_tbl params =
+  match params with
+  | []  -> param_tbl
+  | pm :: pms -> add_param td_tbl param_tbl pm; add_params td_tbl param_tbl pms
 
-let build_headtbl tdtbl pheads =
-  let headtbl = Hashtbl.create 5 in
-  add_heads tdtbl headtbl pheads
+(* Create a table for parameters in a proc header *)
+let build_param_tbl td_tbl pparams =
+  let param_tbl = Hashtbl.create 5 in
+  add_params td_tbl param_tbl pparams
 
-let add_proc tdtbl ptbl (proc_pos, id, pheads, pdecls, _) =
-  let proc_heads = build_headtbl tdtbl pheads in
-  let proc_decls = build_decltbl tdtbl pdecls in
-  Hashtbl.add ptbl id { proc_heads; proc_decls; proc_pos }
+(* Insert a single procedure into the proc lookup table *)
+let add_proc td_tbl p_tbl (id, pparams, (pdecls, _), proc_pos) =
+  let proc_params = build_param_tbl td_tbl pparams in
+  let proc_decls = build_decl_tbl td_tbl pdecls in
+  Hashtbl.add p_tbl id { proc_params; proc_decls; proc_pos }
 
-let rec add_procs tdtbl ptbl procs =
+(* Insert procedures into a lookup table by ident *)
+let rec add_procs td_tbl p_tbl (procs: AST.proc list) =
   match procs with
   | []  -> ()
-  | p :: ps -> add_proc tdtbl ptbl p; add_procs tdtbl ptbl ps
+  | p :: ps -> add_proc td_tbl p_tbl p; add_procs td_tbl p_tbl ps
 
-(* Root table constructor function -- takes the AST as input *)
+(* Symbol table constructor.
+ * Takes a complete AST as argument, and constructs a lookup
+ * table for all variables in the program for semantic analysis
+ * and code generation.                                          *)
 let build_symtbl ast =
   let sym_tds = Hashtbl.create 5 in
   let sym_procs = Hashtbl.create 10 in
-  let symtbl = {sym_tds; sym_procs} in
   add_typedefs sym_tds ast.AST.typedefs;
   add_procs sym_tds sym_procs ast.AST.procs;
-  symtbl
+  { sym_tds; sym_procs }

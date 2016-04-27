@@ -67,6 +67,7 @@ let main () =
   try
     (* Parsing happens here *)
     let prog = Bean_parse.program Bean_lex.token lexbuf in
+    let symtbl = Bean_symtbl.build_symtbl prog in
     match !mode with
     | PrettyPrint ->
       Bean_pprint.print_program Format.std_formatter prog 

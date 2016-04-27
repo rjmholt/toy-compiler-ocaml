@@ -1,6 +1,6 @@
 module Sym = Bean_symtbl
-module AST = Sprout_ast
-module PP  = Sprout_pprint
+module AST = Bean_ast
+module PP  = Bean_pprint
 
 exception Undefined_variable of (AST.ident * AST.pos)
 exception Undefined_proc of (AST.ident * AST.pos)
@@ -14,9 +14,11 @@ let get_unop_type unop =
 
 let get_binop_type binop =
   match binop with
-  | AST.Op_and | AST.Op_or -> Sym.TBool
-  | AST.Op_add | AST.Op_sub | AST.Op_mul | AST.Op_div
-  | AST.Op_eq  | AST.Op_neq | AST.Op_lt  | AST.Op_leq
+  | AST.Op_and | AST.Op_or  -> Sym.TBool
+  | AST.Op_add | AST.Op_sub 
+  | AST.Op_mul | AST.Op_div
+  | AST.Op_eq  | AST.Op_neq 
+  | AST.Op_lt  | AST.Op_leq
   | AST.Op_gt  | AST.Op_geq -> Sym.TInt
 
 (* Return the type of an lvalue as stored in the Symbol Table *)
