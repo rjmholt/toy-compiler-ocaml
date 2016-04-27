@@ -16,7 +16,7 @@ open Format
  *   - LField -> "x.y.z"   *)
 let rec string_of_lval lval =
   match lval with
-  | LId     ident           -> ident
+  | LId     (ident, _)      -> ident
   | LField  (lval, ident)   -> String.concat "." [ident; string_of_lval lval]
 
 (* Binary operator string representations *)
@@ -48,50 +48,51 @@ let parenthesise str =
 (* Binding precedences of operators in the bean grammar *)
 let op_binding expr =
   match expr with
-  | Ebinop (_, Op_or,   _) -> 1
-  | Ebinop (_, Op_and,  _) -> 2
-  | Eunop  (   Op_not,  _) -> 3
-  | Ebinop (_, Op_eq,   _)
-  | Ebinop (_, Op_neq,  _)
-  | Ebinop (_, Op_lt,   _)
-  | Ebinop (_, Op_leq,  _)
-  | Ebinop (_, Op_gt,   _)
-  | Ebinop (_, Op_geq,  _) -> 4
-  | Ebinop (_, Op_add,  _)
-  | Ebinop (_, Op_sub,  _) -> 5
-  | Ebinop (_, Op_mul,  _)
-  | Ebinop (_, Op_div,  _) -> 6
-  | Eunop  ( Op_minus,  _) -> 7
+  | Ebinop (_, Op_or,   _, _) -> 1
+  | Ebinop (_, Op_and,  _, _) -> 2
+  | Eunop  (   Op_not,  _, _) -> 3
+  | Ebinop (_, Op_eq,   _, _)
+  | Ebinop (_, Op_neq,  _, _)
+  | Ebinop (_, Op_lt,   _, _)
+  | Ebinop (_, Op_leq,  _, _)
+  | Ebinop (_, Op_gt,   _, _)
+  | Ebinop (_, Op_geq,  _, _) -> 4
+  | Ebinop (_, Op_add,  _, _)
+  | Ebinop (_, Op_sub,  _, _) -> 5
+  | Ebinop (_, Op_mul,  _, _)
+  | Ebinop (_, Op_div,  _, _) -> 6
+  | Eunop  ( Op_minus,  _, _) -> 7
   | _                      -> 8 (* all other exprs bind tighter*)
 
 
 (* String representation of a whole expression *)
 let rec string_of_expr expr =
   match expr with
-  | Ebool  ebool                 -> string_of_bool ebool
-  | Eint   eint                  -> string_of_int  eint
-  | Elval  lval                  -> string_of_lval lval
-  | Eunop  (unop, subexpr)       -> string_of_unop_expr unop subexpr
-  | Ebinop (lexpr, binop, rexpr) -> string_of_binop_expr binop lexpr rexpr
+  | Ebool  (ebool, _)                 -> string_of_bool ebool
+  | Eint   (eint, _)                  -> string_of_int  eint
+  | Elval  (lval, _)                  -> string_of_lval lval
+  | Eunop  (unop, subexpr, pos)       -> string_of_unop_expr unop subexpr pos
+  | Ebinop (lexpr, binop, rexpr, pos) ->
+      string_of_binop_expr binop lexpr rexpr pos
 
 (* String of a unary operator application expression *)
 and
-string_of_unop_expr unop subexpr =
+string_of_unop_expr unop subexpr pos =
   let concat =
     match unop with
     | Op_minus -> String.concat ""
     | Op_not   -> String.concat " "
   in
   concat [string_of_unop unop;
-          paren_unop_string (Eunop (unop, subexpr)) subexpr]
+          paren_unop_string (Eunop (unop, subexpr, pos)) subexpr]
 
 (* returns the string of a binary operation with its subexpressions *)
 and
-string_of_binop_expr binop lexpr rexpr =
+string_of_binop_expr binop lexpr rexpr pos =
   String.concat " "
-    [paren_binop_string (Ebinop (lexpr, binop, rexpr)) lexpr;
+    [paren_binop_string (Ebinop (lexpr, binop, rexpr, pos)) lexpr;
      string_of_binop binop;
-     paren_binop_string (Ebinop (lexpr, binop, rexpr)) rexpr ~isRHS:true]
+     paren_binop_string (Ebinop (lexpr, binop, rexpr, pos)) rexpr ~isRHS:true]
 
 (* Returns the string of the subexpression of a unary
  * operator, surrounded with parentheses if they are required
@@ -135,7 +136,7 @@ let rec string_of_struct_assign rstruct =
 (* Rval struct fields look like:
  *     x = 3 | y = true           *)
 and
-string_of_struct_entry (ident, rvalue) =
+string_of_struct_entry (ident, rvalue, _) =
   String.concat " = " [ident; string_of_rval rvalue]
 
 (* Rvals are either an expression or a struct init *)
@@ -166,12 +167,12 @@ let rec string_of_typespec ts =
 (* Each field looks like:
  *     <ident> : <typespec>  *)
 and
-string_of_field (ident, typespec) =
+string_of_field (ident, typespec, _) =
   String.concat " : " [ident; string_of_typespec typespec]
 
 (* Declarations look like:
  *   <type> <ident>;       *)
-let string_of_typedecl (id, beantype) =
+let string_of_typedecl (id, beantype, _) =
     let bt_string = string_of_beantype beantype in
     String.concat "" [bt_string; " "; id; ";"]
 
@@ -196,7 +197,7 @@ let print_indent indent_level =
  *   - print the string representation of the typespec the typedef
  *     will represent
  *   - print the ident of the typedef                               *)
-let print_typedef (typespec, ident) =
+let print_typedef (typespec, ident, _) =
   printf "typedef ";
   printf "%s" (string_of_typespec typespec);
   printf " %s\n" ident
@@ -212,15 +213,15 @@ let rec print_typedef_list typedefs =
 (* Print a variable declaration:
  *   - print the string representation of the typespec of the variable
  *   - print the ident of the variable                                  *)
-let print_var_decl indent (ident, typespec) =
-  print_indent indent;
+let print_var_decl (ident, typespec, _) =
+  print_indent 1;
   printf "%s %s;\n" (string_of_typespec typespec) ident
 
 (* Print declarations by printing the first one, then the rest *)
-let rec print_decl_list indent dlist =
+let rec print_decl_list dlist =
   match dlist with
-  | [decl]      -> print_var_decl indent decl
-  | vdecl :: ds -> print_var_decl indent vdecl; print_decl_list indent ds
+  | [decl]      -> print_var_decl decl
+  | decl :: ds  -> print_var_decl decl; print_decl_list ds
   | []          -> ()
 
 (* ---- STATEMENT PRINTING FUNCTIONS ---- *)
@@ -303,12 +304,12 @@ and
 print_stmt_list indent stmt_list =
   let print_stmt stmt =
     match stmt with
-    | Assign   (lval, rval)   -> print_assign indent lval rval
-    | Read     lval           -> print_read indent lval
-    | Write    writeable      -> print_write indent writeable
-    | If       (expr, stmts)  -> print_if indent expr stmts
-    | While    (expr, stmts)  -> print_while indent expr stmts
-    | ProcCall (ident, exprs) -> print_proc_call indent ident exprs
+    | Assign   (lval, rval, _)   -> print_assign indent lval rval
+    | Read     lval              -> print_read indent lval
+    | Write    writeable         -> print_write indent writeable
+    | If       (expr, stmts)     -> print_if indent expr stmts
+    | While    (expr, stmts)     -> print_while indent expr stmts
+    | ProcCall (ident, exprs, _) -> print_proc_call indent ident exprs
     | IfElse (expr, if_stmts, else_stmts) ->
         print_if indent expr if_stmts ~elses:else_stmts
   in
@@ -318,11 +319,16 @@ print_stmt_list indent stmt_list =
 
 (* --- PROCEDURE PRINTING FUNCTIONS --- *)
 
+let print_proc_body (decls, stmts) =
+  print_decl_list decls;
+  printf "\n";
+  print_stmt_list 1 stmts
+
 (* Print a parameter:
  *   - print the pass type
  *   - print the typespec
  *   - print the parameter ident *)
-let print_proc_param (pass_type, typespec, ident) =
+let print_proc_param (pass_type, typespec, ident, _) =
   printf "%s " (string_of_pass pass_type);
   printf "%s " (string_of_typespec typespec);
   printf "%s"  ident
@@ -341,13 +347,11 @@ let rec print_proc_param_list param_list =
  *   - print the declarations in the body
  *   - print the statements in the body
  *   - print the "end" keyword             *)
-let print_proc (ident, proc_params, proc_decls, body_stmts) =
+let print_proc (ident, proc_params, proc_body, _) =
   printf "proc %s(" ident;
   print_proc_param_list proc_params;
   printf ")\n";
-  print_decl_list 1 proc_decls;
-  printf "\n";
-  print_stmt_list 1 body_stmts;
+  print_proc_body proc_body;
   printf "end"
 
 (* Print procedures by printing one, then the rest *)

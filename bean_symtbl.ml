@@ -7,12 +7,6 @@ module AST = Sprout_ast
 type ident = AST.ident
 type pos = Lexing.position
 
-type beantype =
-  | TBool
-  | TInt
-  | TTypedef of (ident * typedef)
-  | TAnonTypedef of typedef
-
 and fielddecl =
   { field_pos: pos;
     field_type: beantype;

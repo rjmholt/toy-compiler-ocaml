@@ -8,6 +8,11 @@
 /* =========================================================== */
 %{
   open Bean_ast
+
+  let sym_pos () =
+    let start = Parsing.symbol_start_pos () in
+    let finish = Parsing.symbol_end_pos () in
+    (start, finish)
 %}
 
 /* Literal tokens */
@@ -68,7 +73,7 @@ typedefs:
 
 /* Single typedef rule */
 typedef:
-  TYPEDEF typespec IDENT { ($2, $3) }
+  TYPEDEF typespec IDENT { ($2, $3, sym_pos ()) }
 
 
 /* Native bean type rules */
@@ -93,7 +98,7 @@ fields:
 
 /* A single struct field */
 field:
-  IDENT COLON typespec { ($1, $3) }
+  IDENT COLON typespec { ($1, $3, sym_pos ()) }
 
 /* Bean procedure list rule */
 procs:
@@ -102,10 +107,12 @@ procs:
 
 /* Rule for producing a single procedure */
 proc:
-  PROC IDENT LPAREN proc_params RPAREN decls stmts END { ($2,
-                                                          List.rev $4,
-                                                          List.rev $6,
-                                                          $7) }
+  PROC IDENT LPAREN proc_params RPAREN proc_body END {
+                                                        ($2,
+                                                        List.rev $4,
+                                                        $6,
+                                                        sym_pos ())
+                                                     }
 
 /* Parameter list in a procedure header (between the parentheses) */
 proc_params:
@@ -115,13 +122,17 @@ proc_params:
 
 /* Individual parameter */
 proc_param:
-  pass_type typespec IDENT { ($1, $2, $3) }
+  pass_type typespec IDENT { ($1, $2, $3, sym_pos ()) }
 
 /* The way a parameter is passed to the procedure,
    either by value or by reference                 */
 pass_type:
   | VAL { Pval }
   | REF { Pref }
+
+/* The body of a proc, composed of declarations and statements */
+proc_body:
+  decls stmts { (List.rev $1, List.rev $2) }
 
 /* A list of declarations in a bean procedure */
 decls:
@@ -130,14 +141,14 @@ decls:
 
 /* A single declaration in the list of declarations */
 decl:
-  typespec IDENT SEMICOLON { ($2, $1) }
+  typespec IDENT SEMICOLON { ($2, $1, sym_pos ()) }
 
 /* The list of statements in a bean procedure */
 /* Builds stmts in non-reverse, right-recursive order */
 /* This is to eliminate a parser conflict error, but ideally
    the grammar could be restructured to eliminate it         */
 stmts:
-  | stmt stmts { $1 :: $2 }
+  | stmts stmt { $2 :: $1 }
   | stmt       { [$1] }
 
 /* A single statement is either a semi-colon terminated statement,
@@ -153,12 +164,12 @@ stmt_body:
   | proc_call            { ProcCall $1 }
   | READ lvalue          { Read     $2 }
   | WRITE writeable      { Write    $2 }
-  | lvalue ASSIGN rvalue { Assign ($1, $3) }
+  | lvalue ASSIGN rvalue { Assign ($1, $3, sym_pos ()) }
 
 /* A procedure call, that takes a named function and
    a list of expressions to pass in                   */
 proc_call:
-  IDENT LPAREN exprs RPAREN { ($1, List.rev $3) }
+  IDENT LPAREN exprs RPAREN { ($1, List.rev $3, sym_pos ()) }
 
 /* A list of expressions, being the expressions passed in to
    a bean procedure, separated by a comma                    */
@@ -185,14 +196,14 @@ struct_assigns:
 
 /* A single field assignment in a struct initialiser */
 struct_assign:
-  IDENT EQ rvalue { ($1, $3) }
+  IDENT EQ rvalue { ($1, $3, sym_pos ()) }
 
 /* An lvalue is either a simple identifier for a simply typed
    identifier, or a field accessor like "x.y.z", which denotes
    a field of a higher lvalue                                  */
 lvalue:
   | IDENT DOT lvalue { LField ($3, $1) }
-  | IDENT            { LId $1 }
+  | IDENT            { LId ($1, sym_pos ()) }
 
 /* A bean expression, being either a literal, an lvalue,
    a binary operator applied to two subexpressions, a unary operator
@@ -200,7 +211,7 @@ lvalue:
    to denote increased precedence of the expression within           */
 expr:
   | literal            { $1 }
-  | lvalue             { Elval $1 }
+  | lvalue             { Elval ($1, sym_pos ()) }
   | binop              { $1 }
   | unop               { $1 }
   | LPAREN expr RPAREN { $2 }
@@ -208,28 +219,28 @@ expr:
 /* A literal is either a boolean or integer literal,
    such as "true" or "8123"                          */
 literal:
-  | BOOL_CONST { Ebool $1 }
-  | INT_CONST  { Eint  $1 }
+  | BOOL_CONST { Ebool ($1, sym_pos ()) }
+  | INT_CONST  { Eint  ($1, sym_pos ()) }
 
 /* A binary operation, applied to two subexpressions */
 binop:
-  | expr PLUS  expr { Ebinop ($1, Op_add, $3) }
-  | expr MINUS expr { Ebinop ($1, Op_sub, $3) }
-  | expr MUL   expr { Ebinop ($1, Op_mul, $3) }
-  | expr DIV   expr { Ebinop ($1, Op_div, $3) }
-  | expr AND   expr { Ebinop ($1, Op_and, $3) }
-  | expr OR    expr { Ebinop ($1, Op_or,  $3) }
-  | expr EQ    expr { Ebinop ($1, Op_eq,  $3) }
-  | expr NEQ   expr { Ebinop ($1, Op_neq, $3) }
-  | expr LT    expr { Ebinop ($1, Op_lt,  $3) }
-  | expr LEQ   expr { Ebinop ($1, Op_leq, $3) }
-  | expr GT    expr { Ebinop ($1, Op_gt,  $3) }
-  | expr GEQ   expr { Ebinop ($1, Op_geq, $3) }
+  | expr PLUS  expr { Ebinop ($1, Op_add, $3, sym_pos ()) }
+  | expr MINUS expr { Ebinop ($1, Op_sub, $3, sym_pos ()) }
+  | expr MUL   expr { Ebinop ($1, Op_mul, $3, sym_pos ()) }
+  | expr DIV   expr { Ebinop ($1, Op_div, $3, sym_pos ()) }
+  | expr AND   expr { Ebinop ($1, Op_and, $3, sym_pos ()) }
+  | expr OR    expr { Ebinop ($1, Op_or,  $3, sym_pos ()) }
+  | expr EQ    expr { Ebinop ($1, Op_eq,  $3, sym_pos ()) }
+  | expr NEQ   expr { Ebinop ($1, Op_neq, $3, sym_pos ()) }
+  | expr LT    expr { Ebinop ($1, Op_lt,  $3, sym_pos ()) }
+  | expr LEQ   expr { Ebinop ($1, Op_leq, $3, sym_pos ()) }
+  | expr GT    expr { Ebinop ($1, Op_gt,  $3, sym_pos ()) }
+  | expr GEQ   expr { Ebinop ($1, Op_geq, $3, sym_pos ()) }
 
 /* A unary operator, applied to a single subexpression */
 unop:
-  | MINUS expr %prec UMINUS { Eunop (Op_minus, $2) }
-  | NOT   expr %prec UNOT   { Eunop (Op_not,   $2) }
+  | MINUS expr %prec UMINUS { Eunop (Op_minus, $2, sym_pos ()) }
+  | NOT   expr %prec UNOT   { Eunop (Op_not,   $2, sym_pos ()) }
 
 /* Either a bean expression or a string literal */
 writeable:

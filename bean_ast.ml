@@ -6,7 +6,10 @@
 (* pretty printer, semantic checker or code generator          *)
 (* =========================================================== *)
 
-(* Specification of an AST for bean *)
+(* The start and end of a parsed symbol in the file *)
+type pos = (Lexing.position * Lexing.position)
+
+(* An identifer for a type, proc or variable *)
 type ident = string
 
 (* Base bean types are "bool" and "int" *)
@@ -20,7 +23,7 @@ type definedtype = ident
 (* A field within a struct-like type specification.
  * Fields and typespecs are mutually recursive, as in:
  *     {x : int, y : {a : int, b : bool}}              *)
-type field = (ident * typespec)
+type field = (ident * typespec * pos)
 
 (* A collection of fields, like a C struct *)
 and
@@ -34,11 +37,11 @@ typespec =
   | TSFieldStruct of field_struct
 
 (* A bean type definition, mapping a type specification to an ident *)
-type typedef = (typespec * ident)
+type typedef = (typespec * ident * pos)
 
 (* Bean lvalues are either simple idents, or fields accesses *)
 type lvalue =
-  | LId    of ident
+  | LId    of (ident * pos)
   | LField of (lvalue * ident)
 
 (* Binary operators *)
@@ -57,11 +60,11 @@ type unop =
 
 (* Expressions are literals, lvalues, binary operations or unary operations *)
 type expr =
-  | Ebool  of bool
-  | Eint   of int
-  | Elval  of lvalue
-  | Ebinop of (expr * binop * expr)
-  | Eunop  of (unop * expr)
+  | Ebool  of (bool * pos)
+  | Eint   of (int * pos)
+  | Elval  of (lvalue * pos)
+  | Ebinop of (expr * binop * expr * pos)
+  | Eunop  of (unop * expr * pos)
 
 (* Bean can "write" (print) expressions and strings *)
 type writeable =
@@ -70,7 +73,7 @@ type writeable =
 
 (* A struct/field initialisation rvalue for assignment, like:
  *     var := {x = 3, y = {a = (7+3)*12, b = true}}   *)
-type struct_init = (ident * rvalue) list
+type struct_init = (ident * rvalue * pos) list
 
 (* An rvalue is a an object of assignment.
  * Can be an expression, of a struct inititaliser
@@ -87,7 +90,7 @@ type pass_type =
   | Pref
 
 (* Parameters in a proc header *)
-type proc_param = (pass_type * typespec * ident)
+type proc_param = (pass_type * typespec * ident * pos)
 
 (* Statements can be:
  *   - assignment: using ":="
@@ -96,20 +99,23 @@ type proc_param = (pass_type * typespec * ident)
  *   - if, if-else, while: conditional statements
  *   - proc-call: calling a procedure                    *)
 type stmt =
-  | Assign   of (lvalue * rvalue)
+  | Assign   of (lvalue * rvalue * pos)
   | Read     of lvalue
   | Write    of writeable
   | If       of (expr * stmt list)
   | IfElse   of (expr * stmt list * stmt list)
   | While    of (expr * stmt list)
-  | ProcCall of (ident * expr list)
+  | ProcCall of (ident * expr list * pos)
 
 (* A declaration declares an ident as having a type *)
-type decl = (ident * typespec)
+type decl = (ident * typespec * pos)
+
+(* The body of a procedure, composed of declarations followed by statements *)
+type proc_body = (decl list * stmt list)
 
 (* A procedure has an ident, a list of parameters and a body
  * composed of declarations followed by statements           *)
-type proc = (ident * proc_param list * decl list * stmt list)
+type proc = (ident * proc_param list * proc_body * pos)
 
 (* A bean program is typedefs followed by procedure definitions *)
 type program = {
