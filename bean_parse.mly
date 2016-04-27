@@ -107,18 +107,16 @@ procs:
 
 /* Rule for producing a single procedure */
 proc:
-  PROC IDENT LPAREN proc_params RPAREN proc_body END {
-                                                        ($2,
-                                                        List.rev $4,
-                                                        $6,
-                                                        sym_pos ())
-                                                     }
+  | PROC IDENT LPAREN RPAREN proc_body END { ($2, [], $5, sym_pos ()) }
+  | PROC IDENT LPAREN proc_params RPAREN proc_body END { ($2,
+                                                         List.rev $4,
+                                                         $6,
+                                                         sym_pos ()) }
 
 /* Parameter list in a procedure header (between the parentheses) */
 proc_params:
   | proc_params COMMA proc_param { $3 :: $1 }
   | proc_param                   { [$1] }
-  |                              { [] }
 
 /* Individual parameter */
 proc_param:

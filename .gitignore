@@ -14,3 +14,4 @@ beanCore/
 name.sh
 *.tar
 *.gz
+bean_parse.output
