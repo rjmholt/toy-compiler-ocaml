@@ -1,0 +1,137 @@
+# Some typedefs
+typedef bool myBool
+typedef {
+    a: int,
+    b: {x: myBool, g: int}
+} aType
+typedef bType aType
+
+# Tests the 'write' command with different strings
+proc writeTest(val int x, ref bool y, val bType z)
+    write "'Kevin!' she shouted politely\n";
+    write "\ \' \nduck\rgoose\trabbit\\\bemu(^&)~|\n";
+    write "\n \\n \\\n \\\\n \n";
+    write x;
+    write y;
+    write z.b.x;
+end
+
+# Tests boolean operators
+proc boolTest(val bool x, val bool y)
+    bool p;
+    bool q;
+
+    p := not x = y;
+    q := x and (p or y);
+
+    if p then
+        write "p is true\n";
+    fi
+
+    if q then
+        write "q is true\n";
+    fi
+end
+
+# Tests division order
+proc divTest()
+    int x;
+    int y;
+    int z;
+    int p;
+    int q;
+
+    x := 100; y:= 20; z := 5;
+
+    if x / y / z = 1 then
+        write "100 / 20 / 5 = 1\n";
+    else
+        write "100 / 20 / 5 != 1\n";
+    fi
+
+    if x / (y / z) = 25 then
+        write "100 / (20 / 5) = 25\n";
+    else
+        write "100 / (20 / 5) != 25\n";
+    fi
+end
+
+# Tests overflow semantics
+proc overflowTest()
+    int x;
+    int y;
+    int z;
+
+    x := 2147483637;
+    y := 2147483635;
+    z := 10;
+
+    write z + (x - y);
+    write z + x - y;
+    write z / x * y;
+    write z / (x * y);
+end
+
+# Sets n to 91
+proc ninetyone(ref int n)
+    if n > 100:
+        n := n - 10;
+    else
+        n := n + 11;
+        ninetyone(n);
+        ninetyone(n);
+    fi
+end
+
+# Checks if x is less than 1, otherwise calls mutual_two on x
+proc mutual_one(val int x)
+    if x <= 1 then
+        write "Finished\n";
+    else
+        mutual_two(x);
+    fi
+end
+
+# If x is even divide by two and call mutual_one on it
+# If x is odd, multiply by three and add one and call mutual_one on it
+proc mutual_two(val int x)
+    write x;
+
+    if x - 2 * (x / 2) = 0 then
+        mutual_one(x/2);
+    else
+        mutual_one(3*x # Hello
+                   + 1);
+    fi
+done
+
+proc main()
+    int x;
+    int n;
+    bool y;
+    bool p;
+    bType z;
+
+    y := true;
+    z := { b = { x = true } };
+    writeTest(false, y, z);
+
+    boolTest(y, z.b.x);
+
+    divTest();
+
+    overflowTest();
+
+    write "n = "; write n; write "\n";
+
+    if p then
+        write "Hello";
+    fi
+
+    n := 36;
+    write "n = "; write n; write "\n";
+    ninetyone(n);
+    write "n = "; write n; write "\n";
+
+    mutual_one(n);
+end
