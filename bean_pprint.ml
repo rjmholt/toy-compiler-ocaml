@@ -113,6 +113,7 @@ paren_unop_string expr subexpr =
 and
 paren_binop_string expr ?isRHS:(isRHS=false) subexpr =
   (* Parens if subex is of lower precedence *)
+  (* TODO stop this happening on boolean binops *)
   if (op_binding subexpr) < (op_binding expr) then
     parenthesise (string_of_expr subexpr)
   (* Parens for right hand side of same precedence non-commutative operators *)

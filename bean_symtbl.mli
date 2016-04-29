@@ -67,7 +67,7 @@ type decl =
  *   - a declaration hashtable
  *   - a position (for error messages)   *)
 type proc =
-  { proc_params: (ident, param) Hashtbl.t;
+  { proc_params: (ident * param) list;
     proc_decls:  (ident, decl) Hashtbl.t;
     proc_pos:    pos;
   }

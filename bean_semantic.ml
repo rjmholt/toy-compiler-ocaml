@@ -1,227 +1,73 @@
-module Sym = Bean_symtbl
 module AST = Bean_ast
-module PP  = Bean_pprint
+module Sym = Bean_symtbl
+module P = Bean_pprint
 
-exception Undefined_variable of (AST.ident * AST.pos)
-exception Undefined_proc of (AST.ident * AST.pos)
-exception Undefined_field of (AST.ident * AST.pos)
-exception Type_error of (AST.ident * AST.pos)
+exception Undefined_variable of string
+exception Undefined_proc of string
+exception Undefined_field of string
+exception Type_error of string
+exception Arity_mismatch of string
 
-let get_unop_type unop =
-  match unop with
-  | AST.Op_not -> Sym.TBool
-  | AST.Op_minus -> Sym.TInt
-
-let get_binop_type binop =
-  match binop with
-  | AST.Op_and | AST.Op_or  -> Sym.TBool
-  | AST.Op_add | AST.Op_sub 
-  | AST.Op_mul | AST.Op_div
-  | AST.Op_eq  | AST.Op_neq 
-  | AST.Op_lt  | AST.Op_leq
-  | AST.Op_gt  | AST.Op_geq -> Sym.TInt
-
-(* Return the type of an lvalue as stored in the Symbol Table *)
-let rec get_lval_type proc _ lval =
-  let heads = proc.Sym.proc_heads in
-  let decls = proc.Sym.proc_decls in
-  let get_entry pos id =
-    if Hashtbl.mem heads id
-    then
-      let head = Hashtbl.find heads id in
-      head.Sym.head_type
-    else if Hashtbl.mem decls id
-    then
-      let decl = Hashtbl.find decls id in
-      decl.Sym.decl_type
-    else
-      raise (Undefined_variable (id, pos))
+(* Check a procedure call *)
+let check_pcall td_tbl procs_tbl proc (id, exprs, pos) =
+  let called_proc =
+    (* Make sure the call is valid -- i.e. the proc is defined*)
+    try Hashtbl.find procs_tbl id
+    with
+    | Not_found -> raise (Undefined_proc "No definition for procedure")
   in
-  match lval with
-  | AST.LId (pos, id) -> get_entry pos id
-  | AST.LField (pos, field, _) -> get_lval_type proc pos field
-  
-(* Check that an lval is valid when we don't care about the type *)
-let check_lval pos proc lval =
-  match get_lval_type pos proc lval with
-  | _ -> true
-
-(* Returns the type of an expression by recursive check.
- * Since a type can only be consistent if it returns, a type
- * check is also performed                                   *)
-let rec get_expr_type proc expr =
-  match expr with
-  | AST.Ebool _ -> Sym.TBool
-  | AST.Eint  _ -> Sym.TInt
-  | AST.Elval (pos, lval) -> get_lval_type proc pos lval
-  | AST.Eunop (pos, unop, expr) ->
-      let unop_type = get_unop_type unop in
-      let expr_type = get_expr_type proc expr in
-      if unop_type = expr_type then unop_type else
-        raise (Type_error (PP.string_of_unop unop, pos))
-  | AST.Ebinop (pos, lexpr, binop, rexpr) ->
-      let binop_type = get_binop_type binop in
-      let lexpr_type = get_expr_type proc lexpr in
-      let rexpr_type = get_expr_type proc rexpr in
-      if binop_type = lexpr_type && binop_type = rexpr_type
-      then binop_type
-      else raise (Type_error (PP.string_of_binop binop, pos))
-
-(* Uses the type check in get_expr_type in situations where
- * we don't want the type it returns                        *)
-let check_expr proc expr =
-  match get_expr_type proc expr with
-  | _ -> true
-
-(* Check that assigning lvals to rvals is correct:
- *   - Ensure types of lval and rval are the same
- *   - If rval is a struct, check that every field is in the lval
- *   - Recursion supports nested struct assignment                 *)
-let rec are_asgn_type_match proc pos lval_t rval =
-  match rval with
-  | AST.Rstruct fields -> check_field_asgn proc pos lval_t fields
-  | AST.Rexpr (_, expr) ->
-      if lval_t = get_expr_type proc expr
-      then true
-      else raise (Type_error (":=", pos))
-
-(* Checks that the lvalue being assigned a field is
- * valid for assignment:
- *   - check it has a struct type
- *   - check the struct fields recursively          *)
-and
-check_field_asgn proc pos lval_t fields =
-  match lval_t with
-  | Sym.TTypedef (_, typedef) -> is_struct_isomorphic proc typedef fields
-  | _ -> raise (Type_error (":=", pos))
-
-(* Check a struct rvalue assignment is valid:
- *   - checks every rvalue field corresponds to an
- *     lvalue of the same identifier
- *   - checks the assignment of every field is valid *)
-and
-is_struct_isomorphic proc typedef (_, fields) =
-  let go (pos, rid, rval) isValid =
-    let lfield =
-      try
-        Hashtbl.find typedef.Sym.td_fields rid
-      with
-        Not_found -> raise (Undefined_field (rid, pos))
-    in
-    isValid && are_asgn_type_match proc pos lfield.Sym.field_type rval
-  in
-  List.fold_right go fields true
-
-(* Check an rvalue:
- *   - check expressions recursively *)
-let rec check_rval proc rval =
-  let go (_, _, rvalue) isValid = isValid && check_rval proc rvalue in
-  match rval with
-  | AST.Rexpr (_, expr) -> check_expr proc expr
-  | AST.Rstruct (_, structs) -> List.fold_right go structs true
-
-(* Check an lvalue is a readable type.
- * It's currently assumed all lvalues are "readable" *)
-let check_readable _ _ = true
-
-(* Check an assignment statement:
- *   - check lvalue
- *   - check rvalue
- *   - check lvalue has the same type as rvalue *)
-let check_asgn proc (pos, lval, rval) =
-  let lval_type = get_lval_type proc pos lval in
-  are_asgn_type_match proc pos lval_type rval
-
-
-(* Check a read statement:
- *   - check lvalue
- *   - check the lvalue is a readable type *)
-let check_read proc (pos, lval) =
-  check_lval proc pos lval && check_readable proc lval
-
-(* Check a write statement:
- *   - strings are always writeable
- *   - expressions are writeable if they are valid *)
-let check_write proc (_, write) =
-  match write with
-  | AST.WString _ -> true
-  | AST.WExpr (_, expr) -> check_expr proc expr
-
-let get_prochead_symtype proc (_, _, _, id) =
-  let heads = proc.Sym.proc_heads in
-  let h = Hashtbl.find heads id in
-  h.Sym.head_type
-
-(* Check a proc call statement:
- *   - check the proc is defined
- *   - check the arity is correct
- *   - check the types of the arguments are correct *)
-let check_pcall procs_tbl heads proc (pos, id, exprs) =
-  let asgn_pairs = List.combine heads exprs in
-  let go (head, expr) isValid =
-    isValid
-    && get_prochead_symtype proc head = get_expr_type proc expr
-    (* TODO check proc assignment
-     * -- record proc arg position in symtab *)
-  in
-  if Hashtbl.mem procs_tbl id then
-    List.fold_right go asgn_pairs true
+  let params = called_proc.Sym.proc_params in
+  (* Make sure the call is the right arity *)
+  if List.length exprs != List.length params then
+    raise
+    (Arity_mismatch "Procedure is called with the wrong number of arguments")
   else
-    raise (Undefined_proc (id, pos))
+    (* Make sure the paramters are the right types and can be passed
+     * by reference if they are required to be                       *)
+    let go ((id, param), expr) () =
+      check_expr_asgn param.Sym.param_type expr;
+      check_pass_type param.Sym.param_pass expr
+    in
+    List.fold_right go (List.combine params exprs) ()
 
-(* Check conditionals:
- *   - check conditional expression
- *   - check condition of of boolean type
- *   - check statements in condition body *)
-let rec check_cond procs_tbl heads proc cond =
-  let go stmt isValid = isValid && check_stmt procs_tbl heads proc stmt in
+(* Check a statement *)
+let rec check_stmt td_tbl procs_tbl proc stmt =
   let check_cond_expr proc expr =
-    check_expr proc expr
-    && get_expr_type proc expr = Sym.TBool
+    check_expr proc expr;
+    if get_expr_type proc expr != AST.TBool then
+      raise (Type_error "Expression in conditional guard is not boolean")
+    else
+      ()
   in
-  match cond with
-  | AST.If (_, expr, stmts) ->
-      check_cond_expr proc expr
-      && List.fold_right go stmts true
-  | AST.IfElse (_, expr, ifStmts, elStmts) ->
-      check_cond_expr proc expr
-      && List.fold_right go ifStmts true
-      && List.fold_right go elStmts true
-  | AST.While (_, expr, stmts) ->
-      check_cond_expr proc expr
-      && List.fold_right go stmts true
-  (* If an expression is unmatched here, it's a compiler error;
-   * if a non-conditional statement gets here, it's a bug and not
-   * the programmer's fault                                       *)
-
-(* Check semantics of a single statement, with the possibilities of:
- *   - assignment
- *   - read in
- *   - write out
- *   - if, ifelse, while
- *   - proc calls                                                    *)
-and check_stmt procs_tbl heads proc stmt =
+  let go stmt () = check_stmt td_tbl procs_tbl proc stmt in
   match stmt with
-  | AST.Assign asgn     -> check_asgn proc asgn
-  | AST.Read read       -> check_read proc read
-  | AST.Write write     -> check_write proc write
-  | AST.ProcCall pcall  -> check_pcall procs_tbl heads proc pcall
-  (* Put conditionals together to minimise mutual recursion *)
-  | condStmt            -> check_cond procs_tbl heads proc condStmt
+  | AST.Assign   asgn          -> check_asgn  td_tbl proc asgn
+  | AST.Read     read          -> check_read  td_tbl proc read
+  | AST.Write    write         -> check_write td_tbl proc write
+  | AST.ProcCall pcall         -> check_pcall td_tbl procs_tbl proc pcall
+  | AST.While    (expr, stmts) ->
+      check_cond_expr proc expr; List.fold_right go stmts ()
+  | AST.If       (expr, stmts) ->
+      check_cond_expr proc expr; List.fold_right go stmts ()
+  | AST.IfElse   (expr, if_stmts, el_stmts) ->
+      check_cond_expr proc expr;
+      List.fold_right go if_stmts ();
+      List.fold_right go el_stmts ()
 
-(* Check semantics in a single proc by checking
- * every statement in the body of that proc     *)
-let check_proc procs_tbl (_, proc_id, heads, _, stmts) =
+
+(* Check the semantics of a single procedure definition *)
+let check_proc td_tbl procs_tbl (proc_id, _, (_, stmts), _) =
   let proc = Hashtbl.find procs_tbl proc_id in
-  (* Fold checks over all statements in a proc body *)
-  let go stmt isValid = isValid && check_stmt procs_tbl heads proc stmt in
-  List.fold_right go stmts true
+  let go stmt () = check_stmt td_tbl procs_tbl proc stmt in
+  List.fold_right go stmts ()
 
-(* Check semantics for all procs in a bean program, with reference
- * to the typedefs in the symbol table                             *)
+(* Check semantics, including declarations and types,
+ * of a Bean program by running over the program body
+ * with reference to the symbol table                 *)
 let check_semantics symtbl program =
+  let td_tbl    = symtbl.Sym.sym_tds in
   let procs_tbl = symtbl.Sym.sym_procs in
-  (* Fold over all procs and return true if they are all valid *)
-  let go proc isValid = isValid && check_proc procs_tbl proc in
-  let ps = program.AST.procs in 
-  List.fold_right go ps true
+  (* Fold over all the procedures in the program to check them *)
+  let go proc () = check_proc td_tbl procs_tbl proc in
+  let ps = program.AST.procs in
+  List.fold_right go ps ()

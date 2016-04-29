@@ -67,7 +67,8 @@ type decl =
  *   - a declaration hashtable
  *   - a position (for error messages)   *)
 type proc =
-  { proc_params: (ident, param) Hashtbl.t;
+  { (* Params must be a list, since Hashtbl doesn't preserve order *)
+    proc_params: (ident * param) list;
     proc_decls:  (ident, decl) Hashtbl.t;
     proc_pos:    pos;
   }
@@ -157,20 +158,14 @@ let add_param td_tbl param_tbl (param_pass, param_ast_type, id, param_pos) =
   let param_type = sym_tbl_t_of_ast_t td_tbl param_ast_type in
   Hashtbl.add param_tbl id { param_pass; param_type; param_pos }
 
-(* Add proc parameters from a list into the parameter table for that proc *)
-let rec add_params td_tbl param_tbl params =
-  match params with
-  | []  -> param_tbl
-  | pm :: pms -> add_param td_tbl param_tbl pm; add_params td_tbl param_tbl pms
-
-(* Create a table for parameters in a proc header *)
-let build_param_tbl td_tbl pparams =
-  let param_tbl = Hashtbl.create 5 in
-  add_params td_tbl param_tbl pparams
+(* Take a procedure parameter and extract ids as a list key *)
+let param_by_id td_tbl (param_pass, typespec, id, param_pos) =
+  let param_type = sym_tbl_t_of_ast_t td_tbl typespec in
+  (id, {param_pass; param_type; param_pos})
 
 (* Insert a single procedure into the proc lookup table *)
 let add_proc td_tbl p_tbl (id, pparams, (pdecls, _), proc_pos) =
-  let proc_params = build_param_tbl td_tbl pparams in
+  let proc_params = List.map (param_by_id td_tbl) pparams in
   let proc_decls = build_decl_tbl td_tbl pdecls in
   Hashtbl.add p_tbl id { proc_params; proc_decls; proc_pos }
 
