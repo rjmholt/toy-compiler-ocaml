@@ -85,6 +85,11 @@ type symtbl =
  * allows other modules to use `Bean_symtbl.t` *)
 type t = symtbl
 
+(* ---- SYMBOL TABLE EXTERNAL API ---- *)
+let get_type sym_tbl proc id = UNDEFINED
+
+let 
+
 (* ---- SYMBOL TABLE CONSTRUCTOR FUNCTIONS ---- *)
 
 (* Exception if the user has tried to set a type
