@@ -191,7 +191,7 @@ struct_init:
 struct_assigns:
   | struct_assigns COMMA struct_assign  { $3 :: $1 }
   | struct_assign                       { [$1] }
-  |                                     { }
+  |                                     { [] }
 
 /* A single field assignment in a struct initialiser */
 struct_assign:

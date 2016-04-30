@@ -1,6 +1,7 @@
 (* Bean Symbol Table *)
 
 module AST = Bean_ast
+module CG = Bean_code_generate
 
 (* Symbol table data structure definitions *)
 
@@ -37,30 +38,12 @@ and field_struct = (ident, field_decl) Hashtbl.t
  *   - a position          *)
 and typedef = (typespec * pos)
 
-(* Vestigial type for initialising variables in the symbol table.
- * This is now deferred to code generation time, since optimisation
- * will be done there                                             
-type beanval =
-  | VBool of bool
-  | VInt of int
-  | VStruct of (ident, beanval) Hashtbl.t
-*)
+type var_scope =
+  | SDecl
+  | SParamVal
+  | SParamRef
 
-(* Procedure header parameter, made up of:
- *   - a pass-type indicator
- *   - a type
- *   - a position                          *)
-type param =
-  { param_pass: AST.pass_type;
-    param_type: typespec;
-    param_pos:  pos;
-  }
-
-(* Type declaration, composed of a type and a position *)
-type decl =
-  { decl_type: typespec;
-    decl_pos:  pos;
-  }
+type var_symbol = (typespec * var_scope * CG.stack_slot option * pos)
 
 (* Procedure symbol table, composed of:
  *   - a parameter hashtable
@@ -68,9 +51,9 @@ type decl =
  *   - a position (for error messages)   *)
 type proc =
   { (* Params must be a list, since Hashtbl doesn't preserve order *)
-    proc_params: (ident * param) list;
-    proc_decls:  (ident, decl) Hashtbl.t;
-    proc_pos:    pos;
+    proc_params:  AST.proc_param list;
+    proc_sym_tbl: (ident, var_symbol) Hashtbl.t;
+    proc_pos:     pos;
   }
 
 (* Symbol (lookup) table, composed of:
@@ -85,16 +68,30 @@ type symtbl =
  * allows other modules to use `Bean_symtbl.t` *)
 type t = symtbl
 
-(* ---- SYMBOL TABLE EXTERNAL API ---- *)
-let get_type sym_tbl proc id = UNDEFINED
+(* ---- SYMBOL TABLE INTERFACE FUNCTIONS ---- *)
 
-let 
+let get_type sym_tbl proc_id id =
+  let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
+  Hashtbl.find proc.proc_sym_tbl id
+
+let set_slot_num sym_tbl proc_id id slot_num = 
+
 
 (* ---- SYMBOL TABLE CONSTRUCTOR FUNCTIONS ---- *)
 
 (* Exception if the user has tried to set a type
  * they have not defined                         *)
-exception Undefined_type of (Lexing.position * Lexing.position)
+exception Undefined_type of pos
+
+exception Duplicate_field
+
+exception Duplicate_typedef
+
+exception Duplicate_proc
+
+exception Duplicate_param
+
+exception Duplicate_decl
 
 (* Attempt to find a typedef based on the identifier.
  * If no such type is defined, an error is raised     *)
@@ -111,8 +108,11 @@ let rec add_field_to_tbl td_tbl (id, typespec, pos) tbl =
       field_type = sym_tbl_t_of_ast_t td_tbl typespec
     }
   in
-  Hashtbl.add tbl id field_decl;
-  tbl
+  if Hashtbl.mem tbl id then
+    raise Duplicate_field
+  else
+    Hashtbl.add tbl id field_decl;
+    tbl
 
 (* Make a type lookup table for the fields from
  * a struct-like typespec                        *)
@@ -134,7 +134,10 @@ sym_tbl_t_of_ast_t td_tbl typespec =
 (* Add a single typedef into the lookup table *)
 let add_typedef td_tbl (typespec, id, pos) =
   let sym_type = sym_tbl_t_of_ast_t td_tbl typespec in
-  Hashtbl.add td_tbl id (sym_type, pos)
+  if Hashtbl.mem td_tbl id then
+    raise Duplicate_typedef
+  else
+    Hashtbl.add td_tbl id (sym_type, pos)
 
 (* Add typedefs into the lookup table *)
 let rec add_typedefs td_tbl typedefs =
@@ -142,37 +145,48 @@ let rec add_typedefs td_tbl typedefs =
   | td :: tds -> add_typedef td_tbl td; add_typedefs td_tbl tds
   | []        -> ()
 
-(* Add a single declaration to the lookup table *)
-let add_decl td_tbl decl_tbl (id, decl_ast_type, decl_pos) =
+let make_decl_symbol td_tbl decl_ast_type decl_pos =
   let decl_type = sym_tbl_t_of_ast_t td_tbl decl_ast_type in
-  Hashtbl.add decl_tbl id { decl_type; decl_pos }
+  (decl_type, SDecl, None, decl_pos)
 
-(* Add declarations to a procedure's lookup table *)
-let rec add_decls td_tbl decl_tbl decls =
-  match decls with
-  | [] -> decl_tbl
-  | d :: ds -> add_decl td_tbl decl_tbl d; add_decls td_tbl decl_tbl ds
-
-(* Create the declaration lookup table for a procedure *)
-let build_decl_tbl td_tbl decls =
-  let decl_tbl = Hashtbl.create 10 in
-  add_decls td_tbl decl_tbl decls
-
-(* Add a single proc parameter into the lookup table *)
-let add_param td_tbl param_tbl (param_pass, param_ast_type, id, param_pos) =
-  let param_type = sym_tbl_t_of_ast_t td_tbl param_ast_type in
-  Hashtbl.add param_tbl id { param_pass; param_type; param_pos }
+let add_decl_symbol td_tbl proc_sym_tbl decl =
+  let (id, decl_ast_type, decl_pos) = decl in
+  let decl_sym = make_decl_symbol td_tbl decl_ast_type decl_pos in
+  if Hashtbl.mem proc_sym_tbl id then
+    raise Duplicate_decl
+  else
+    Hashtbl.add proc_sym_tbl id decl_sym
 
 (* Take a procedure parameter and extract ids as a list key *)
-let param_by_id td_tbl (param_pass, typespec, id, param_pos) =
+let make_param_symbol td_tbl param_pass typespec param_pos =
   let param_type = sym_tbl_t_of_ast_t td_tbl typespec in
-  (id, {param_pass; param_type; param_pos})
+  let param_scope =
+    match param_pass with
+    | AST.Pval -> SParamVal
+    | AST.Pref -> SParamRef
+  in
+  (param_type, param_scope, None, param_pos)
+
+(* Add a parameter to a proc's symbol table *)
+let add_param_symbol td_tbl proc_sym_tbl param =
+  let (param_pass, param_type, id, param_pos) = param in
+  let param_sym = make_param_symbol td_tbl param_pass param_type param_pos in
+  if Hashtbl.mem proc_sym_tbl id then
+    raise Duplicate_param
+  else
+    Hashtbl.add proc_sym_tbl id param_sym
 
 (* Insert a single procedure into the proc lookup table *)
-let add_proc td_tbl p_tbl (id, pparams, (pdecls, _), proc_pos) =
-  let proc_params = List.map (param_by_id td_tbl) pparams in
-  let proc_decls = build_decl_tbl td_tbl pdecls in
-  Hashtbl.add p_tbl id { proc_params; proc_decls; proc_pos }
+let add_proc td_tbl ps_tbl (id, proc_params, (proc_decls, _), proc_pos) =
+  if Hashtbl.mem ps_tbl id then
+    raise Duplicate_proc
+  else
+    let proc_sym_tbl       = Hashtbl.create 10 in
+    let add_param param () = add_param_symbol td_tbl proc_sym_tbl param in
+    let add_decl decl ()   = add_decl_symbol td_tbl proc_sym_tbl decl in
+    List.fold_right add_param proc_params ();
+    List.fold_right add_decl  proc_decls  ();
+    Hashtbl.add ps_tbl id {proc_params; proc_sym_tbl; proc_pos}
 
 (* Insert procedures into a lookup table by ident *)
 let rec add_procs td_tbl p_tbl (procs: AST.proc list) =
