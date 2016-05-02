@@ -70,8 +70,9 @@ let main () =
     let symtbl = Bean_symtbl.build_symtbl prog in
     match !mode with
     | PrettyPrint ->
-      Bean_pprint.print_program Format.std_formatter prog 
-    | Compile -> ()
+        Bean_pprint.print_program Format.std_formatter prog 
+    | Compile ->
+        Bean_code_generate.generate_oz_code symtbl prog
   with
   | Bean_lex.Lex_error msg ->
       let (fname, ln, col) = get_lex_pos lexbuf in
