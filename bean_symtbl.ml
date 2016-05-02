@@ -67,19 +67,7 @@ type symtbl =
  * allows other modules to use `Bean_symtbl.t` *)
 type t = symtbl
 
-(* ---- SYMBOL TABLE INTERFACE FUNCTIONS ---- *)
-
-let get_type sym_tbl proc_id id =
-  let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
-  let (typespec, _, _, _) = Hashtbl.find proc.proc_sym_tbl id in
-  typespec
-
-let set_slot_num sym_tbl proc_id id slot_num = 
-  let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
-  let (_, _, slot, _) = Hashtbl.find proc.proc_sym_tbl id in
-  slot := Some slot_num
-
-(* ---- SYMBOL TABLE CONSTRUCTOR FUNCTIONS ---- *)
+(* ---- SYMBOL TABLE EXCEPTIONS ---- *)
 
 (* Exception if the user has tried to set a type
  * they have not defined                         *)
@@ -94,6 +82,70 @@ exception Duplicate_proc
 exception Duplicate_param
 
 exception Duplicate_decl
+
+exception No_field
+
+exception Slot_not_allocated
+
+(* ---- SYMBOL TABLE INTERFACE FUNCTIONS ---- *)
+
+(* Get the type of an ident in a procedure context *)
+let get_type sym_tbl proc_id id =
+  let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
+  let (typespec, _, _, _) = Hashtbl.find proc.proc_sym_tbl id in
+  typespec
+
+(* Follow a struct field access to find its type *)
+(* This function gets messy because a type may be 
+ * embedded in a type specification or a typedef.
+ * A pathological example would be a field from a type specification
+ * that is in a typedef that is in a type specification that is in
+ * another typedef...                                                *)
+let get_field_type sym_tbl proc_id (lval, id) =
+  (* Get the type specification from a field ident *)
+  let get_field_typespec field_struct ident =
+    let field_decl = Hashtbl.find field_struct ident in
+    field_decl.field_type
+  in
+  (* Follow get the type of the next field down *)
+  let rec get_subfield_type field_struct field_lval =
+    match field_lval with
+    | AST.LId (ident, _) -> get_field_typespec field_struct ident
+    | AST.LField (subval, ident) ->
+        let ts = get_field_typespec field_struct ident in
+        match ts with
+        | TSFieldStruct fs -> get_subfield_type fs subval
+        | TSDefinedtype dt -> get_def_type dt subval
+        | TSBeantype    _  -> raise No_field
+  and
+  (* Get the field type of a typedef'd struct *)
+  get_def_type (ts, _) subval =
+    match ts with
+    | TSFieldStruct fs -> get_subfield_type fs subval
+    | TSDefinedtype dt -> get_def_type dt subval
+    | TSBeantype    _  -> raise No_field
+  in
+  let base_type = get_type sym_tbl proc_id id in
+  match base_type with
+  | TSBeantype    bt -> raise No_field
+  | TSDefinedtype dt -> get_def_type dt lval
+  | TSFieldStruct fs -> get_subfield_type fs lval
+
+(* Set the slot number for a symbol in a stack frame *)
+let set_slot_num sym_tbl proc_id id slot_num = 
+  let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
+  let (_, _, slot, _) = Hashtbl.find proc.proc_sym_tbl id in
+  slot := Some slot_num
+
+(* Retrieve the slot number for a symbol in a stack frame *)
+let get_slot_num sym_tbl proc_id id =
+  let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
+  let (_, _, slot, _) = Hashtbl.find proc.proc_sym_tbl id in
+  match !slot with
+  | None     -> raise Slot_not_allocated
+  | Some num -> num
+
+(* ---- SYMBOL TABLE CONSTRUCTOR FUNCTIONS ---- *)
 
 (* Attempt to find a typedef based on the identifier.
  * If no such type is defined, an error is raised     *)

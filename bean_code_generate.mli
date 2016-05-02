@@ -28,7 +28,7 @@ type instr =
   | StoreIndirect  of reg        * reg
   (* Register immediate operations *)
   | IntConst       of reg * int
-  | StringConst    of reg * int
+  | StringConst    of reg * string
   (* Integer arithmetic operations *)
   | AddInt         of reg * reg * reg
   | SubInt         of reg * reg * reg
@@ -60,16 +60,11 @@ type instr =
   | Return
   (* Emulator halt *)
   | Halt
+  (* A label pseudo-instruction *)
+  | BlockLabel     of label
   (* Debug instructions *)
   | DebugReg       of reg
   | DebugSlot      of stack_slot
   | DebugStack
 
-type code =
-  | Node of code * code
-  | Leaf of instr
-  | EmptyLeaf
-
-type block = (label * code)
-
-type oz_program = (code * block list)
+type code = instr list

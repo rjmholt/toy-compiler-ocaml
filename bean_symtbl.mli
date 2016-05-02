@@ -50,7 +50,7 @@ type var_symbol = (typespec * var_scope * (int option) ref * pos)
  *   - a position (for error messages)   *)
 type proc =
   { (* Params must be a list, since Hashtbl doesn't preserve order *)
-    proc_params:  AST.proc_param list;
+    proc_params:  AST.ident list;
     proc_sym_tbl: (ident, var_symbol) Hashtbl.t;
     proc_pos:     pos;
   }
@@ -75,4 +75,8 @@ val build_symtbl: Bean_ast.t -> symtbl
 
 val get_type: symtbl -> AST.ident -> AST.ident -> typespec
 
+val get_field_type: symtbl -> AST.ident -> (AST.lvalue * AST.ident) -> typespec
+
 val set_slot_num: symtbl -> AST.ident -> AST.ident -> int -> unit
+
+val get_slot_num: symtbl -> AST.ident -> AST.ident -> int
