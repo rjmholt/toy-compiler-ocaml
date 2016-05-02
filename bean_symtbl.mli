@@ -37,39 +37,22 @@ and field_struct = (ident, field_decl) Hashtbl.t
  *   - a position          *)
 and typedef = (typespec * pos)
 
-(* Vestigial type for initialising variables in the symbol table.
- * This is now deferred to code generation time, since optimisation
- * will be done there                                             
-type beanval =
-  | VBool of bool
-  | VInt of int
-  | VStruct of (ident, beanval) Hashtbl.t
-*)
+type var_scope =
+  | SDecl
+  | SParamVal
+  | SParamRef
 
-(* Procedure header parameter, made up of:
- *   - a pass-type indicator
- *   - a type
- *   - a position                          *)
-type param =
-  { param_pass: AST.pass_type;
-    param_type: typespec;
-    param_pos:  pos;
-  }
-
-(* Type declaration, composed of a type and a position *)
-type decl =
-  { decl_type: typespec;
-    decl_pos:  pos;
-  }
+type var_symbol = (typespec * var_scope * (int option) ref * pos)
 
 (* Procedure symbol table, composed of:
  *   - a parameter hashtable
  *   - a declaration hashtable
  *   - a position (for error messages)   *)
 type proc =
-  { proc_params: (ident * param) list;
-    proc_decls:  (ident, decl) Hashtbl.t;
-    proc_pos:    pos;
+  { (* Params must be a list, since Hashtbl doesn't preserve order *)
+    proc_params:  AST.proc_param list;
+    proc_sym_tbl: (ident, var_symbol) Hashtbl.t;
+    proc_pos:     pos;
   }
 
 (* Symbol (lookup) table, composed of:
@@ -88,5 +71,8 @@ type t = symtbl
  * they have not defined                         *)
 exception Undefined_type of (Lexing.position * Lexing.position)
 
-
 val build_symtbl: Bean_ast.t -> symtbl
+
+val get_type: symtbl -> AST.ident -> AST.ident -> typespec
+
+val set_slot_num: symtbl -> AST.ident -> AST.ident -> int -> unit

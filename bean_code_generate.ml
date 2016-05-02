@@ -63,37 +63,28 @@ type instr =
   | Return
   (* Emulator halt *)
   | Halt
+  (* A label pseudo-instruction *)
+  | BlockLabel     of label
   (* Debug instructions *)
   | DebugReg       of reg
   | DebugSlot      of stack_slot
   | DebugStack
 
-type code =
-  | Node of code * code
-  | Leaf of instr
-  | EmptyLeaf
-
-type block = (label * code)
-
-type oz_program = (code * block list)
+type code = instr list
 
 exception Unsupported of string
 
-let rec pre_insert code tree=
-  match tree with
-  | EmptyLeaf   -> code
-  | Leaf instr  -> Node (code, Leaf instr)
-  | Node (l, r) -> Node (pre_insert code l, r)
+(*
+let gen_writeable_code symtbl proc_id code_tree wrt = undefined
 
-let rec post_insert code tree =
-  match tree with
-  | EmptyLeaf   -> code
-  | Leaf instr  -> Node (Leaf instr, code)
-  | Node (l, r) -> Node (l, post_insert code r)
+let gen_stmt_code symtbl label_num proc_id code_tree stmt =
+  match stmt with
+  | AST.Write wrt -> gen_writeable_code symtbl proc_id code_tree wrt
+  | _             -> raise (Unsupported "Only write statements supported")
 
 let init_beantype slot_num bt =
   let set_instr = IntConst (Reg 0, 0) in
-  let store_instr = Store (!slot_num, Reg 0) in
+  let store_instr = Store (StackSlot !slot_num, Reg 0) in
   Node (Leaf set_instr, Leaf store_instr)
 
 let gen_decl_code symtbl proc_id slot_num code_tree (id, _, _) =
@@ -103,6 +94,7 @@ let gen_decl_code symtbl proc_id slot_num code_tree (id, _, _) =
     match lval_type with
     | Sym.TSBeantype bt -> init_beantype slot_num bt
     | _ -> raise (Unsupported "Primitive types only")
+  in
   post_insert decl_init_code code_tree
 
 let gen_param_code symtbl proc_id frame_size code_tree _ = code_tree
@@ -119,7 +111,7 @@ let gen_proc_code symtbl label_num oz_prog proc =
   label_num := !label_num + 1;
   let param_gen = gen_param_code symtbl proc_id frame_size in
   let decl_gen  = gen_decl_code symtbl proc_id frame_size in
-  let stmt_gen  = gen_stmt_code symtbl label_num proc_id frame_size in
+  let stmt_gen  = gen_stmt_code symtbl label_num proc_id in
   let param_code = List.fold_left param_gen EmptyLeaf params in
   let decl_code  = List.fold_left decl_gen param_code decls in
   let stmt_code = List.fold_left stmt_gen decl_code stmts in
@@ -127,10 +119,43 @@ let gen_proc_code symtbl label_num oz_prog proc =
   let epilogue = Node (Leaf (PopStackFrame !frame_size), Leaf Return) in
   let code = post_insert epilogue (pre_insert prologue stmt_code) in
   (label, code) :: oz_prog
+*)
 
+(* Generate code for a single procedure *)
+let gen_proc_code symtbl (label_num, code) proc =
+  (* Set up proc label and frame *)
+  let label =
+    if label_num = 0 then
+      Label "proc_main"
+    else
+      Label ("label" ^ string_of_int label_num)
+  in
+  let frame_size = 0 in
+  (* Generate code for each part of the proc *)
+  let (proc_id, params, (decls, stmts), _) = proc in
+  (* Define curried folder functions *)
+  let param_gen = gen_param_code symtbl proc_id in
+  let decl_gen  = gen_decl_code  symtbl proc_id in
+  let stmt_gen  = gen_stmt_code  symtbl proc_id in
+  (* Do the recursive code generation *)
+  let (frame_size1, code1) =
+    List.fold_left param_gen (frame_size, code) params
+  in
+  let (frame_size2, code2) =
+    List.fold_left decl_gen (frame_size1, code1) decls
+  in
+  let (labels_used, proc_frame_size, body_code) =
+    List.fold_left stmt_gen (label_num, frame_size2, code2) stmts
+  in
+  (* Create the function prologue and epilogue *)
+  let prologue = [PushStackFrame proc_frame_size] in
+  let epilogue = [PopStackFrame proc_frame_size; Return] in
+  (labels_used, prologue @ List.rev_append body_code epilogue)
+
+(* Generate code for a bean program *)
 let gen_code symtbl prog =
   let procs = List.rev prog.AST.procs in
-  let prelude = Node (Leaf (Call (Label "proc_main")), Leaf (Halt)) in
-  let label_num = ref 0 in
-  let prog = List.fold_left (gen_proc_code symtbl label_num) [] procs in
-  (prelude, List.rev prog)
+  (* Standard Oz prelude: call proc_main and then halt *)
+  let prelude = [Call (Label "proc_main"); Halt] in
+  let (_, prog) = List.fold_left (gen_proc_code symtbl) (0, []) procs in
+  prelude @ prog
