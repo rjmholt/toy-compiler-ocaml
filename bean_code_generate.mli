@@ -69,4 +69,4 @@ type instr =
 
 type code = instr list
 
-val generate_oz_code: out_channel -> Bean_symtbl.t -> Bean_ast.t -> unit
+val generate_oz_code: Bean_symtbl.t -> Bean_ast.t -> string
