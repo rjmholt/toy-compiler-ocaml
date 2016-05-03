@@ -112,7 +112,8 @@ let get_expr_type symtbl proc_id expr =
   | AST.Ebinop (_, binop, _, _) -> get_binop_type binop
 
 (* Generate code for an integer literal expression *)
-let gen_int_expr_code load_reg code i = (IntConst (load_reg, i)) :: code
+let gen_int_expr_code load_reg code i =
+  (IntConst (load_reg, i)) :: code
 
 (* Generate code for a boolean literal expression *)
 let gen_bool_expr_code load_reg code b =
@@ -123,15 +124,30 @@ let gen_bool_expr_code load_reg code b =
 (* Generate code for an lvalue expression evaluation *)
 let gen_lval_code symtbl proc_id load_reg code lval =
   match lval with
-  | AST.LField _    -> raise Struct_expression_error
-  | AST.LId (id, _) ->
+  | AST.LField (lval, id) ->
+      raise (Unsupported "Field accesses not yet supported")
+  | AST.LId (id, _)       ->
       let slot_num = Sym.get_slot_num symtbl proc_id id in
       (Load (load_reg, StackSlot slot_num)) :: code
 
+(* Generate code for a unary operation expression *)
 let rec gen_unop_code symtbl proc_id load_reg code unop expr =
+  let subexpr_code =
+    gen_expr_code symtbl proc_id load_reg code expr
+  in
   match unop with
-  | _ -> raise (Unsupported "Unary operators are not yet supported")
+  | AST.Op_not ->
+      let not_instr = Not (load_reg, load_reg) in
+      not_instr :: subexpr_code @ code
+  | AST.Op_minus ->
+      let (Reg r) = load_reg in
+      let minus_code =
+        [MulInt (Reg r, Reg r, Reg (r+1));
+         IntConst (Reg (r+1), -1)]
+      in
+      minus_code @ subexpr_code @ code
 
+(* Generate code for a binary operation expression *)
 and
 gen_binop_code symtbl proc_id load_reg code binop lexpr rexpr =
   match binop with
@@ -163,7 +179,9 @@ let gen_write_code symtbl proc_id code wrt =
       instrs @ code
   | AST.WExpr expr ->
       let print_reg  = Reg 0 in
-      let new_code   = gen_expr_code symtbl proc_id print_reg code expr in
+      let new_code =
+        gen_expr_code symtbl proc_id print_reg code expr
+      in
       let expr_type  = get_expr_type symtbl proc_id expr in
       let print_code =
         match expr_type with

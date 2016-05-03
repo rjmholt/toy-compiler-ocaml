@@ -1,4 +1,4 @@
 proc main()
-    write 3;
+    write not not not true;
     write "\n";
 end
