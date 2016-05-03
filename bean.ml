@@ -17,13 +17,16 @@ let infile_name = ref None
 type compiler_mode = PrettyPrint | Compile
 let mode = ref Compile
 
+let outfile_name = ref "a.out"
+
 (* --------------------------------------------- *)
 (*  Specification for command-line options       *)
 (* --------------------------------------------- *)
 let (speclist:(Arg.key * Arg.spec * Arg.doc) list) =
-  ["-p",
-     Arg.Unit(fun () -> mode := PrettyPrint),
-     " Run the compiler in pretty-printer mode"
+  [("-p", Arg.Unit (fun () -> mode := PrettyPrint),
+    " Run the compiler in pretty-printer mode");
+   ("-o", Arg.String (fun str -> outfile_name := str),
+    " Specify the output file for bean to compile to")
   ]
 
 (* --------------------------------------------- *)
@@ -72,7 +75,9 @@ let main () =
     | PrettyPrint ->
         Bean_pprint.print_program Format.std_formatter prog 
     | Compile ->
-        Bean_code_generate.generate_oz_code symtbl prog
+        let outfile = open_out !outfile_name in
+        Bean_code_generate.generate_oz_code outfile symtbl prog;
+        close_out outfile
   with
   | Bean_lex.Lex_error msg ->
       let (fname, ln, col) = get_lex_pos lexbuf in

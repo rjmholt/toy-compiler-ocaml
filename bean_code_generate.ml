@@ -256,96 +256,96 @@ let gen_code symtbl prog =
 
 (* ---- CODE PRINTING FUNCTIONS ---- *)
 
-let write = Format.printf
+let fprintf = Printf.fprintf
 
-let write_push_stack frame_size =
-  write "push_stack_frame %d\n" frame_size
+let write_push_stack file frame_size =
+  fprintf file "push_stack_frame %d\n" frame_size
 
-let write_pop_stack frame_size =
-  write "pop_stack_frame %d\n" frame_size 
+let write_pop_stack file frame_size =
+  fprintf file "pop_stack_frame %d\n" frame_size 
 
-let write_load (Reg r) (StackSlot s) =
-  write "load r%d, %d\n" r s
+let write_load file (Reg r) (StackSlot s) =
+  fprintf file "load r%d, %d\n" r s
 
-let write_store (StackSlot s) (Reg r) =
-  write "store %d, r%d\n" s r
+let write_store file (StackSlot s) (Reg r) =
+  fprintf file "store %d, r%d\n" s r
 
-let write_load_addr (Reg r) (StackSlot s) =
-  write "load_address r%d, %d\n" r s
+let write_load_addr file (Reg r) (StackSlot s) =
+  fprintf file "load_address r%d, %d\n" r s
 
-let write_load_ind (Reg r1) (Reg r2) =
-  write "load_indirect r%d, r%d\n" r1 r2
+let write_load_ind file (Reg r1) (Reg r2) =
+  fprintf file "load_indirect r%d, r%d\n" r1 r2
 
-let write_store_ind (Reg r1) (Reg r2) =
-  write "store_indirect r%d, r%d\n" r1 r2
+let write_store_ind file (Reg r1) (Reg r2) =
+  fprintf file "store_indirect r%d, r%d\n" r1 r2
 
-let write_int_const (Reg r) imm =
-  write "int_const r%d, %d\n" r imm
+let write_int_const file (Reg r) imm =
+  fprintf file "int_const r%d, %d\n" r imm
 
-let write_str_const (Reg r) str =
-  write "string_const r%d, \"%s\"\n" r str
+let write_str_const file (Reg r) str =
+  fprintf file "string_const r%d, \"%s\"\n" r str
 
-let write_add_int (Reg r1) (Reg r2) (Reg r3) =
-  write "add_int r%d, r%d, r%d\n" r1 r2 r3
+let write_add_int file (Reg r1) (Reg r2) (Reg r3) =
+  fprintf file "add_int r%d, r%d, r%d\n" r1 r2 r3
                                                   
-let write_sub_int (Reg r1) (Reg r2) (Reg r3) =
-  write "sub_int r%d, r%d, r%d\n" r1 r2 r3
+let write_sub_int file (Reg r1) (Reg r2) (Reg r3) =
+  fprintf file "sub_int r%d, r%d, r%d\n" r1 r2 r3
 
-let write_mul_int (Reg r1) (Reg r2) (Reg r3) =
-  write "mul_int r%d, r%d, r%d\n" r1 r2 r3
+let write_mul_int file (Reg r1) (Reg r2) (Reg r3) =
+  fprintf file "mul_int r%d, r%d, r%d\n" r1 r2 r3
 
-let write_div_int (Reg r1) (Reg r2) (Reg r3) =
-  write "div_int r%d, r%d, r%d\n" r1 r2 r3
+let write_div_int file (Reg r1) (Reg r2) (Reg r3) =
+  fprintf file "div_int r%d, r%d, r%d\n" r1 r2 r3
 
-let write_add_offset (Reg r1) (Reg r2) (Reg r3) =
-  write "add_offset r%d, r%d, r%d\n" r1 r2 r3
+let write_add_offset file (Reg r1) (Reg r2) (Reg r3) =
+  fprintf file "add_offset r%d, r%d, r%d\n" r1 r2 r3
 
-let write_sub_offset (Reg r1) (Reg r2) (Reg r3) =
-  write "sub_offset r%d, r%d, r%d\n" r1 r2 r3
+let write_sub_offset file (Reg r1) (Reg r2) (Reg r3) =
+  fprintf file "sub_offset r%d, r%d, r%d\n" r1 r2 r3
 
-let write_cmp_eq (Reg r1) (Reg r2) (Reg r3) =
-  write "cmp_eq_int r%d, r%d, r%d\n" r1 r2 r3
+let write_cmp_eq file (Reg r1) (Reg r2) (Reg r3) =
+  fprintf file "cmp_eq_int r%d, r%d, r%d\n" r1 r2 r3
 
-let write_cmp_neq (Reg r1) (Reg r2) (Reg r3) =
-  write "cmp_ne_int r%d, r%d, r%d\n" r1 r2 r3
+let write_cmp_neq file (Reg r1) (Reg r2) (Reg r3) =
+  fprintf file "cmp_ne_int r%d, r%d, r%d\n" r1 r2 r3
 
-let write_cmp_lt (Reg r1) (Reg r2) (Reg r3) =
-  write "cmp_lt_int r%d, r%d, r%d\n" r1 r2 r3
+let write_cmp_lt file (Reg r1) (Reg r2) (Reg r3) =
+  fprintf file "cmp_lt_int r%d, r%d, r%d\n" r1 r2 r3
 
-let write_cmp_leq (Reg r1) (Reg r2) (Reg r3) =
-  write "cmp_le_int r%d, r%d, r%d\n" r1 r2 r3
+let write_cmp_leq file (Reg r1) (Reg r2) (Reg r3) =
+  fprintf file "cmp_le_int r%d, r%d, r%d\n" r1 r2 r3
 
-let write_cmp_gt (Reg r1) (Reg r2) (Reg r3) =
-  write "cmp_gt_int r%d, r%d, r%d\n" r1 r2 r3
+let write_cmp_gt file (Reg r1) (Reg r2) (Reg r3) =
+  fprintf file "cmp_gt_int r%d, r%d, r%d\n" r1 r2 r3
 
-let write_cmp_geq (Reg r1) (Reg r2) (Reg r3) =
-  write "cmp_ge_int r%d, r%d, r%d\n" r1 r2 r3
+let write_cmp_geq file (Reg r1) (Reg r2) (Reg r3) =
+  fprintf file "cmp_ge_int r%d, r%d, r%d\n" r1 r2 r3
 
-let write_and (Reg r1) (Reg r2) (Reg r3) =
-  write "and r%d, r%d, r%d\n" r1 r2 r3
+let write_and file (Reg r1) (Reg r2) (Reg r3) =
+  fprintf file "and r%d, r%d, r%d\n" r1 r2 r3
 
-let write_or (Reg r1) (Reg r2) (Reg r3) =
-  write "or r%d, r%d, r%d\n" r1 r2 r3
+let write_or file (Reg r1) (Reg r2) (Reg r3) =
+  fprintf file "or r%d, r%d, r%d\n" r1 r2 r3
 
-let write_not (Reg r1) (Reg r2) =
-  write "not r%d, r%d\n" r1 r2
+let write_not file (Reg r1) (Reg r2) =
+  fprintf file "not r%d, r%d\n" r1 r2
 
-let write_move (Reg r1) (Reg r2) =
-  write "move r%d, r%d\n" r1 r2
+let write_move file (Reg r1) (Reg r2) =
+  fprintf file "move r%d, r%d\n" r1 r2
 
-let write_branch_true (Reg r) (Label label) =
-  write "branch_on_true r%d, %s\n" r label
+let write_branch_true file (Reg r) (Label label) =
+  fprintf file "branch_on_true r%d, %s\n" r label
 
-let write_branch_false (Reg r) (Label label) =
-  write "branch_on_false r%d, %s\n" r label
+let write_branch_false file (Reg r) (Label label) =
+  fprintf file "branch_on_false r%d, %s\n" r label
 
-let write_branch_uncond (Label label) =
-  write "branch_uncond %s\n" label
+let write_branch_uncond file (Label label) =
+  fprintf file "branch_uncond %s\n" label
 
-let write_call (Label label) =
-  write "call %s\n" label
+let write_call file (Label label) =
+  fprintf file "call %s\n" label
 
-let write_call_builtin builtin =
+let write_call_builtin file builtin =
   let builtin_str =
     match builtin with
     | ReadInt     -> "read_int"
@@ -354,68 +354,68 @@ let write_call_builtin builtin =
     | PrintBool   -> "print_bool"
     | PrintString -> "print_string"
   in
-  write "call_builtin %s\n" builtin_str
+  fprintf file "call_builtin %s\n" builtin_str
 
-let write_return () =
-  write "return\n"
+let write_return file =
+  fprintf file "return\n"
 
-let write_halt () =
-  write "halt\n"
+let write_halt file =
+  fprintf file "halt\n"
 
-let write_block_label (Label label) =
-  write "%s:\n" label
+let write_block_label file (Label label) =
+  fprintf file "%s:\n" label
 
-let write_debug_reg (Reg r) =
-  write "debug_reg r%d\n" r
+let write_debug_reg file (Reg r) =
+  fprintf file "debug_reg r%d\n" r
 
-let write_debug_slot (StackSlot s) =
-  write "debug_slot %d\n" s
+let write_debug_slot file (StackSlot s) =
+  fprintf file "debug_slot %d\n" s
 
-let write_debug_stack () =
-  write "debug_stack\n"
+let write_debug_stack file =
+  fprintf file "debug_stack\n"
 
-let write_instr () instr =
+let write_instr file () instr =
   match instr with
-  | PushStackFrame  frame_size -> write_push_stack frame_size
-  | PopStackFrame   frame_size -> write_pop_stack  frame_size
-  | Load           (reg, slot) -> write_load reg slot
-  | Store          (slot, reg) -> write_store slot reg
-  | LoadAddress    (reg, slot) -> write_load_addr reg slot
-  | LoadIndirect  (reg1, reg2) -> write_load_ind reg1 reg2
-  | StoreIndirect (reg1, reg2) -> write_store_ind reg1 reg2
-  | IntConst        (reg, imm) -> write_int_const reg imm
-  | StringConst     (reg, str) -> write_str_const reg str
-  | AddInt        (r1, r2, r3) -> write_add_int r1 r2 r3
-  | SubInt        (r1, r2, r3) -> write_sub_int r1 r2 r3
-  | MulInt        (r1, r2, r3) -> write_mul_int r1 r2 r3
-  | DivInt        (r1, r2, r3) -> write_div_int r1 r2 r3
-  | AddOffset     (r1, r2, r3) -> write_add_offset r1 r2 r3
-  | SubOffset     (r1, r2, r3) -> write_sub_offset r1 r2 r3
-  | CmpEqInt      (r1, r2, r3) -> write_cmp_eq r1 r2 r3
-  | CmpNeqInt     (r1, r2, r3) -> write_cmp_neq r1 r2 r3
-  | CmpLtInt      (r1, r2, r3) -> write_cmp_lt r1 r2 r3
-  | CmpLeqInt     (r1, r2, r3) -> write_cmp_leq r1 r2 r3
-  | CmpGtInt      (r1, r2, r3) -> write_cmp_gt r1 r2 r3
-  | CmpGeqInt     (r1, r2, r3) -> write_cmp_geq r1 r2 r3
-  | And           (r1, r2, r3) -> write_and r1 r2 r3
-  | Or            (r1, r2, r3) -> write_or r1 r2 r3
-  | Not               (r1, r2) -> write_not r1 r2
-  | Move              (r1, r2) -> write_move r1 r2
-  | BranchOnTrue  (reg, label) -> write_branch_true reg label
-  | BranchOnFalse (reg, label) -> write_branch_false reg label
-  | BranchUncond         label -> write_branch_uncond label
-  | Call                 label -> write_call label
-  | CallBuiltin        builtin -> write_call_builtin builtin
-  | Return                     -> write_return ()
-  | Halt                       -> write_halt ()
-  | BlockLabel           label -> write_block_label label
-  | DebugReg               reg -> write_debug_reg reg
-  | DebugSlot       stack_slot -> write_debug_slot stack_slot
-  | DebugStack                 -> write_debug_stack ()
+  | PushStackFrame  frame_size -> write_push_stack file frame_size
+  | PopStackFrame   frame_size -> write_pop_stack file frame_size
+  | Load           (reg, slot) -> write_load file reg slot
+  | Store          (slot, reg) -> write_store file slot reg
+  | LoadAddress    (reg, slot) -> write_load_addr file reg slot
+  | LoadIndirect  (reg1, reg2) -> write_load_ind file reg1 reg2
+  | StoreIndirect (reg1, reg2) -> write_store_ind file reg1 reg2
+  | IntConst        (reg, imm) -> write_int_const file reg imm
+  | StringConst     (reg, str) -> write_str_const file reg str
+  | AddInt        (r1, r2, r3) -> write_add_int file r1 r2 r3
+  | SubInt        (r1, r2, r3) -> write_sub_int file r1 r2 r3
+  | MulInt        (r1, r2, r3) -> write_mul_int file r1 r2 r3
+  | DivInt        (r1, r2, r3) -> write_div_int file r1 r2 r3
+  | AddOffset     (r1, r2, r3) -> write_add_offset file r1 r2 r3
+  | SubOffset     (r1, r2, r3) -> write_sub_offset file r1 r2 r3
+  | CmpEqInt      (r1, r2, r3) -> write_cmp_eq file r1 r2 r3
+  | CmpNeqInt     (r1, r2, r3) -> write_cmp_neq file r1 r2 r3
+  | CmpLtInt      (r1, r2, r3) -> write_cmp_lt file r1 r2 r3
+  | CmpLeqInt     (r1, r2, r3) -> write_cmp_leq file r1 r2 r3
+  | CmpGtInt      (r1, r2, r3) -> write_cmp_gt file r1 r2 r3
+  | CmpGeqInt     (r1, r2, r3) -> write_cmp_geq file r1 r2 r3
+  | And           (r1, r2, r3) -> write_and file r1 r2 r3
+  | Or            (r1, r2, r3) -> write_or file r1 r2 r3
+  | Not               (r1, r2) -> write_not file r1 r2
+  | Move              (r1, r2) -> write_move file r1 r2
+  | BranchOnTrue  (reg, label) -> write_branch_true file reg label
+  | BranchOnFalse (reg, label) -> write_branch_false file reg label
+  | BranchUncond         label -> write_branch_uncond file label
+  | Call                 label -> write_call file label
+  | CallBuiltin        builtin -> write_call_builtin file builtin
+  | Return                     -> write_return file
+  | Halt                       -> write_halt file
+  | BlockLabel           label -> write_block_label file label
+  | DebugReg               reg -> write_debug_reg file reg
+  | DebugSlot       stack_slot -> write_debug_slot file stack_slot
+  | DebugStack                 -> write_debug_stack file
 
-let write_program code =
-  List.fold_left write_instr () code
+let write_program file code =
+  List.fold_left (write_instr file) () code
 
-let generate_oz_code symtbl prog =
+let generate_oz_code file symtbl prog =
   let code = gen_code symtbl prog in
-  write_program code
+  write_program file code
