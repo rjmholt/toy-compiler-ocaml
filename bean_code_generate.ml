@@ -154,8 +154,21 @@ gen_binop_code symtbl proc_id load_reg code binop lexpr rexpr =
   let lexpr_code = gen_expr_code symtbl proc_id (Reg r) code lexpr in
   let rexpr_code = gen_expr_code symtbl proc_id (Reg (r+1)) lexpr_code rexpr in
   match binop with
+  (* Integer operations *)
   | AST.Op_add -> AddInt (Reg r, Reg r, Reg (r+1)) :: rexpr_code
-  | _ -> raise (Unsupported "Only + binop is supported")
+  | AST.Op_sub -> SubInt (Reg r, Reg r, Reg (r+1)) :: rexpr_code
+  | AST.Op_mul -> MulInt (Reg r, Reg r, Reg (r+1)) :: rexpr_code
+  | AST.Op_div -> DivInt (Reg r, Reg r, Reg (r+1)) :: rexpr_code
+  (* Integer comparison operations *)
+  | AST.Op_eq  -> CmpEqInt  (Reg r, Reg r, Reg (r+1)) :: rexpr_code
+  | AST.Op_neq -> CmpNeqInt (Reg r, Reg r, Reg (r+1)) :: rexpr_code
+  | AST.Op_gt  -> CmpGtInt  (Reg r, Reg r, Reg (r+1)) :: rexpr_code
+  | AST.Op_geq -> CmpGeqInt (Reg r, Reg r, Reg (r+1)) :: rexpr_code
+  | AST.Op_lt  -> CmpLtInt  (Reg r, Reg r, Reg (r+1)) :: rexpr_code
+  | AST.Op_leq -> CmpLeqInt (Reg r, Reg r, Reg (r+1)) :: rexpr_code
+  (* Boolean binops *)
+  | AST.Op_and -> And (Reg r, Reg r, Reg (r+1)) :: rexpr_code
+  | AST.Op_or  -> Or  (Reg r, Reg r, Reg (r+1)) :: rexpr_code
 
 (* Generate code for an expression *)
 and
@@ -168,6 +181,22 @@ gen_expr_code symtbl proc_id load_reg code expr =
       gen_unop_code symtbl proc_id load_reg code unop expr
   | AST.Ebinop (lexpr, binop, rexpr, _) ->
       gen_binop_code symtbl proc_id load_reg code binop lexpr rexpr
+
+let gen_read_code symtbl proc_id code lval =
+  let (Sym.TSBeantype bt) = get_lval_type symtbl proc_id lval in
+  let read_call =
+    match bt with
+    | AST.TInt  -> ReadInt
+    | AST.TBool -> ReadBool
+  in
+  match lval with
+  | AST.LField _ -> raise (Unsupported "Field reads not yet supported")
+  | AST.LId (id, _) -> 
+      let slot_num = Sym.get_slot_num symtbl proc_id id in
+      let read_code = [Store (StackSlot slot_num, Reg 0);
+                       CallBuiltin read_call]
+      in
+      read_code @ code
 
 let gen_struct_assign_code symtbl proc_id code lval rstruct =
   raise (Unsupported "Structure field assignments not yet supported")
@@ -230,12 +259,13 @@ let gen_bt_decl_code frame_size code bt =
 let gen_stmt_code symtbl proc_id (label_num, frame_size, code) stmt =
   match stmt with
   | AST.Write wrt ->
-      let new_code =
-        gen_write_code symtbl proc_id code wrt
-      in
+      let new_code = gen_write_code symtbl proc_id code wrt in
       (label_num, frame_size, new_code)
   | AST.Assign (lval, rval, _) ->
       let new_code = gen_assign_code symtbl proc_id code lval rval in
+      (label_num, frame_size, new_code)
+  | AST.Read lval ->
+      let new_code = gen_read_code symtbl proc_id code lval in
       (label_num, frame_size, new_code)
   | _ -> raise (Unsupported "Only write statements are currently supported")
 

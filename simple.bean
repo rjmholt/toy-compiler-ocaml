@@ -2,7 +2,9 @@ proc main()
     int x;
     int y;
     x := 8;
-    y := 19;
-    write x + y + 38;
+    write "Enter a number: ";
+    read y;
+    write "That number plus 8 is ";
+    write x + y;
     write "\n";
 end
