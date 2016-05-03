@@ -150,8 +150,12 @@ let rec gen_unop_code symtbl proc_id load_reg code unop expr =
 (* Generate code for a binary operation expression *)
 and
 gen_binop_code symtbl proc_id load_reg code binop lexpr rexpr =
+  let Reg r = load_reg in
+  let lexpr_code = gen_expr_code symtbl proc_id (Reg r) code lexpr in
+  let rexpr_code = gen_expr_code symtbl proc_id (Reg (r+1)) lexpr_code rexpr in
   match binop with
-  | _ -> raise (Unsupported "Binary operators not yet supported")
+  | AST.Op_add -> AddInt (Reg r, Reg r, Reg (r+1)) :: rexpr_code
+  | _ -> raise (Unsupported "Only + binop is supported")
 
 (* Generate code for an expression *)
 and
@@ -164,6 +168,21 @@ gen_expr_code symtbl proc_id load_reg code expr =
       gen_unop_code symtbl proc_id load_reg code unop expr
   | AST.Ebinop (lexpr, binop, rexpr, _) ->
       gen_binop_code symtbl proc_id load_reg code binop lexpr rexpr
+
+let gen_struct_assign_code symtbl proc_id code lval rstruct =
+  raise (Unsupported "Structure field assignments not yet supported")
+
+let gen_assign_code symtbl proc_id code lval rval =
+  match rval with
+  | AST.Rstruct rstruct ->
+      gen_struct_assign_code symtbl proc_id code lval rstruct
+  | AST.Rexpr expr ->
+      let expr_code = gen_expr_code symtbl proc_id (Reg 0) code expr in
+      match lval with
+      | AST.LId (id, _) ->
+          let slot_num = Sym.get_slot_num symtbl proc_id id in
+          Store (StackSlot slot_num, Reg 0) :: expr_code
+      | _ -> raise (Unsupported "Field assignment not yet supported")
 
 (* Generate code to print a given bean type *)
 let gen_bt_write_code code bt =
@@ -214,6 +233,9 @@ let gen_stmt_code symtbl proc_id (label_num, frame_size, code) stmt =
       let new_code =
         gen_write_code symtbl proc_id code wrt
       in
+      (label_num, frame_size, new_code)
+  | AST.Assign (lval, rval, _) ->
+      let new_code = gen_assign_code symtbl proc_id code lval rval in
       (label_num, frame_size, new_code)
   | _ -> raise (Unsupported "Only write statements are currently supported")
 

@@ -1,4 +1,8 @@
 proc main()
-    write not not not true;
+    int x;
+    int y;
+    x := 8;
+    y := 19;
+    write x + y + 38;
     write "\n";
 end
