@@ -82,7 +82,7 @@ exception Struct_expression_error
 
 (* Generate a label name *)
 let make_label label_num =
-  "label" ^ string_of_int label_num
+  Label ("label" ^ string_of_int label_num)
 
 (* Get the type of an lvalue *)
 let get_lval_type symtbl proc_id lval =
@@ -244,7 +244,7 @@ let gen_write_code symtbl proc_id code wrt =
 
 (* TODO sort out how to make a massive function fit onto one line nicely *)
 let rec gen_if_code symtbl proc_id label_num code expr stmts =
-  let (new_label, after_label) = (label_num+1, Label (make_label label_num)) in
+  let (new_label, after_label) = (label_num+1, make_label label_num) in
   let cond_reg = Reg 0 in
   let expr_code = gen_expr_code symtbl proc_id cond_reg code expr in
   let branch_code = BranchOnFalse (cond_reg, after_label) :: expr_code in
@@ -253,6 +253,26 @@ let rec gen_if_code symtbl proc_id label_num code expr stmts =
     List.fold_right stmt_fold stmts (new_label, branch_code)
   in
   (final_label, (BlockLabel after_label) :: stmts_code)
+
+and
+gen_ifelse_code symtbl proc_id label_num code expr if_stmts el_stmts =
+  let (new_label, after_label, else_label) =
+    (label_num+2, make_label (label_num+1), make_label label_num)
+  in
+  let cond_reg = Reg 0 in
+  let expr_code = gen_expr_code symtbl proc_id cond_reg code expr in
+  let branch_code = BranchOnFalse (cond_reg, else_label) :: expr_code in
+  let stmt_fold stmt acc = gen_stmt_code symtbl proc_id acc stmt in
+  let (label_num1, if_stmts_code) =
+    List.fold_right stmt_fold if_stmts (new_label, branch_code)
+  in
+  let before_else_code =
+    BlockLabel else_label :: BranchUncond after_label :: if_stmts_code
+  in
+  let (label_num2, else_code) =
+    List.fold_right stmt_fold el_stmts (label_num1, before_else_code)
+  in
+  (label_num2, (BlockLabel after_label) :: else_code)
 
 (* Generate code for a single statement *)
 and
@@ -268,7 +288,9 @@ gen_stmt_code symtbl proc_id (label_num, code) stmt =
       let new_code = gen_read_code symtbl proc_id code lval in
       (label_num, new_code)
   | AST.If (expr, stmts) ->
-        gen_if_code symtbl proc_id label_num code expr stmts
+      gen_if_code symtbl proc_id label_num code expr stmts
+  | AST.IfElse (expr, if_stmts, el_stmts) ->
+      gen_ifelse_code symtbl proc_id label_num code expr if_stmts el_stmts
   | _ -> raise (Unsupported "Only write statements are currently supported")
 
 (* Generate code for an integer declaration *)
@@ -309,7 +331,7 @@ let gen_proc_code symtbl (label_num, code) proc =
     if label_num = 0 then
       Label "proc_main"
     else
-      Label (make_label label_num)
+      make_label label_num
   in
   let frame_size = 0 in
   (* Generate code for each part of the proc *)

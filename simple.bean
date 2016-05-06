@@ -13,5 +13,7 @@ proc main()
         write "y + z == ";
         write y + z;
         write "\n";
+    else
+        write "You have elected not to proceed\n";
     fi
 end
