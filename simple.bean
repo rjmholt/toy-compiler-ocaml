@@ -1,10 +1,17 @@
 proc main()
-    int x;
+    bool x;
     int y;
-    x := 8;
-    write "Enter a number: ";
-    read y;
-    write "That number plus 8 is ";
-    write x + y;
+    int z;
+
+    write "Do you wish to proceed?[true/false] ";
+    read x;
     write "\n";
+
+    if x then
+        y := 64;
+        z := 11;
+        write "y + z == ";
+        write y + z;
+        write "\n";
+    fi
 end

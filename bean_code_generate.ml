@@ -80,6 +80,10 @@ exception Unsupported of string
 
 exception Struct_expression_error
 
+(* Generate a label name *)
+let make_label label_num =
+  "label" ^ string_of_int label_num
+
 (* Get the type of an lvalue *)
 let get_lval_type symtbl proc_id lval =
   match lval with
@@ -238,6 +242,35 @@ let gen_write_code symtbl proc_id code wrt =
       in
       print_code
 
+(* TODO sort out how to make a massive function fit onto one line nicely *)
+let rec gen_if_code symtbl proc_id label_num code expr stmts =
+  let (new_label, after_label) = (label_num+1, Label (make_label label_num)) in
+  let cond_reg = Reg 0 in
+  let expr_code = gen_expr_code symtbl proc_id cond_reg code expr in
+  let branch_code = BranchOnFalse (cond_reg, after_label) :: expr_code in
+  let stmt_fold stmt acc = gen_stmt_code symtbl proc_id acc stmt in
+  let (final_label, stmts_code) =
+    List.fold_right stmt_fold stmts (new_label, branch_code)
+  in
+  (final_label, (BlockLabel after_label) :: stmts_code)
+
+(* Generate code for a single statement *)
+and
+gen_stmt_code symtbl proc_id (label_num, code) stmt =
+  match stmt with
+  | AST.Write wrt ->
+      let new_code = gen_write_code symtbl proc_id code wrt in
+      (label_num, new_code)
+  | AST.Assign (lval, rval, _) ->
+      let new_code = gen_assign_code symtbl proc_id code lval rval in
+      (label_num, new_code)
+  | AST.Read lval ->
+      let new_code = gen_read_code symtbl proc_id code lval in
+      (label_num, new_code)
+  | AST.If (expr, stmts) ->
+        gen_if_code symtbl proc_id label_num code expr stmts
+  | _ -> raise (Unsupported "Only write statements are currently supported")
+
 (* Generate code for an integer declaration *)
 let gen_int_decl_code frame_size code =
   (* Generate the code backwards *)
@@ -254,20 +287,6 @@ let gen_bt_decl_code frame_size code bt =
   match bt with
   | AST.TInt  -> gen_int_decl_code frame_size code
   | AST.TBool -> gen_bool_decl_code frame_size code
-
-(* Generate code for a single statement *)
-let gen_stmt_code symtbl proc_id (label_num, frame_size, code) stmt =
-  match stmt with
-  | AST.Write wrt ->
-      let new_code = gen_write_code symtbl proc_id code wrt in
-      (label_num, frame_size, new_code)
-  | AST.Assign (lval, rval, _) ->
-      let new_code = gen_assign_code symtbl proc_id code lval rval in
-      (label_num, frame_size, new_code)
-  | AST.Read lval ->
-      let new_code = gen_read_code symtbl proc_id code lval in
-      (label_num, frame_size, new_code)
-  | _ -> raise (Unsupported "Only write statements are currently supported")
 
 (* Generate code for a single declaration *)
 let gen_decl_code symtbl proc_id (frame_size, code) (id, _, _) =
@@ -290,7 +309,7 @@ let gen_proc_code symtbl (label_num, code) proc =
     if label_num = 0 then
       Label "proc_main"
     else
-      Label ("label" ^ string_of_int label_num)
+      Label (make_label label_num)
   in
   let frame_size = 0 in
   (* Generate code for each part of the proc *)
@@ -303,11 +322,11 @@ let gen_proc_code symtbl (label_num, code) proc =
   let (frame_size1, code1) =
     List.fold_left param_gen (frame_size, []) params
   in
-  let (frame_size2, code2) =
+  let (proc_frame_size, code2) =
     List.fold_left decl_gen (frame_size1, code1) decls
   in
-  let (labels_used, proc_frame_size, body_code) =
-    List.fold_left stmt_gen (label_num, frame_size2, code2) stmts
+  let (labels_used, body_code) =
+    List.fold_left stmt_gen (label_num, code2) stmts
   in
   (* Create the function prologue and epilogue *)
   let prologue = [PushStackFrame proc_frame_size; BlockLabel label] in

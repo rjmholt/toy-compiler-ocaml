@@ -4,22 +4,27 @@ typedef {
     a: int,
     b: {x: myBool, g: int}
 } aType
-typedef bType aType
+typedef aType bType
 
 # Tests the 'write' command with different strings
 proc writeTest(val int x, ref bool y, val bType z)
+    write "---- Begin write test ----\n";
+
     write "'Kevin!' she shouted politely\n";
     write "\ \' \nduck\rgoose\trabbit\\\bemu(^&)~|\n";
     write "\n \\n \\\n \\\\n \n";
     write x;
     write y;
     write z.b.x;
+    write "\n";
 end
 
 # Tests boolean operators
 proc boolTest(val bool x, val bool y)
     bool p;
     bool q;
+
+    write "---- Begin bool test ----\n";
 
     p := not x = y;
     q := x and (p or y);
@@ -31,6 +36,7 @@ proc boolTest(val bool x, val bool y)
     if q then
         write "q is true\n";
     fi
+    write "\n";
 end
 
 # Tests division order
@@ -40,6 +46,8 @@ proc divTest()
     int z;
     int p;
     int q;
+
+    write "---- Begin division test ----\n";
 
     x := 100; y:= 20; z := 5;
 
@@ -53,7 +61,27 @@ proc divTest()
         write "100 / (20 / 5) = 25\n";
     else
         write "100 / (20 / 5) != 25\n";
-    fi
+    fi 
+    write "\n";
+end
+
+# Tests expression handling and reading
+proc readExprTest()
+    int x;
+    int y;
+
+    write "---- Begin read/expr test ----\n";
+
+    write "Enter a value for x: ";
+    read x;
+    write "\n";
+
+    write "Enter a value for y: ";
+    read y;
+    write "\n";
+
+    write ((28 - 3 + y) * x / 4 * (x + x * y / y));
+    write "\n";
 end
 
 # Tests overflow semantics
@@ -61,6 +89,8 @@ proc overflowTest()
     int x;
     int y;
     int z;
+
+    write "---- Begin overflow test ----\n";
 
     x := 2147483637;
     y := 2147483635;
@@ -70,11 +100,12 @@ proc overflowTest()
     write z + x - y;
     write z / x * y;
     write z / (x * y);
+    write "\n";
 end
 
 # Sets n to 91
 proc ninetyone(ref int n)
-    if n > 100:
+    if n > 100 then
         n := n - 10;
     else
         n := n + 11;
@@ -103,7 +134,7 @@ proc mutual_two(val int x)
         mutual_one(3*x # Hello
                    + 1);
     fi
-done
+end
 
 proc main()
     int x;
@@ -122,16 +153,24 @@ proc main()
 
     overflowTest();
 
+    write "---- Testing default int value ----\n";
     write "n = "; write n; write "\n";
+    write "\n";
 
+    write "---- Testing default bool value ----\n";
     if p then
         write "Hello";
     fi
+    write "\n";
 
+    write "---- Testing McCarthy91 ----\n";
     n := 36;
     write "n = "; write n; write "\n";
     ninetyone(n);
     write "n = "; write n; write "\n";
+    write "\n";
 
+    write "---- Testing mutually recursive collatz function ----\n";
     mutual_one(n);
+    write "\n";
 end

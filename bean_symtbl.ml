@@ -71,7 +71,7 @@ type t = symtbl
 
 (* Exception if the user has tried to set a type
  * they have not defined                         *)
-exception Undefined_type of pos
+exception Undefined_type of AST.ident * pos
 
 exception Duplicate_field
 
@@ -153,7 +153,7 @@ let get_typedef td_tbl (deftype_id, pos) =
   try Hashtbl.find td_tbl deftype_id
   with
   | Not_found ->
-      raise (Undefined_type pos)
+      raise (Undefined_type (deftype_id, pos))
 
 (* Add a struct field type to a struct type lookup table *)
 let rec add_field_to_tbl td_tbl (id, typespec, pos) tbl =

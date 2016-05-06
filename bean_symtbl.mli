@@ -69,7 +69,7 @@ type t = symtbl
 
 (* Exception if the user has tried to set a type
  * they have not defined                         *)
-exception Undefined_type of (Lexing.position * Lexing.position)
+exception Undefined_type of AST.ident * pos
 
 val build_symtbl: Bean_ast.t -> symtbl
 
