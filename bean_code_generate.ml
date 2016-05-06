@@ -274,6 +274,22 @@ gen_ifelse_code symtbl proc_id label_num code expr if_stmts el_stmts =
   in
   (label_num2, (BlockLabel after_label) :: else_code)
 
+and
+gen_while_code symtbl proc_id label_num code expr stmts =
+  let (new_label, cond_label, after_label) =
+    (label_num+2, make_label (label_num+1), make_label label_num)
+  in
+  let cond_reg = Reg 0 in
+  let cond_code = BlockLabel cond_label :: code in
+  let expr_code = gen_expr_code symtbl proc_id cond_reg cond_code expr in
+  let branch_code = BranchOnFalse (cond_reg, after_label) :: expr_code in
+  let stmt_fold stmt acc = gen_stmt_code symtbl proc_id acc stmt in
+  let (final_label, stmt_code) =
+    List.fold_right stmt_fold stmts (new_label, branch_code)
+  in
+  let while_code = BranchUncond cond_label :: stmt_code in
+  (final_label, BlockLabel after_label :: while_code)
+
 (* Generate code for a single statement *)
 and
 gen_stmt_code symtbl proc_id (label_num, code) stmt =
@@ -291,6 +307,8 @@ gen_stmt_code symtbl proc_id (label_num, code) stmt =
       gen_if_code symtbl proc_id label_num code expr stmts
   | AST.IfElse (expr, if_stmts, el_stmts) ->
       gen_ifelse_code symtbl proc_id label_num code expr if_stmts el_stmts
+  | AST.While (expr, stmts) ->
+      gen_while_code symtbl proc_id label_num code expr stmts
   | _ -> raise (Unsupported "Only write statements are currently supported")
 
 (* Generate code for an integer declaration *)

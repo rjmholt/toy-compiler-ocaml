@@ -1,19 +1,10 @@
 proc main()
-    bool x;
-    int y;
-    int z;
+    int x;
 
-    write "Do you wish to proceed?[true/false] ";
-    read x;
-    write "\n";
-
-    if x then
-        y := 64;
-        z := 11;
-        write "y + z == ";
-        write y + z;
+    x := 0;
+    while x < 10 do
+        x := x + 1;
+        write x;
         write "\n";
-    else
-        write "You have elected not to proceed\n";
-    fi
+    od
 end
