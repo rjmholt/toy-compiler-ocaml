@@ -52,6 +52,7 @@ type proc =
   { (* Params must be a list, since Hashtbl doesn't preserve order *)
     proc_params:  AST.ident list;
     proc_sym_tbl: (ident, var_symbol) Hashtbl.t;
+    proc_label:   string option ref;
     proc_pos:     pos;
   }
 
@@ -86,6 +87,8 @@ exception Duplicate_decl
 exception No_field
 
 exception Slot_not_allocated
+
+exception No_such_procedure
 
 (* ---- SYMBOL TABLE INTERFACE FUNCTIONS ---- *)
 
@@ -144,6 +147,27 @@ let get_slot_num sym_tbl proc_id id =
   match !slot with
   | None     -> raise Slot_not_allocated
   | Some num -> num
+
+(* Set the label of a procedure body *)
+let set_proc_label sym_tbl proc_id label =
+  let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
+  proc.proc_label := Some label
+
+let get_proc_label sym_tbl proc_id =
+  let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
+  match !(proc.proc_label) with
+  | None       -> raise No_such_procedure
+  | Some label -> label
+
+let get_param_list sym_tbl proc_id =
+  let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
+  proc.proc_params
+
+let get_proc_var_scope sym_tbl proc_id symbol_id =
+  let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
+  let proc_syms = proc.proc_sym_tbl in
+  let (_, scope, _, _) = Hashtbl.find proc_syms symbol_id in
+  scope
 
 (* ---- SYMBOL TABLE CONSTRUCTOR FUNCTIONS ---- *)
 
@@ -236,13 +260,14 @@ let add_proc td_tbl ps_tbl (id, pparams, (proc_decls, _), proc_pos) =
     raise Duplicate_proc
   else
     let get_param_id (_, _, id, _) ids = id :: ids in
-    let proc_params = List.fold_right get_param_id pparams [] in
-    let proc_sym_tbl       = Hashtbl.create 10 in
+    let proc_params  = List.fold_right get_param_id pparams [] in
+    let proc_sym_tbl = Hashtbl.create 10 in
+    let proc_label   = ref None in
     let add_param param () = add_param_symbol td_tbl proc_sym_tbl param in
     let add_decl decl ()   = add_decl_symbol td_tbl proc_sym_tbl decl in
     List.fold_right add_param pparams ();
     List.fold_right add_decl  proc_decls  ();
-    Hashtbl.add ps_tbl id {proc_params; proc_sym_tbl; proc_pos}
+    Hashtbl.add ps_tbl id {proc_params; proc_sym_tbl; proc_label; proc_pos}
 
 (* Insert procedures into a lookup table by ident *)
 let rec add_procs td_tbl p_tbl (procs: AST.proc list) =

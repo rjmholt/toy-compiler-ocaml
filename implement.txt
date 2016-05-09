@@ -1,0 +1,6 @@
+procedure call:
+    Either save the stack and call the label, or
+    remember which registers are in use already (maybe worse)
+
+    Need the symbol table to associate procedure names with labels
+    

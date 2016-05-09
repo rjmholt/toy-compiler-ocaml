@@ -52,6 +52,7 @@ type proc =
   { (* Params must be a list, since Hashtbl doesn't preserve order *)
     proc_params:  AST.ident list;
     proc_sym_tbl: (ident, var_symbol) Hashtbl.t;
+    proc_label:   string option ref;
     proc_pos:     pos;
   }
 
@@ -80,3 +81,11 @@ val get_field_type: symtbl -> AST.ident -> (AST.lvalue * AST.ident) -> typespec
 val set_slot_num: symtbl -> AST.ident -> AST.ident -> int -> unit
 
 val get_slot_num: symtbl -> AST.ident -> AST.ident -> int
+
+val set_proc_label: symtbl -> AST.ident -> string -> unit
+
+val get_proc_label: symtbl -> AST.ident -> string
+
+val get_param_list: symtbl -> AST.ident -> AST.ident list
+
+val get_proc_var_scope: symtbl -> AST.ident -> AST.ident -> var_scope

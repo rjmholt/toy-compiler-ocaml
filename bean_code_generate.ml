@@ -81,8 +81,19 @@ exception Unsupported of string
 exception Struct_expression_error
 
 (* Generate a label name *)
-let make_label label_num =
-  Label ("label" ^ string_of_int label_num)
+let make_if_labels label_num =
+  let after_label = Label ("if_after" ^ string_of_int label_num) in
+  (label_num+1, after_label)
+
+let make_ifel_labels label_num =
+  let else_label = Label ("ifel_else" ^ string_of_int label_num) in
+  let after_label = Label ("ifel_after" ^ string_of_int label_num) in
+  (label_num+1, after_label, else_label)
+
+let make_while_labels label_num =
+  let cond_label = Label ("while_cond" ^ string_of_int label_num) in
+  let after_label = Label ("while_after" ^ string_of_int label_num) in
+  (label_num+1, after_label, cond_label)
 
 (* Get the type of an lvalue *)
 let get_lval_type symtbl proc_id lval =
@@ -116,77 +127,77 @@ let get_expr_type symtbl proc_id expr =
   | AST.Ebinop (_, binop, _, _) -> get_binop_type binop
 
 (* Generate code for an integer literal expression *)
-let gen_int_expr_code load_reg code i =
-  (IntConst (load_reg, i)) :: code
+let gen_int_expr_code load_reg i =
+  [IntConst (load_reg, i)]
 
 (* Generate code for a boolean literal expression *)
-let gen_bool_expr_code load_reg code b =
+let gen_bool_expr_code load_reg b =
   match b with
-  | true  -> gen_int_expr_code load_reg code 1
-  | false -> gen_int_expr_code load_reg code 0
+  | true  -> gen_int_expr_code load_reg 1
+  | false -> gen_int_expr_code load_reg 0
 
 (* Generate code for an lvalue expression evaluation *)
-let gen_lval_code symtbl proc_id load_reg code lval =
+let gen_lval_code symtbl proc_id load_reg lval =
   match lval with
   | AST.LField (lval, id) ->
       raise (Unsupported "Field accesses not yet supported")
   | AST.LId (id, _)       ->
       let slot_num = Sym.get_slot_num symtbl proc_id id in
-      (Load (load_reg, StackSlot slot_num)) :: code
+      [Load (load_reg, StackSlot slot_num)]
 
 (* Generate code for a unary operation expression *)
-let rec gen_unop_code symtbl proc_id load_reg code unop expr =
+let rec gen_unop_code symtbl proc_id load_reg unop expr =
   let subexpr_code =
-    gen_expr_code symtbl proc_id load_reg code expr
+    gen_expr_code symtbl proc_id load_reg expr
   in
-  match unop with
-  | AST.Op_not ->
-      let not_instr = Not (load_reg, load_reg) in
-      not_instr :: subexpr_code @ code
-  | AST.Op_minus ->
-      let (Reg r) = load_reg in
-      let minus_code =
+  let operation_code = match unop with
+    | AST.Op_not -> [Not (load_reg, load_reg)]
+    | AST.Op_minus ->
+        let (Reg r) = load_reg in
         [MulInt (Reg r, Reg r, Reg (r+1));
          IntConst (Reg (r+1), -1)]
-      in
-      minus_code @ subexpr_code @ code
+  in
+  operation_code @ subexpr_code
 
 (* Generate code for a binary operation expression *)
 and
-gen_binop_code symtbl proc_id load_reg code binop lexpr rexpr =
+gen_binop_code symtbl proc_id load_reg binop lexpr rexpr =
   let Reg r = load_reg in
-  let lexpr_code = gen_expr_code symtbl proc_id (Reg r) code lexpr in
-  let rexpr_code = gen_expr_code symtbl proc_id (Reg (r+1)) lexpr_code rexpr in
-  match binop with
-  (* Integer operations *)
-  | AST.Op_add -> AddInt (Reg r, Reg r, Reg (r+1)) :: rexpr_code
-  | AST.Op_sub -> SubInt (Reg r, Reg r, Reg (r+1)) :: rexpr_code
-  | AST.Op_mul -> MulInt (Reg r, Reg r, Reg (r+1)) :: rexpr_code
-  | AST.Op_div -> DivInt (Reg r, Reg r, Reg (r+1)) :: rexpr_code
-  (* Integer comparison operations *)
-  | AST.Op_eq  -> CmpEqInt  (Reg r, Reg r, Reg (r+1)) :: rexpr_code
-  | AST.Op_neq -> CmpNeqInt (Reg r, Reg r, Reg (r+1)) :: rexpr_code
-  | AST.Op_gt  -> CmpGtInt  (Reg r, Reg r, Reg (r+1)) :: rexpr_code
-  | AST.Op_geq -> CmpGeqInt (Reg r, Reg r, Reg (r+1)) :: rexpr_code
-  | AST.Op_lt  -> CmpLtInt  (Reg r, Reg r, Reg (r+1)) :: rexpr_code
-  | AST.Op_leq -> CmpLeqInt (Reg r, Reg r, Reg (r+1)) :: rexpr_code
-  (* Boolean binops *)
-  | AST.Op_and -> And (Reg r, Reg r, Reg (r+1)) :: rexpr_code
-  | AST.Op_or  -> Or  (Reg r, Reg r, Reg (r+1)) :: rexpr_code
+  let lexpr_code = gen_expr_code symtbl proc_id (Reg r) lexpr in
+  let rexpr_code = gen_expr_code symtbl proc_id (Reg (r+1)) rexpr in
+  let operation_code = 
+    match binop with
+    (* Integer operations *)
+    | AST.Op_add -> [AddInt (Reg r, Reg r, Reg (r+1))]
+    | AST.Op_sub -> [SubInt (Reg r, Reg r, Reg (r+1))]
+    | AST.Op_mul -> [MulInt (Reg r, Reg r, Reg (r+1))]
+    | AST.Op_div -> [DivInt (Reg r, Reg r, Reg (r+1))]
+    (* Integer comparison operations *)
+    | AST.Op_eq  -> [CmpEqInt  (Reg r, Reg r, Reg (r+1))]
+    | AST.Op_neq -> [CmpNeqInt (Reg r, Reg r, Reg (r+1))]
+    | AST.Op_gt  -> [CmpGtInt  (Reg r, Reg r, Reg (r+1))]
+    | AST.Op_geq -> [CmpGeqInt (Reg r, Reg r, Reg (r+1))]
+    | AST.Op_lt  -> [CmpLtInt  (Reg r, Reg r, Reg (r+1))]
+    | AST.Op_leq -> [CmpLeqInt (Reg r, Reg r, Reg (r+1))]
+    (* Boolean binops *)
+    | AST.Op_and -> [And (Reg r, Reg r, Reg (r+1))]
+    | AST.Op_or  -> [Or  (Reg r, Reg r, Reg (r+1))]
+  in
+  operation_code @ rexpr_code @ lexpr_code
 
 (* Generate code for an expression *)
 and
-gen_expr_code symtbl proc_id load_reg code expr =
+gen_expr_code symtbl proc_id load_reg expr =
   match expr with
-  | AST.Eint  (i, _) -> gen_int_expr_code load_reg code i
-  | AST.Ebool (b, _) -> gen_bool_expr_code load_reg code b
-  | AST.Elval (lval, _) -> gen_lval_code symtbl proc_id load_reg code lval
+  | AST.Eint  (i, _) -> gen_int_expr_code load_reg i
+  | AST.Ebool (b, _) -> gen_bool_expr_code load_reg b
+  | AST.Elval (lval, _) -> gen_lval_code symtbl proc_id load_reg lval
   | AST.Eunop (unop, expr, _) ->
-      gen_unop_code symtbl proc_id load_reg code unop expr
+      gen_unop_code symtbl proc_id load_reg unop expr
   | AST.Ebinop (lexpr, binop, rexpr, _) ->
-      gen_binop_code symtbl proc_id load_reg code binop lexpr rexpr
+      gen_binop_code symtbl proc_id load_reg binop lexpr rexpr
 
-let gen_read_code symtbl proc_id code lval =
+let gen_read_code symtbl proc_id lval =
   let (Sym.TSBeantype bt) = get_lval_type symtbl proc_id lval in
   let read_call =
     match bt with
@@ -197,136 +208,156 @@ let gen_read_code symtbl proc_id code lval =
   | AST.LField _ -> raise (Unsupported "Field reads not yet supported")
   | AST.LId (id, _) -> 
       let slot_num = Sym.get_slot_num symtbl proc_id id in
-      let read_code = [Store (StackSlot slot_num, Reg 0);
-                       CallBuiltin read_call]
-      in
-      read_code @ code
+      [Store (StackSlot slot_num, Reg 0); CallBuiltin read_call]
 
-let gen_struct_assign_code symtbl proc_id code lval rstruct =
+let gen_struct_assign_code symtbl proc_id lval rstruct =
   raise (Unsupported "Structure field assignments not yet supported")
 
-let gen_assign_code symtbl proc_id code lval rval =
+let gen_assign_code symtbl proc_id lval rval =
   match rval with
   | AST.Rstruct rstruct ->
-      gen_struct_assign_code symtbl proc_id code lval rstruct
+      gen_struct_assign_code symtbl proc_id lval rstruct
   | AST.Rexpr expr ->
-      let expr_code = gen_expr_code symtbl proc_id (Reg 0) code expr in
-      match lval with
-      | AST.LId (id, _) ->
-          let slot_num = Sym.get_slot_num symtbl proc_id id in
-          Store (StackSlot slot_num, Reg 0) :: expr_code
-      | _ -> raise (Unsupported "Field assignment not yet supported")
+      let expr_code = gen_expr_code symtbl proc_id (Reg 0) expr in
+      let asgn_code = match lval with
+        | AST.LId (id, _) ->
+            let slot_num = Sym.get_slot_num symtbl proc_id id in
+            [Store (StackSlot slot_num, Reg 0)]
+        | _ -> raise (Unsupported "Field assignment not yet supported")
+      in
+      asgn_code @ expr_code
 
 (* Generate code to print a given bean type *)
-let gen_bt_write_code code bt =
+let gen_bt_write_code bt =
   match bt with
-  | AST.TInt  -> (CallBuiltin PrintInt)  :: code
-  | AST.TBool -> (CallBuiltin PrintBool) :: code
+  | AST.TInt  -> [CallBuiltin PrintInt]
+  | AST.TBool -> [CallBuiltin PrintBool]
 
 (* Generate code for a write statement *)
-let gen_write_code symtbl proc_id code wrt =
+let gen_write_code symtbl proc_id wrt =
+  let print_reg  = Reg 0 in
   match wrt with
   | AST.WString str ->
-      let instrs = [CallBuiltin PrintString; StringConst (Reg 0, str)] in
-      instrs @ code
+      [CallBuiltin PrintString; StringConst (print_reg, str)]
   | AST.WExpr expr ->
-      let print_reg  = Reg 0 in
-      let new_code =
-        gen_expr_code symtbl proc_id print_reg code expr
-      in
+      let expr_code = gen_expr_code symtbl proc_id print_reg expr in
       let expr_type  = get_expr_type symtbl proc_id expr in
       let print_code =
         match expr_type with
-        | Sym.TSBeantype bt -> gen_bt_write_code new_code bt
+        | Sym.TSBeantype bt -> gen_bt_write_code bt
         | _ -> raise (Unsupported "Only primitive Bean types can be printed")
       in
-      print_code
+      print_code @ expr_code
 
+let gen_proc_call_code symtbl caller_id (proc_id, args, _) = ()
+  (* TODO *)
+
+(* Generate if code *)
 (* TODO sort out how to make a massive function fit onto one line nicely *)
-let rec gen_if_code symtbl proc_id label_num code expr stmts =
-  let (new_label, after_label) = (label_num+1, make_label label_num) in
+let rec gen_if_code symtbl proc_id label_num expr stmts =
+  let (new_label, after_label) = make_if_labels label_num in
   let cond_reg = Reg 0 in
-  let expr_code = gen_expr_code symtbl proc_id cond_reg code expr in
+  let expr_code = gen_expr_code symtbl proc_id cond_reg expr in
   let branch_code = BranchOnFalse (cond_reg, after_label) :: expr_code in
   let stmt_fold stmt acc = gen_stmt_code symtbl proc_id acc stmt in
   let (final_label, stmts_code) =
     List.fold_right stmt_fold stmts (new_label, branch_code)
   in
-  (final_label, (BlockLabel after_label) :: stmts_code)
+  let after_code = [BlockLabel after_label] in
+  (final_label, after_code @ stmts_code @ branch_code @ expr_code)
 
+(* Generate if-else code *)
 and
-gen_ifelse_code symtbl proc_id label_num code expr if_stmts el_stmts =
-  let (new_label, after_label, else_label) =
-    (label_num+2, make_label (label_num+1), make_label label_num)
-  in
+gen_ifelse_code symtbl proc_id label_num expr if_stmts el_stmts =
+  let (new_label, after_label, else_label) = make_ifel_labels label_num in
   let cond_reg = Reg 0 in
-  let expr_code = gen_expr_code symtbl proc_id cond_reg code expr in
-  let branch_code = BranchOnFalse (cond_reg, else_label) :: expr_code in
+  let expr_code = gen_expr_code symtbl proc_id cond_reg expr in
+  let branch_code = [BranchOnFalse (cond_reg, else_label)] in
   let stmt_fold stmt acc = gen_stmt_code symtbl proc_id acc stmt in
   let (label_num1, if_stmts_code) =
-    List.fold_right stmt_fold if_stmts (new_label, branch_code)
+    List.fold_right stmt_fold if_stmts (new_label, [])
   in
   let before_else_code =
-    BlockLabel else_label :: BranchUncond after_label :: if_stmts_code
+    [BlockLabel else_label; BranchUncond after_label]
   in
   let (label_num2, else_code) =
-    List.fold_right stmt_fold el_stmts (label_num1, before_else_code)
+    List.fold_right stmt_fold el_stmts (label_num1, [])
   in
-  (label_num2, (BlockLabel after_label) :: else_code)
+  let after_code = [BlockLabel after_label] in
+  let code =
+    after_code
+    @ else_code
+    @ before_else_code
+    @ if_stmts_code
+    @ branch_code
+    @ expr_code
+  in
+  (label_num2, code)
 
+(* Generate while code statement *)
 and
-gen_while_code symtbl proc_id label_num code expr stmts =
-  let (new_label, cond_label, after_label) =
-    (label_num+2, make_label (label_num+1), make_label label_num)
-  in
+gen_while_code symtbl proc_id label_num expr stmts =
+  let (new_label, after_label, cond_label) = make_while_labels label_num in
   let cond_reg = Reg 0 in
-  let cond_code = BlockLabel cond_label :: code in
-  let expr_code = gen_expr_code symtbl proc_id cond_reg cond_code expr in
-  let branch_code = BranchOnFalse (cond_reg, after_label) :: expr_code in
+  let cond_code = [BlockLabel cond_label] in
+  let expr_code = gen_expr_code symtbl proc_id cond_reg expr in
+  let branch_code = [BranchOnFalse (cond_reg, after_label)] in
   let stmt_fold stmt acc = gen_stmt_code symtbl proc_id acc stmt in
   let (final_label, stmt_code) =
     List.fold_right stmt_fold stmts (new_label, branch_code)
   in
-  let while_code = BranchUncond cond_label :: stmt_code in
-  (final_label, BlockLabel after_label :: while_code)
+  let while_end_code = [BranchUncond cond_label] in
+  let after_code = [BlockLabel after_label] in
+  let code =
+    after_code
+    @ while_end_code
+    @ stmt_code
+    @ branch_code
+    @ expr_code
+    @ cond_code
+  in
+  (final_label, code)
 
 (* Generate code for a single statement *)
 and
 gen_stmt_code symtbl proc_id (label_num, code) stmt =
-  match stmt with
-  | AST.Write wrt ->
-      let new_code = gen_write_code symtbl proc_id code wrt in
-      (label_num, new_code)
-  | AST.Assign (lval, rval, _) ->
-      let new_code = gen_assign_code symtbl proc_id code lval rval in
-      (label_num, new_code)
-  | AST.Read lval ->
-      let new_code = gen_read_code symtbl proc_id code lval in
-      (label_num, new_code)
-  | AST.If (expr, stmts) ->
-      gen_if_code symtbl proc_id label_num code expr stmts
-  | AST.IfElse (expr, if_stmts, el_stmts) ->
-      gen_ifelse_code symtbl proc_id label_num code expr if_stmts el_stmts
-  | AST.While (expr, stmts) ->
-      gen_while_code symtbl proc_id label_num code expr stmts
-  | _ -> raise (Unsupported "Only write statements are currently supported")
+  let (new_label, stmt_code) =
+    match stmt with
+    | AST.Write wrt ->
+        (label_num, gen_write_code symtbl proc_id wrt)
+    | AST.Assign (lval, rval, _) ->
+        (label_num, gen_assign_code symtbl proc_id lval rval)
+    | AST.Read lval ->
+        (label_num, gen_read_code symtbl proc_id lval)
+    | AST.If (expr, stmts) ->
+        gen_if_code symtbl proc_id label_num expr stmts
+    | AST.IfElse (expr, if_stmts, el_stmts) ->
+        gen_ifelse_code symtbl proc_id label_num expr if_stmts el_stmts
+    | AST.While (expr, stmts) ->
+        gen_while_code symtbl proc_id label_num expr stmts
+    | _ -> raise (Unsupported "Only write statements are currently supported")
+  in
+  (new_label, stmt_code @ code)
 
 (* Generate code for an integer declaration *)
-let gen_int_decl_code frame_size code =
+let gen_int_decl_code frame_size =
   (* Generate the code backwards *)
-  let instrs = [Store (StackSlot frame_size, Reg 0); IntConst (Reg 0, 0)] in
-  (frame_size+1, instrs @ code)
+  let code = [Store (StackSlot frame_size, Reg 0); IntConst (Reg 0, 0)] in
+  (frame_size+1, code)
 
 (* Generate code for a boolean declaration *)
-let gen_bool_decl_code frame_size code =
+let gen_bool_decl_code frame_size =
   (* Oz represents bools as ints internally, and the default matches ints *)
-  gen_int_decl_code frame_size code
+  gen_int_decl_code frame_size 
 
 (* Generate code for a single declartion of a primitively typed variable *)
 let gen_bt_decl_code frame_size code bt =
-  match bt with
-  | AST.TInt  -> gen_int_decl_code frame_size code
-  | AST.TBool -> gen_bool_decl_code frame_size code
+  let (new_frame, decl_code) =
+    match bt with
+    | AST.TInt  -> gen_int_decl_code frame_size
+    | AST.TBool -> gen_bool_decl_code frame_size
+  in
+  (new_frame, decl_code @ code)
 
 (* Generate code for a single declaration *)
 let gen_decl_code symtbl proc_id (frame_size, code) (id, _, _) =
@@ -339,21 +370,14 @@ let gen_decl_code symtbl proc_id (frame_size, code) (id, _, _) =
 
 (* Generate code for a single parameter pass *)
 let gen_param_code symtbl proc_id (frame_size, code) param =
-  (* TODO Currently ignores params *)
   (frame_size, code)
 
 (* Generate code for a single procedure *)
 let gen_proc_code symtbl (label_num, code) proc =
-  (* Set up proc label and frame *)
-  let label =
-    if label_num = 0 then
-      Label "proc_main"
-    else
-      make_label label_num
-  in
-  let frame_size = 0 in
-  (* Generate code for each part of the proc *)
   let (proc_id, params, (decls, stmts), _) = proc in
+  let label_str = "proc_" ^ proc_id in
+  let frame_size = 0 in
+  Sym.set_proc_label symtbl proc_id label_str;
   (* Define curried folder functions *)
   let param_gen = gen_param_code symtbl proc_id in
   let decl_gen  = gen_decl_code  symtbl proc_id in
@@ -362,15 +386,16 @@ let gen_proc_code symtbl (label_num, code) proc =
   let (frame_size1, code1) =
     List.fold_left param_gen (frame_size, []) params
   in
-  let (proc_frame_size, code2) =
+  let (frame_size2, code2) =
     List.fold_left decl_gen (frame_size1, code1) decls
   in
   let (labels_used, body_code) =
     List.fold_left stmt_gen (label_num, code2) stmts
   in
   (* Create the function prologue and epilogue *)
-  let prologue = [PushStackFrame proc_frame_size; BlockLabel label] in
-  let epilogue = [Return; PopStackFrame proc_frame_size] in
+  let label = Label label_str in
+  let prologue = [PushStackFrame frame_size2; BlockLabel label] in
+  let epilogue = [Return; PopStackFrame frame_size2] in
   (* Make the code backwards so it can be reversed at the end *)
   let proc_code = epilogue @ body_code @ prologue in
   (labels_used, proc_code @ code)
