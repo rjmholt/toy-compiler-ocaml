@@ -249,10 +249,19 @@ let gen_write_code symtbl proc_id wrt =
       in
       print_code @ expr_code
 
-let gen_proc_call_code symtbl caller_id (proc_id, args, _) = ()
+let gen_proc_call_code symtbl caller_id proc_id args =
+  let proc_label = Sym.get_proc_label symtbl proc_id in
+  let load_arg (arg_num, code) arg =
+    let expr_code = gen_expr_code symtbl caller_id (Reg arg_num) arg in
+    let load_code = [Load (Reg arg_num, StackSlot arg_num)] in
+    (arg_num+1, load_code @ expr_code @ code)
+  in
+  let (_, arg_code) = List.fold_left load_arg (0, []) args in
+  let call_code = [Call (Label proc_label)] in
+  call_code @ arg_code
   (* TODO *)
 
-(* Generate if code *)
+(* Generate if-statement code *)
 (* TODO sort out how to make a massive function fit onto one line nicely *)
 let rec gen_if_code symtbl proc_id label_num expr stmts =
   let (new_label, after_label) = make_if_labels label_num in
@@ -266,7 +275,7 @@ let rec gen_if_code symtbl proc_id label_num expr stmts =
   let after_code = [BlockLabel after_label] in
   (final_label, after_code @ stmts_code @ branch_code @ expr_code)
 
-(* Generate if-else code *)
+(* Generate if-else-statement code *)
 and
 gen_ifelse_code symtbl proc_id label_num expr if_stmts el_stmts =
   let (new_label, after_label, else_label) = make_ifel_labels label_num in
@@ -294,7 +303,7 @@ gen_ifelse_code symtbl proc_id label_num expr if_stmts el_stmts =
   in
   (label_num2, code)
 
-(* Generate while code statement *)
+(* Generate while-statement code statement *)
 and
 gen_while_code symtbl proc_id label_num expr stmts =
   let (new_label, after_label, cond_label) = make_while_labels label_num in
@@ -335,7 +344,8 @@ gen_stmt_code symtbl proc_id (label_num, code) stmt =
         gen_ifelse_code symtbl proc_id label_num expr if_stmts el_stmts
     | AST.While (expr, stmts) ->
         gen_while_code symtbl proc_id label_num expr stmts
-    | _ -> raise (Unsupported "Only write statements are currently supported")
+    | AST.ProcCall (id, exprs, _) ->
+        (label_num, gen_proc_call_code symtbl proc_id id exprs)
   in
   (new_label, stmt_code @ code)
 
@@ -373,8 +383,17 @@ let gen_decl_code symtbl proc_id (frame_size, code) (id, _, _) =
 
 (* Generate code for a single parameter pass *)
 let gen_param_code symtbl proc_id (frame_size, code) param =
-
-  (frame_size, code)
+  let (pass_type, ast_type, id, _) = param in
+  let param_code =
+    match pass_type with
+    (* Put the nth parameter into the nth register...
+     * This will probably need changing later            *)
+    | AST.Pval ->
+        Sym.set_slot_num symtbl proc_id id frame_size;
+        [Store (StackSlot frame_size, Reg frame_size)]
+    | _        -> raise (Unsupported "Only pass by value is supported")
+  in
+  (frame_size+1, param_code @ code)
 
 (* Generate code for a single procedure *)
 let gen_proc_code symtbl (label_num, code) proc =
