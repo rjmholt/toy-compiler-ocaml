@@ -351,25 +351,29 @@ let gen_bool_decl_code frame_size =
   gen_int_decl_code frame_size 
 
 (* Generate code for a single declartion of a primitively typed variable *)
-let gen_bt_decl_code frame_size code bt =
+let gen_bt_decl_code frame_size bt =
   let (new_frame, decl_code) =
     match bt with
     | AST.TInt  -> gen_int_decl_code frame_size
     | AST.TBool -> gen_bool_decl_code frame_size
   in
-  (new_frame, decl_code @ code)
+  (new_frame, decl_code)
 
 (* Generate code for a single declaration *)
 let gen_decl_code symtbl proc_id (frame_size, code) (id, _, _) =
   let decl_type = Sym.get_type symtbl proc_id id in
   (* Store the location of this symbol in the symbol table *)
   Sym.set_slot_num symtbl proc_id id frame_size;
-  match decl_type with
-  | Sym.TSBeantype bt -> gen_bt_decl_code frame_size code bt
-  | _ -> raise (Unsupported "Only primitive types are supported for now")
+  let (new_frame, decl_code) =
+    match decl_type with
+    | Sym.TSBeantype bt -> gen_bt_decl_code frame_size bt
+    | _ -> raise (Unsupported "Only primitive types are supported for now")
+  in
+  (new_frame, decl_code @ code)
 
 (* Generate code for a single parameter pass *)
 let gen_param_code symtbl proc_id (frame_size, code) param =
+
   (frame_size, code)
 
 (* Generate code for a single procedure *)
