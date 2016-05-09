@@ -142,8 +142,14 @@ let gen_lval_code symtbl proc_id load_reg lval =
   | AST.LField (lval, id) ->
       raise (Unsupported "Field accesses not yet supported")
   | AST.LId (id, _)       ->
+      let scope = Sym.get_proc_var_scope symtbl proc_id id in
       let slot_num = Sym.get_slot_num symtbl proc_id id in
-      [Load (load_reg, StackSlot slot_num)]
+      match scope with
+      | Sym.SDecl
+      | Sym.SParamVal -> [Load (load_reg, StackSlot slot_num)]
+      | Sym.SParamRef ->
+          [LoadIndirect (load_reg, load_reg);
+           Load (load_reg, StackSlot slot_num)]
 
 (* Generate code for a unary operation expression *)
 let rec gen_unop_code symtbl proc_id load_reg unop expr =
@@ -214,15 +220,22 @@ let gen_struct_assign_code symtbl proc_id lval rstruct =
   raise (Unsupported "Structure field assignments not yet supported")
 
 let gen_assign_code symtbl proc_id lval rval =
+  let lid_asgn id =
+    let slot_num = Sym.get_slot_num symtbl proc_id id in
+    match Sym.get_proc_var_scope symtbl proc_id id with
+    | Sym.SDecl
+    | Sym.SParamVal -> [Store (StackSlot slot_num, Reg 0)]
+    | Sym.SParamRef -> [StoreIndirect (Reg 1, Reg 0);
+                        Load (Reg 1, StackSlot slot_num)]
+  in
   match rval with
   | AST.Rstruct rstruct ->
       gen_struct_assign_code symtbl proc_id lval rstruct
   | AST.Rexpr expr ->
       let expr_code = gen_expr_code symtbl proc_id (Reg 0) expr in
-      let asgn_code = match lval with
-        | AST.LId (id, _) ->
-            let slot_num = Sym.get_slot_num symtbl proc_id id in
-            [Store (StackSlot slot_num, Reg 0)]
+      let asgn_code =
+        match lval with
+        | AST.LId (id, _) -> lid_asgn id
         | _ -> raise (Unsupported "Field assignment not yet supported")
       in
       asgn_code @ expr_code
@@ -251,15 +264,21 @@ let gen_write_code symtbl proc_id wrt =
 
 let gen_proc_call_code symtbl caller_id proc_id args =
   let proc_label = Sym.get_proc_label symtbl proc_id in
-  let load_arg (arg_num, code) arg =
+  let params = Sym.get_param_list symtbl proc_id in
+  let load_arg (arg_num, code) (arg, param) =
+    let scope = Sym.get_proc_var_scope symtbl proc_id param in
     let expr_code = gen_expr_code symtbl caller_id (Reg arg_num) arg in
-    let load_code = [Load (Reg arg_num, StackSlot arg_num)] in
+    let load_code =
+      match scope with
+      | Sym.SParamVal -> [Load (Reg arg_num, StackSlot arg_num)]
+      | Sym.SParamRef -> [LoadAddress (Reg arg_num, StackSlot arg_num)]
+    in
     (arg_num+1, load_code @ expr_code @ code)
   in
-  let (_, arg_code) = List.fold_left load_arg (0, []) args in
+  let param_args = List.combine args params in
+  let (arg_num, arg_code) = List.fold_left load_arg (0, []) param_args in
   let call_code = [Call (Label proc_label)] in
   call_code @ arg_code
-  (* TODO *)
 
 (* Generate if-statement code *)
 (* TODO sort out how to make a massive function fit onto one line nicely *)
@@ -384,14 +403,11 @@ let gen_decl_code symtbl proc_id (frame_size, code) (id, _, _) =
 (* Generate code for a single parameter pass *)
 let gen_param_code symtbl proc_id (frame_size, code) param =
   let (pass_type, ast_type, id, _) = param in
+  Sym.set_slot_num symtbl proc_id id frame_size;
   let param_code =
-    match pass_type with
-    (* Put the nth parameter into the nth register...
-     * This will probably need changing later            *)
-    | AST.Pval ->
-        Sym.set_slot_num symtbl proc_id id frame_size;
-        [Store (StackSlot frame_size, Reg frame_size)]
-    | _        -> raise (Unsupported "Only pass by value is supported")
+    (* TODO this will need to deal with structs by allocating
+     * multiple slots at once later                           *)
+    [Store (StackSlot frame_size, Reg frame_size)]
   in
   (frame_size+1, param_code @ code)
 
