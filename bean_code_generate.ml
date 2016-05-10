@@ -95,12 +95,6 @@ let make_while_labels label_num =
   let after_label = Label ("while_after" ^ string_of_int label_num) in
   (label_num+1, after_label, cond_label)
 
-(* Get the type of an lvalue *)
-let get_lval_type symtbl proc_id lval =
-  match lval with
-  | AST.LId (id, _) -> Sym.get_type symtbl proc_id id
-  | AST.LField field -> Sym.get_field_type symtbl proc_id field
-
 (* Get the type of a unary operator *)
 let get_unop_type unop =
   match unop with
@@ -122,7 +116,7 @@ let get_expr_type symtbl proc_id expr =
   match expr with
   | AST.Ebool  _                -> Sym.TSBeantype AST.TBool
   | AST.Eint   _                -> Sym.TSBeantype AST.TInt
-  | AST.Elval  (lval, _)        -> get_lval_type symtbl proc_id lval
+  | AST.Elval  (lval, _)        -> Sym.get_lval_type symtbl proc_id lval
   | AST.Eunop  (unop, _, _)     -> get_unop_type unop
   | AST.Ebinop (_, binop, _, _) -> get_binop_type binop
 
@@ -204,7 +198,7 @@ gen_expr_code symtbl proc_id load_reg expr =
       gen_binop_code symtbl proc_id load_reg binop lexpr rexpr
 
 let gen_read_code symtbl proc_id lval =
-  let (Sym.TSBeantype bt) = get_lval_type symtbl proc_id lval in
+  let (Sym.TSBeantype bt) = Sym.get_lval_type symtbl proc_id lval in
   let read_call =
     match bt with
     | AST.TInt  -> ReadInt

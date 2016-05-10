@@ -76,7 +76,7 @@ val build_symtbl: Bean_ast.t -> symtbl
 
 val get_type: symtbl -> AST.ident -> AST.ident -> typespec
 
-val get_field_type: symtbl -> AST.ident -> (AST.lvalue * AST.ident) -> typespec
+val get_lval_type: symtbl -> AST.ident -> AST.lvalue -> typespec
 
 val set_slot_num: symtbl -> AST.ident -> AST.ident -> int -> unit
 
