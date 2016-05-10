@@ -34,7 +34,8 @@ MODULES = bean_ast \
 	  bean_parse \
 	  bean_pprint \
 	  bean_symtbl \
-	  bean_code_generate
+	  bean_intermediate_code \
+	  bean_oz
 MLFILES = $(addsuffix .ml, $(MODULES))
 CMOFILES = $(addsuffix .cmo, $(MODULES))
 CMXFILES = $(addsuffix .cmx, $(MODULES))
