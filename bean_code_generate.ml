@@ -95,12 +95,6 @@ let make_while_labels label_num =
   let after_label = Label ("while_after" ^ string_of_int label_num) in
   (label_num+1, after_label, cond_label)
 
-(* Get the type of an lvalue *)
-let get_lval_type symtbl proc_id lval =
-  match lval with
-  | AST.LId (id, _) -> Sym.get_type symtbl proc_id id
-  | AST.LField field -> Sym.get_field_type symtbl proc_id field
-
 (* Get the type of a unary operator *)
 let get_unop_type unop =
   match unop with
@@ -122,7 +116,7 @@ let get_expr_type symtbl proc_id expr =
   match expr with
   | AST.Ebool  _                -> Sym.TSBeantype AST.TBool
   | AST.Eint   _                -> Sym.TSBeantype AST.TInt
-  | AST.Elval  (lval, _)        -> get_lval_type symtbl proc_id lval
+  | AST.Elval  (lval, _)        -> Sym.get_lval_type symtbl proc_id lval
   | AST.Eunop  (unop, _, _)     -> get_unop_type unop
   | AST.Ebinop (_, binop, _, _) -> get_binop_type binop
 
@@ -142,8 +136,14 @@ let gen_lval_code symtbl proc_id load_reg lval =
   | AST.LField (lval, id) ->
       raise (Unsupported "Field accesses not yet supported")
   | AST.LId (id, _)       ->
+      let scope = Sym.get_proc_var_scope symtbl proc_id id in
       let slot_num = Sym.get_slot_num symtbl proc_id id in
-      [Load (load_reg, StackSlot slot_num)]
+      match scope with
+      | Sym.SDecl
+      | Sym.SParamVal -> [Load (load_reg, StackSlot slot_num)]
+      | Sym.SParamRef ->
+          [LoadIndirect (load_reg, load_reg);
+           Load (load_reg, StackSlot slot_num)]
 
 (* Generate code for a unary operation expression *)
 let rec gen_unop_code symtbl proc_id load_reg unop expr =
@@ -198,7 +198,7 @@ gen_expr_code symtbl proc_id load_reg expr =
       gen_binop_code symtbl proc_id load_reg binop lexpr rexpr
 
 let gen_read_code symtbl proc_id lval =
-  let (Sym.TSBeantype bt) = get_lval_type symtbl proc_id lval in
+  let (Sym.TSBeantype bt) = Sym.get_lval_type symtbl proc_id lval in
   let read_call =
     match bt with
     | AST.TInt  -> ReadInt
@@ -214,15 +214,22 @@ let gen_struct_assign_code symtbl proc_id lval rstruct =
   raise (Unsupported "Structure field assignments not yet supported")
 
 let gen_assign_code symtbl proc_id lval rval =
+  let lid_asgn id =
+    let slot_num = Sym.get_slot_num symtbl proc_id id in
+    match Sym.get_proc_var_scope symtbl proc_id id with
+    | Sym.SDecl
+    | Sym.SParamVal -> [Store (StackSlot slot_num, Reg 0)]
+    | Sym.SParamRef -> [StoreIndirect (Reg 1, Reg 0);
+                        Load (Reg 1, StackSlot slot_num)]
+  in
   match rval with
   | AST.Rstruct rstruct ->
       gen_struct_assign_code symtbl proc_id lval rstruct
   | AST.Rexpr expr ->
       let expr_code = gen_expr_code symtbl proc_id (Reg 0) expr in
-      let asgn_code = match lval with
-        | AST.LId (id, _) ->
-            let slot_num = Sym.get_slot_num symtbl proc_id id in
-            [Store (StackSlot slot_num, Reg 0)]
+      let asgn_code =
+        match lval with
+        | AST.LId (id, _) -> lid_asgn id
         | _ -> raise (Unsupported "Field assignment not yet supported")
       in
       asgn_code @ expr_code
@@ -251,15 +258,21 @@ let gen_write_code symtbl proc_id wrt =
 
 let gen_proc_call_code symtbl caller_id proc_id args =
   let proc_label = Sym.get_proc_label symtbl proc_id in
-  let load_arg (arg_num, code) arg =
+  let params = Sym.get_param_list symtbl proc_id in
+  let load_arg (arg_num, code) (arg, param) =
+    let scope = Sym.get_proc_var_scope symtbl proc_id param in
     let expr_code = gen_expr_code symtbl caller_id (Reg arg_num) arg in
-    let load_code = [Load (Reg arg_num, StackSlot arg_num)] in
+    let load_code =
+      match scope with
+      | Sym.SParamVal -> [Load (Reg arg_num, StackSlot arg_num)]
+      | Sym.SParamRef -> [LoadAddress (Reg arg_num, StackSlot arg_num)]
+    in
     (arg_num+1, load_code @ expr_code @ code)
   in
-  let (_, arg_code) = List.fold_left load_arg (0, []) args in
+  let param_args = List.combine args params in
+  let (arg_num, arg_code) = List.fold_left load_arg (0, []) param_args in
   let call_code = [Call (Label proc_label)] in
   call_code @ arg_code
-  (* TODO *)
 
 (* Generate if-statement code *)
 (* TODO sort out how to make a massive function fit onto one line nicely *)
@@ -384,14 +397,11 @@ let gen_decl_code symtbl proc_id (frame_size, code) (id, _, _) =
 (* Generate code for a single parameter pass *)
 let gen_param_code symtbl proc_id (frame_size, code) param =
   let (pass_type, ast_type, id, _) = param in
+  Sym.set_slot_num symtbl proc_id id frame_size;
   let param_code =
-    match pass_type with
-    (* Put the nth parameter into the nth register...
-     * This will probably need changing later            *)
-    | AST.Pval ->
-        Sym.set_slot_num symtbl proc_id id frame_size;
-        [Store (StackSlot frame_size, Reg frame_size)]
-    | _        -> raise (Unsupported "Only pass by value is supported")
+    (* TODO this will need to deal with structs by allocating
+     * multiple slots at once later                           *)
+    [Store (StackSlot frame_size, Reg frame_size)]
   in
   (frame_size+1, param_code @ code)
 
@@ -435,94 +445,94 @@ let gen_code symtbl prog =
 
 let write = Printf.sprintf
 
-let write_push_stack oz_prog frame_size =
-  write "push_stack_frame %d\n" frame_size ^ oz_prog
+let write_push_stack frame_size =
+  write "push_stack_frame %d\n" frame_size
 
-let write_pop_stack oz_prog frame_size =
-  write "pop_stack_frame %d\n" frame_size ^ oz_prog
+let write_pop_stack frame_size =
+  write "pop_stack_frame %d\n" frame_size
 
-let write_load oz_prog (Reg r) (StackSlot s) =
-  write "load r%d, %d\n" r s ^ oz_prog 
+let write_load (Reg r) (StackSlot s) =
+  write "load r%d, %d\n" r s
 
-let write_store oz_prog (StackSlot s) (Reg r) =
-  write "store %d, r%d\n" s r ^ oz_prog
+let write_store (StackSlot s) (Reg r) =
+  write "store %d, r%d\n" s r
 
-let write_load_addr oz_prog (Reg r) (StackSlot s) =
-  write "load_address r%d, %d\n" r s ^ oz_prog
+let write_load_addr (Reg r) (StackSlot s) =
+  write "load_address r%d, %d\n" r s
 
-let write_load_ind oz_prog (Reg r1) (Reg r2) =
-  write "load_indirect r%d, r%d\n" r1 r2 ^ oz_prog
+let write_load_ind (Reg r1) (Reg r2) =
+  write "load_indirect r%d, r%d\n" r1 r2
 
-let write_store_ind oz_prog (Reg r1) (Reg r2) =
-  write "store_indirect r%d, r%d\n" r1 r2 ^ oz_prog
+let write_store_ind (Reg r1) (Reg r2) =
+  write "store_indirect r%d, r%d\n" r1 r2
 
-let write_int_const oz_prog (Reg r) imm =
-  write "int_const r%d, %d\n" r imm ^ oz_prog
+let write_int_const (Reg r) imm =
+  write "int_const r%d, %d\n" r imm
 
-let write_str_const oz_prog (Reg r) str =
-  write "string_const r%d, \"%s\"\n" r str ^ oz_prog
+let write_str_const (Reg r) str =
+  write "string_const r%d, \"%s\"\n" r str
 
-let write_add_int oz_prog (Reg r1) (Reg r2) (Reg r3) =
-  write "add_int r%d, r%d, r%d\n" r1 r2 r3 ^ oz_prog
+let write_add_int (Reg r1) (Reg r2) (Reg r3) =
+  write "add_int r%d, r%d, r%d\n" r1 r2 r3
                                                   
-let write_sub_int oz_prog (Reg r1) (Reg r2) (Reg r3) =
-  write "sub_int r%d, r%d, r%d\n" r1 r2 r3 ^ oz_prog
+let write_sub_int (Reg r1) (Reg r2) (Reg r3) =
+  write "sub_int r%d, r%d, r%d\n" r1 r2 r3
 
-let write_mul_int oz_prog (Reg r1) (Reg r2) (Reg r3) =
-  write "mul_int r%d, r%d, r%d\n" r1 r2 r3 ^ oz_prog
+let write_mul_int (Reg r1) (Reg r2) (Reg r3) =
+  write "mul_int r%d, r%d, r%d\n" r1 r2 r3
 
-let write_div_int oz_prog (Reg r1) (Reg r2) (Reg r3) =
-  write "div_int r%d, r%d, r%d\n" r1 r2 r3 ^ oz_prog
+let write_div_int (Reg r1) (Reg r2) (Reg r3) =
+  write "div_int r%d, r%d, r%d\n" r1 r2 r3
 
-let write_add_offset oz_prog (Reg r1) (Reg r2) (Reg r3) =
-  write "add_offset r%d, r%d, r%d\n" r1 r2 r3 ^ oz_prog
+let write_add_offset (Reg r1) (Reg r2) (Reg r3) =
+  write "add_offset r%d, r%d, r%d\n" r1 r2 r3
 
-let write_sub_offset oz_prog (Reg r1) (Reg r2) (Reg r3) =
-  write "sub_offset r%d, r%d, r%d\n" r1 r2 r3 ^ oz_prog
+let write_sub_offset (Reg r1) (Reg r2) (Reg r3) =
+  write "sub_offset r%d, r%d, r%d\n" r1 r2 r3
 
-let write_cmp_eq oz_prog (Reg r1) (Reg r2) (Reg r3) =
-  write "cmp_eq_int r%d, r%d, r%d\n" r1 r2 r3 ^ oz_prog
+let write_cmp_eq (Reg r1) (Reg r2) (Reg r3) =
+  write "cmp_eq_int r%d, r%d, r%d\n" r1 r2 r3
 
-let write_cmp_neq oz_prog (Reg r1) (Reg r2) (Reg r3) =
-  write "cmp_ne_int r%d, r%d, r%d\n" r1 r2 r3 ^ oz_prog
+let write_cmp_neq (Reg r1) (Reg r2) (Reg r3) =
+  write "cmp_ne_int r%d, r%d, r%d\n" r1 r2 r3
 
-let write_cmp_lt oz_prog (Reg r1) (Reg r2) (Reg r3) =
-  write "cmp_lt_int r%d, r%d, r%d\n" r1 r2 r3 ^ oz_prog
+let write_cmp_lt (Reg r1) (Reg r2) (Reg r3) =
+  write "cmp_lt_int r%d, r%d, r%d\n" r1 r2 r3
 
-let write_cmp_leq oz_prog (Reg r1) (Reg r2) (Reg r3) =
-  write "cmp_le_int r%d, r%d, r%d\n" r1 r2 r3 ^ oz_prog
+let write_cmp_leq (Reg r1) (Reg r2) (Reg r3) =
+  write "cmp_le_int r%d, r%d, r%d\n" r1 r2 r3
 
-let write_cmp_gt oz_prog (Reg r1) (Reg r2) (Reg r3) =
-  write "cmp_gt_int r%d, r%d, r%d\n" r1 r2 r3 ^ oz_prog
+let write_cmp_gt (Reg r1) (Reg r2) (Reg r3) =
+  write "cmp_gt_int r%d, r%d, r%d\n" r1 r2 r3
 
-let write_cmp_geq oz_prog (Reg r1) (Reg r2) (Reg r3) =
-  write "cmp_ge_int r%d, r%d, r%d\n" r1 r2 r3 ^ oz_prog
+let write_cmp_geq (Reg r1) (Reg r2) (Reg r3) =
+  write "cmp_ge_int r%d, r%d, r%d\n" r1 r2 r3
 
-let write_and oz_prog (Reg r1) (Reg r2) (Reg r3) =
-  write "and r%d, r%d, r%d\n" r1 r2 r3 ^ oz_prog
+let write_and (Reg r1) (Reg r2) (Reg r3) =
+  write "and r%d, r%d, r%d\n" r1 r2 r3
 
-let write_or oz_prog (Reg r1) (Reg r2) (Reg r3) =
-  write "or r%d, r%d, r%d\n" r1 r2 r3 ^ oz_prog
+let write_or (Reg r1) (Reg r2) (Reg r3) =
+  write "or r%d, r%d, r%d\n" r1 r2 r3
 
-let write_not oz_prog (Reg r1) (Reg r2) =
-  write "not r%d, r%d\n" r1 r2 ^ oz_prog
+let write_not (Reg r1) (Reg r2) =
+  write "not r%d, r%d\n" r1 r2
 
-let write_move oz_prog (Reg r1) (Reg r2) =
-  write "move r%d, r%d\n" r1 r2 ^ oz_prog
+let write_move (Reg r1) (Reg r2) =
+  write "move r%d, r%d\n" r1 r2
 
-let write_branch_true oz_prog (Reg r) (Label label) =
-  write "branch_on_true r%d, %s\n" r label ^ oz_prog
+let write_branch_true (Reg r) (Label label) =
+  write "branch_on_true r%d, %s\n" r label
 
-let write_branch_false oz_prog (Reg r) (Label label) =
-  write "branch_on_false r%d, %s\n" r label ^ oz_prog
+let write_branch_false (Reg r) (Label label) =
+  write "branch_on_false r%d, %s\n" r label
 
-let write_branch_uncond oz_prog (Label label) =
-  write "branch_uncond %s\n" label ^ oz_prog
+let write_branch_uncond (Label label) =
+  write "branch_uncond %s\n" label
 
-let write_call oz_prog (Label label) =
-  write "call %s\n" label ^ oz_prog
+let write_call (Label label) =
+  write "call %s\n" label
 
-let write_call_builtin oz_prog builtin =
+let write_call_builtin builtin =
   let builtin_str =
     match builtin with
     | ReadInt     -> "read_int"
@@ -531,67 +541,67 @@ let write_call_builtin oz_prog builtin =
     | PrintBool   -> "print_bool"
     | PrintString -> "print_string"
   in
-  write "call_builtin %s\n" builtin_str ^ oz_prog
+  write "call_builtin %s\n" builtin_str
 
-let write_return oz_prog =
-  write "return\n" ^ oz_prog
+let write_return =
+  write "return\n"
 
-let write_halt oz_prog =
-  write "halt\n" ^ oz_prog
+let write_halt =
+  write "halt\n"
 
-let write_block_label oz_prog (Label label) =
-  write "%s:\n" label ^ oz_prog
+let write_block_label (Label label) =
+  write "%s:\n" label
 
-let write_debug_reg oz_prog (Reg r) =
-  write "debug_reg r%d\n" r ^ oz_prog
+let write_debug_reg (Reg r) =
+  write "debug_reg r%d\n" r
 
-let write_debug_slot oz_prog (StackSlot s) =
-  write "debug_slot %d\n" s ^ oz_prog
+let write_debug_slot (StackSlot s) =
+  write "debug_slot %d\n" s
 
-let write_debug_stack oz_prog =
-  write "debug_stack\n" ^ oz_prog
+let write_debug_stack =
+  write "debug_stack\n"
 
-let write_instr instr oz_prog =
+let write_instr instr =
   match instr with
-  | PushStackFrame  frame_size -> write_push_stack oz_prog frame_size
-  | PopStackFrame   frame_size -> write_pop_stack oz_prog frame_size
-  | Load           (reg, slot) -> write_load oz_prog reg slot
-  | Store          (slot, reg) -> write_store oz_prog slot reg
-  | LoadAddress    (reg, slot) -> write_load_addr oz_prog reg slot
-  | LoadIndirect  (reg1, reg2) -> write_load_ind oz_prog reg1 reg2
-  | StoreIndirect (reg1, reg2) -> write_store_ind oz_prog reg1 reg2
-  | IntConst        (reg, imm) -> write_int_const oz_prog reg imm
-  | StringConst     (reg, str) -> write_str_const oz_prog reg str
-  | AddInt        (r1, r2, r3) -> write_add_int oz_prog r1 r2 r3
-  | SubInt        (r1, r2, r3) -> write_sub_int oz_prog r1 r2 r3
-  | MulInt        (r1, r2, r3) -> write_mul_int oz_prog r1 r2 r3
-  | DivInt        (r1, r2, r3) -> write_div_int oz_prog r1 r2 r3
-  | AddOffset     (r1, r2, r3) -> write_add_offset oz_prog r1 r2 r3
-  | SubOffset     (r1, r2, r3) -> write_sub_offset oz_prog r1 r2 r3
-  | CmpEqInt      (r1, r2, r3) -> write_cmp_eq oz_prog r1 r2 r3
-  | CmpNeqInt     (r1, r2, r3) -> write_cmp_neq oz_prog r1 r2 r3
-  | CmpLtInt      (r1, r2, r3) -> write_cmp_lt oz_prog r1 r2 r3
-  | CmpLeqInt     (r1, r2, r3) -> write_cmp_leq oz_prog r1 r2 r3
-  | CmpGtInt      (r1, r2, r3) -> write_cmp_gt oz_prog r1 r2 r3
-  | CmpGeqInt     (r1, r2, r3) -> write_cmp_geq oz_prog r1 r2 r3
-  | And           (r1, r2, r3) -> write_and oz_prog r1 r2 r3
-  | Or            (r1, r2, r3) -> write_or oz_prog r1 r2 r3
-  | Not               (r1, r2) -> write_not oz_prog r1 r2
-  | Move              (r1, r2) -> write_move oz_prog r1 r2
-  | BranchOnTrue  (reg, label) -> write_branch_true oz_prog reg label
-  | BranchOnFalse (reg, label) -> write_branch_false oz_prog reg label
-  | BranchUncond         label -> write_branch_uncond oz_prog label
-  | Call                 label -> write_call oz_prog label
-  | CallBuiltin        builtin -> write_call_builtin oz_prog builtin
-  | Return                     -> write_return oz_prog
-  | Halt                       -> write_halt oz_prog
-  | BlockLabel           label -> write_block_label oz_prog label
-  | DebugReg               reg -> write_debug_reg oz_prog reg
-  | DebugSlot       stack_slot -> write_debug_slot oz_prog stack_slot
-  | DebugStack                 -> write_debug_stack oz_prog
+  | PushStackFrame  frame_size -> write_push_stack frame_size
+  | PopStackFrame   frame_size -> write_pop_stack frame_size
+  | Load           (reg, slot) -> write_load reg slot
+  | Store          (slot, reg) -> write_store slot reg
+  | LoadAddress    (reg, slot) -> write_load_addr reg slot
+  | LoadIndirect  (reg1, reg2) -> write_load_ind reg1 reg2
+  | StoreIndirect (reg1, reg2) -> write_store_ind reg1 reg2
+  | IntConst        (reg, imm) -> write_int_const reg imm
+  | StringConst     (reg, str) -> write_str_const reg str
+  | AddInt        (r1, r2, r3) -> write_add_int r1 r2 r3
+  | SubInt        (r1, r2, r3) -> write_sub_int r1 r2 r3
+  | MulInt        (r1, r2, r3) -> write_mul_int r1 r2 r3
+  | DivInt        (r1, r2, r3) -> write_div_int r1 r2 r3
+  | AddOffset     (r1, r2, r3) -> write_add_offset r1 r2 r3
+  | SubOffset     (r1, r2, r3) -> write_sub_offset r1 r2 r3
+  | CmpEqInt      (r1, r2, r3) -> write_cmp_eq r1 r2 r3
+  | CmpNeqInt     (r1, r2, r3) -> write_cmp_neq r1 r2 r3
+  | CmpLtInt      (r1, r2, r3) -> write_cmp_lt r1 r2 r3
+  | CmpLeqInt     (r1, r2, r3) -> write_cmp_leq r1 r2 r3
+  | CmpGtInt      (r1, r2, r3) -> write_cmp_gt r1 r2 r3
+  | CmpGeqInt     (r1, r2, r3) -> write_cmp_geq r1 r2 r3
+  | And           (r1, r2, r3) -> write_and r1 r2 r3
+  | Or            (r1, r2, r3) -> write_or r1 r2 r3
+  | Not               (r1, r2) -> write_not r1 r2
+  | Move              (r1, r2) -> write_move r1 r2
+  | BranchOnTrue  (reg, label) -> write_branch_true reg label
+  | BranchOnFalse (reg, label) -> write_branch_false reg label
+  | BranchUncond         label -> write_branch_uncond label
+  | Call                 label -> write_call label
+  | CallBuiltin        builtin -> write_call_builtin builtin
+  | Return                     -> write_return
+  | Halt                       -> write_halt
+  | BlockLabel           label -> write_block_label label
+  | DebugReg               reg -> write_debug_reg reg
+  | DebugSlot       stack_slot -> write_debug_slot stack_slot
+  | DebugStack                 -> write_debug_stack
 
 let write_program code =
-  List.fold_right write_instr code ""
+  String.concat (List.map write_instr code)
 
 let generate_oz_code symtbl prog =
   let code = gen_code symtbl prog in

@@ -42,7 +42,14 @@ type var_scope =
   | SParamVal
   | SParamRef
 
-type var_symbol = (typespec * var_scope * (int option) ref * pos)
+type type_symbol =
+  | STBeantype    of AST.beantype
+  | STDefinedtype of type_symbol
+  | STFieldStruct of (ident, field_symbol) Hashtbl.t
+
+and field_symbol = (type_symbol * int option ref)
+
+type var_symbol = (type_symbol * var_scope * int option ref * pos)
 
 (* Procedure symbol table, composed of:
  *   - a parameter hashtable
@@ -95,8 +102,8 @@ exception No_such_procedure
 (* Get the type of an ident in a procedure context *)
 let get_type sym_tbl proc_id id =
   let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
-  let (typespec, _, _, _) = Hashtbl.find proc.proc_sym_tbl id in
-  typespec
+  let (type_symbol, _, _, _) = Hashtbl.find proc.proc_sym_tbl id in
+  type_symbol
 
 (* Follow a struct field access to find its type *)
 (* This function gets messy because a type may be 
@@ -105,6 +112,14 @@ let get_type sym_tbl proc_id id =
  * that is in a typedef that is in a type specification that is in
  * another typedef...                                                *)
 let get_field_type sym_tbl proc_id (lval, id) =
+  (* Get the type_symbol of the field itself *)
+  let get_field_typesym field_struct ident =
+    let field_sym = Hashtbl.find field_struct ident in
+    (* TODO replicate type getting but for field symbols
+     * and then introduce type symbols everywhere where typespecs
+     * have been used and look to eliminating typespec stuff outside of
+     * typedefs...                                                      *)
+
   (* Get the type specification from a field ident *)
   let get_field_typespec field_struct ident =
     let field_decl = Hashtbl.find field_struct ident in
@@ -133,6 +148,12 @@ let get_field_type sym_tbl proc_id (lval, id) =
   | TSBeantype    bt -> raise No_field
   | TSDefinedtype dt -> get_def_type dt lval
   | TSFieldStruct fs -> get_subfield_type fs lval
+
+(* Get the type of an lvalue *)
+let get_lval_type sym_tbl proc_id lval =
+  match lval with
+  | AST.LId (id, _)  -> get_type sym_tbl proc_id id
+  | AST.LField field -> get_field_type sym_tbl proc_id field
 
 (* Set the slot number for a symbol in a stack frame *)
 let set_slot_num sym_tbl proc_id id slot_num = 

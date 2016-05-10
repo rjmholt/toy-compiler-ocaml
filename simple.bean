@@ -1,11 +1,17 @@
-proc print(val int x)
-    write x;
-    write "\n";
+proc change(ref int x)
+    write "Changing x\n";
+    x := 42;
 end
 
 proc main()
     int x;
 
     x := 7;
-    print(x);
+    write "x = ";
+    write x;
+    write "\n";
+    change(x);
+    write "x = ";
+    write x;
+    write "\n";
 end
