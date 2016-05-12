@@ -42,7 +42,13 @@ type var_scope =
   | SParamVal
   | SParamRef
 
-type var_symbol = (typespec * var_scope * (int option) ref * pos)
+type type_symbol =
+  | STBeantype    of AST.beantype
+  | STFieldStruct of (ident, field_symbol) Hashtbl.t
+
+and field_symbol = (type_symbol * int option ref)
+
+type var_symbol = (type_symbol * var_scope * int option ref * pos)
 
 (* Procedure symbol table, composed of:
  *   - a parameter hashtable
@@ -74,13 +80,15 @@ exception Undefined_type of AST.ident * pos
 
 val build_symtbl: Bean_ast.t -> symtbl
 
-val get_type: symtbl -> AST.ident -> AST.ident -> typespec
+val get_id_type: symtbl -> AST.ident -> AST.ident -> type_symbol
 
-val get_lval_type: symtbl -> AST.ident -> AST.lvalue -> typespec
+val get_lval_type: symtbl -> AST.ident -> AST.lvalue -> type_symbol
 
-val set_slot_num: symtbl -> AST.ident -> AST.ident -> int -> unit
+val allocate_frame_slots: symtbl -> AST.ident -> AST.ident -> int -> int
 
-val get_slot_num: symtbl -> AST.ident -> AST.ident -> int
+val get_lid_slot_num: symtbl -> AST.ident -> AST.ident -> int
+
+val get_lfield_slot_num: symtbl -> AST.ident -> (AST.lvalue * AST.ident) -> int
 
 val set_proc_label: symtbl -> AST.ident -> string -> unit
 

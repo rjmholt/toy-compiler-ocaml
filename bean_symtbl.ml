@@ -156,11 +156,14 @@ let get_lval_type sym_tbl proc_id lval =
   | AST.LField field -> get_field_type sym_tbl proc_id field
 *)
 
+(* Get the type of an ordinary variable id
+ * when it's not given as an lvalue (like in declarations) *)
 let get_id_type sym_tbl proc_id id =
   let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
   let (type_symbol, _, _, _) = Hashtbl.find proc.proc_sym_tbl id in
   type_symbol
 
+(* Get the type of a given lvalue *)
 let get_lval_type sym_tbl proc_id lval =
   let rec get_field_sym field lvalue =
     match lvalue with
@@ -181,16 +184,54 @@ let get_lval_type sym_tbl proc_id lval =
           let (field_type, _) = get_field_sym field lval in
           field_type
 
-(* Set the slot number for a symbol in a stack frame *)
-let set_slot_num sym_tbl proc_id id slot_num = 
+(* Allocate a slot number for an id of any type *)
+let allocate_frame_slots sym_tbl proc_id id slot_num =
   let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
-  let (_, _, slot, _) = Hashtbl.find proc.proc_sym_tbl id in
-  slot := Some slot_num
+  let rec allocate_type type_sym slotnum =
+    match type_sym with
+    | STBeantype    _     -> slotnum
+    | STFieldStruct field ->
+        let field_fold id (t_sym, slot) slotn =
+          slot := Some slotn;
+          allocate_type t_sym (slotn+1)
+        in
+        Hashtbl.fold field_fold field slotnum
+  in
+  let (type_sym, scope, slot, _) = Hashtbl.find proc.proc_sym_tbl id in
+  match scope with
+  | SParamRef -> slot := Some slot_num; slot_num+1
+  | _         ->
+      slot := Some slot_num;
+      allocate_type type_sym (slot_num+1)
 
-(* Retrieve the slot number for a symbol in a stack frame *)
-let get_slot_num sym_tbl proc_id id =
+(* Retrieve the slot number for an id lvalue in a stack frame *)
+let get_lid_slot_num sym_tbl proc_id id =
   let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
   let (_, _, slot, _) = Hashtbl.find proc.proc_sym_tbl id in
+  match !slot with
+  | None     -> raise Slot_not_allocated
+  | Some num -> num
+
+(* Get the slot number allocated to the field given 
+ * by an lvalue of a variable given by id            *)
+let get_lfield_slot_num sym_tbl proc_id (lval, id) =
+  let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
+  let (type_sym, _, _, _) = Hashtbl.find proc.proc_sym_tbl id in
+  let get_field t_sym field_id =
+    match t_sym with
+    | STBeantype    _     -> raise No_field
+    | STFieldStruct field -> Hashtbl.find field field_id
+  in
+  let rec get_field_slot field_type lval =
+    match lval with
+    | AST.LId (id, _) ->
+        let (_, slot) = get_field field_type id in
+        slot
+    | AST.LField (lval, id) ->
+        let (subfield_type, _) = get_field field_type id in
+        get_field_slot subfield_type lval
+  in
+  let slot = get_field_slot type_sym lval in
   match !slot with
   | None     -> raise Slot_not_allocated
   | Some num -> num
