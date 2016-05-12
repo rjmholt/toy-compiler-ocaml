@@ -44,7 +44,6 @@ type var_scope =
 
 type type_symbol =
   | STBeantype    of AST.beantype
-  | STDefinedtype of type_symbol
   | STFieldStruct of (ident, field_symbol) Hashtbl.t
 
 and field_symbol = (type_symbol * int option ref)
@@ -99,6 +98,7 @@ exception No_such_procedure
 
 (* ---- SYMBOL TABLE INTERFACE FUNCTIONS ---- *)
 
+(*
 (* Get the type of an ident in a procedure context *)
 let get_type sym_tbl proc_id id =
   let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
@@ -154,17 +154,84 @@ let get_lval_type sym_tbl proc_id lval =
   match lval with
   | AST.LId (id, _)  -> get_type sym_tbl proc_id id
   | AST.LField field -> get_field_type sym_tbl proc_id field
+*)
 
-(* Set the slot number for a symbol in a stack frame *)
-let set_slot_num sym_tbl proc_id id slot_num = 
+(* Get the type of an ordinary variable id
+ * when it's not given as an lvalue (like in declarations) *)
+let get_id_type sym_tbl proc_id id =
+  let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
+  let (type_symbol, _, _, _) = Hashtbl.find proc.proc_sym_tbl id in
+  type_symbol
+
+(* Get the type of a given lvalue *)
+let get_lval_type sym_tbl proc_id lval =
+  let rec get_field_sym field lvalue =
+    match lvalue with
+    | AST.LId    (id, _)  -> Hashtbl.find field id
+    | AST.LField (lv, id) ->
+        let (field_type, _) = Hashtbl.find field id in
+        match field_type with
+        | STBeantype    _        -> raise No_field
+        | STFieldStruct subfield ->
+            get_field_sym subfield lv
+  in
+  match lval with
+  | AST.LId    (id, _)    -> get_id_type sym_tbl proc_id id
+  | AST.LField (lval, id) ->
+      match get_id_type sym_tbl proc_id id with
+      | STBeantype    _     -> raise No_field
+      | STFieldStruct field ->
+          let (field_type, _) = get_field_sym field lval in
+          field_type
+
+(* Allocate a slot number for an id of any type *)
+let allocate_frame_slots sym_tbl proc_id id slot_num =
+  let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
+  let rec allocate_type type_sym slotnum =
+    match type_sym with
+    | STBeantype    _     -> slotnum
+    | STFieldStruct field ->
+        let field_fold id (t_sym, slot) slotn =
+          slot := Some slotn;
+          allocate_type t_sym (slotn+1)
+        in
+        Hashtbl.fold field_fold field slotnum
+  in
+  let (type_sym, scope, slot, _) = Hashtbl.find proc.proc_sym_tbl id in
+  match scope with
+  | SParamRef -> slot := Some slot_num; slot_num+1
+  | _         ->
+      slot := Some slot_num;
+      allocate_type type_sym (slot_num+1)
+
+(* Retrieve the slot number for an id lvalue in a stack frame *)
+let get_lid_slot_num sym_tbl proc_id id =
   let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
   let (_, _, slot, _) = Hashtbl.find proc.proc_sym_tbl id in
-  slot := Some slot_num
+  match !slot with
+  | None     -> raise Slot_not_allocated
+  | Some num -> num
 
-(* Retrieve the slot number for a symbol in a stack frame *)
-let get_slot_num sym_tbl proc_id id =
+(* Get the slot number allocated to the field given 
+ * by an lvalue of a variable given by id            *)
+let get_lfield_slot_num sym_tbl proc_id (lval, id) =
   let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
-  let (_, _, slot, _) = Hashtbl.find proc.proc_sym_tbl id in
+  let (type_sym, _, _, _) = Hashtbl.find proc.proc_sym_tbl id in
+  let get_field t_sym field_id =
+    match t_sym with
+    | STBeantype    _     -> raise No_field
+    | STFieldStruct field -> Hashtbl.find field field_id
+  in
+  let rec get_field_slot field_type lval =
+    match lval with
+    | AST.LId (id, _) ->
+        let (_, slot) = get_field field_type id in
+        slot
+    | AST.LField (lval, id) ->
+        let (subfield_type, _) = get_field field_type id in
+        get_field_slot subfield_type lval
+  in
+  let slot = get_field_slot type_sym lval in
   match !slot with
   | None     -> raise Slot_not_allocated
   | Some num -> num
@@ -230,6 +297,29 @@ sym_tbl_t_of_ast_t td_tbl typespec =
   | AST.TSDefinedtype dt -> TSDefinedtype (get_typedef td_tbl dt)
   | AST.TSFieldStruct fs -> TSFieldStruct (sym_type_of_struct td_tbl fs)
 
+(* Make a symbol instance for a struct variable from a symbolic typespec *)
+let rec make_struct_symbol field_struct =
+  let field_tbl = Hashtbl.create 5 in
+  let add_field id field_decl f_tbl =
+    let ft = make_type_symbol field_decl.field_type in
+    Hashtbl.add f_tbl id (ft, ref None);
+    f_tbl
+  in
+  STFieldStruct (Hashtbl.fold add_field field_struct field_tbl)
+
+(* Make an instance symbol for a type based on its symbolic type *)
+and
+make_type_symbol typespec =
+  match typespec with
+  | TSBeantype bt         -> STBeantype bt
+  | TSDefinedtype (ts, _) -> make_type_symbol ts
+  | TSFieldStruct fs      -> make_struct_symbol fs
+
+(* Make an instance symbol for a variable *)
+let make_var_symbol scope_type typespec pos =
+  let type_sym = make_type_symbol typespec in
+  (type_sym, scope_type, ref None, pos)
+
 (* Add a single typedef into the lookup table *)
 let add_typedef td_tbl (typespec, id, pos) =
   let sym_type = sym_tbl_t_of_ast_t td_tbl typespec in
@@ -246,7 +336,7 @@ let rec add_typedefs td_tbl typedefs =
 
 let make_decl_symbol td_tbl decl_ast_type decl_pos =
   let decl_type = sym_tbl_t_of_ast_t td_tbl decl_ast_type in
-  (decl_type, SDecl, ref None, decl_pos)
+  make_var_symbol SDecl decl_type decl_pos
 
 let add_decl_symbol td_tbl proc_sym_tbl decl =
   let (id, decl_ast_type, decl_pos) = decl in
@@ -264,7 +354,7 @@ let make_param_symbol td_tbl param_pass typespec param_pos =
     | AST.Pval -> SParamVal
     | AST.Pref -> SParamRef
   in
-  (param_type, param_scope, ref None, param_pos)
+  make_var_symbol param_scope param_type param_pos
 
 (* Add a parameter to a proc's symbol table *)
 let add_param_symbol td_tbl proc_sym_tbl param =
