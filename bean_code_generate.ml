@@ -191,7 +191,13 @@ gen_binop_code symtbl proc_id load_reg binop lexpr rexpr =
   in
   operation_code @ rexpr_code @ lexpr_code
 
-(* Generate code for an expression *)
+(*  Generate code for an expression 
+    symtbl: context symbol table for function
+    proc_id: context procedure for function
+    load_reg: put resulting value in this register
+    expr: expression in question
+    return: array of type bean_code_generate.instr
+  *)
 and
 gen_expr_code symtbl proc_id load_reg expr =
   match expr with
@@ -214,7 +220,13 @@ let gen_read_code symtbl proc_id lval =
   | AST.LField _ -> raise (Unsupported "Field reads not yet supported")
   | AST.LId (id, _) -> 
       let slot_num = Sym.get_slot_num symtbl proc_id id in
-      [Store (StackSlot slot_num, Reg 0); CallBuiltin read_call]
+      match Sym.get_proc_var_scope symtbl proc_id id with
+      | Sym.SDecl
+      | Sym.SParamVal -> [Store (StackSlot slot_num, Reg 0); 
+                          CallBuiltin read_call]
+      | Sym.SParamRef -> [StoreIndirect (Reg 1, Reg 0);
+                          Load (Reg 1, StackSlot slot_num);
+                          CallBuiltin read_call]
 
 let gen_struct_assign_code symtbl proc_id lval rstruct =
   raise (Unsupported "Structure field assignments not yet supported")
@@ -262,18 +274,43 @@ let gen_write_code symtbl proc_id wrt =
       in
       print_code @ expr_code
 
+
+(*
+  generates code to load a pointer to an arg in arg_num
+  symtbl: context symbol table for program
+  caller_id: proc ident which is calling the new proc
+  arg_num: register number to load the pointer into
+  arg: expr->Elval which contains value to be pointed to
+  return: [instr]  
+*)
+let gen_proc_load_ref symtbl caller_id arg_num arg =
+  match arg with 
+  | AST.Ebool  _ | AST.Eint   _
+  | AST.Eunop  _ | AST.Ebinop _
+      -> raise (Unsupported "Cannot accept expression as ref arg")
+  | AST.Elval (lval, _) ->
+      match lval with
+      | AST.LField (lval, id) ->
+          raise (Unsupported "Fields not currently implemented as ref args")
+      | AST.LId (id, _) -> 
+          let slot_num = Sym.get_slot_num symtbl caller_id id in
+          match Sym.get_proc_var_scope symtbl caller_id id with
+          | Sym.SDecl
+          | Sym.SParamVal -> [LoadAddress (arg_num, StackSlot slot_num)]
+          | Sym.SParamRef -> [Load (arg_num, StackSlot slot_num)]
+      
+
 let gen_proc_call_code symtbl caller_id proc_id args =
   let proc_label = Sym.get_proc_label symtbl proc_id in
   let params = Sym.get_param_list symtbl proc_id in
   let load_arg (arg_num, code) (arg, param) =
     let scope = Sym.get_proc_var_scope symtbl proc_id param in
-    let expr_code = gen_expr_code symtbl caller_id (Reg arg_num) arg in
     let load_code =
       match scope with
-      | Sym.SParamVal -> [Load (Reg arg_num, StackSlot arg_num)]
-      | Sym.SParamRef -> [LoadAddress (Reg arg_num, StackSlot arg_num)]
+      | Sym.SParamVal -> gen_expr_code symtbl caller_id (Reg arg_num) arg
+      | Sym.SParamRef -> gen_proc_load_ref symtbl caller_id (Reg arg_num) arg
     in
-    (arg_num+1, load_code @ expr_code @ code)
+    (arg_num+1, load_code @ code)
   in
   let param_args = List.combine args params in
   let (arg_num, arg_code) = List.fold_left load_arg (0, []) param_args in
