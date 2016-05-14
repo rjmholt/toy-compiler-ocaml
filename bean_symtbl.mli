@@ -84,7 +84,9 @@ val get_id_type: symtbl -> AST.ident -> AST.ident -> type_symbol
 
 val get_lval_type: symtbl -> AST.ident -> AST.lvalue -> type_symbol
 
-val allocate_frame_slots: symtbl -> AST.ident -> AST.ident -> int -> int
+val allocate_id_frame_slot: symtbl -> AST.ident -> AST.ident -> int -> int
+
+val allocate_field_frame_slot: symtbl -> field_symbol -> int -> int
 
 val get_lid_slot_num: symtbl -> AST.ident -> AST.ident -> int
 
