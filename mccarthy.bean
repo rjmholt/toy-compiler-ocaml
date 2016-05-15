@@ -1,0 +1,23 @@
+proc ninety_one(ref int n)
+    if n > 100 then
+        n := n - 10;
+    else
+        n := n + 11;
+        ninety_one(n);
+        ninety_one(n);
+    fi
+end
+
+proc main()
+    int n;
+
+    n := 36;
+    write "n = ";
+    write n;
+    write "\n";
+
+    ninety_one(n);
+    write "m91(n) = ";
+    write n;
+    write "\n";
+end

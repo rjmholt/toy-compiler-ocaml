@@ -98,63 +98,9 @@ exception No_such_procedure
 
 (* ---- SYMBOL TABLE INTERFACE FUNCTIONS ---- *)
 
-(*
-(* Get the type of an ident in a procedure context *)
-let get_type sym_tbl proc_id id =
+let get_var_sym sym_tbl proc_id id =
   let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
-  let (type_symbol, _, _, _) = Hashtbl.find proc.proc_sym_tbl id in
-  type_symbol
-
-(* Follow a struct field access to find its type *)
-(* This function gets messy because a type may be 
- * embedded in a type specification or a typedef.
- * A pathological example would be a field from a type specification
- * that is in a typedef that is in a type specification that is in
- * another typedef...                                                *)
-let get_field_type sym_tbl proc_id (lval, id) =
-  (* Get the type_symbol of the field itself *)
-  let get_field_typesym field_struct ident =
-    let field_sym = Hashtbl.find field_struct ident in
-    (* TODO replicate type getting but for field symbols
-     * and then introduce type symbols everywhere where typespecs
-     * have been used and look to eliminating typespec stuff outside of
-     * typedefs...                                                      *)
-
-  (* Get the type specification from a field ident *)
-  let get_field_typespec field_struct ident =
-    let field_decl = Hashtbl.find field_struct ident in
-    field_decl.field_type
-  in
-  (* Follow get the type of the next field down *)
-  let rec get_subfield_type field_struct field_lval =
-    match field_lval with
-    | AST.LId (ident, _) -> get_field_typespec field_struct ident
-    | AST.LField (subval, ident) ->
-        let ts = get_field_typespec field_struct ident in
-        match ts with
-        | TSFieldStruct fs -> get_subfield_type fs subval
-        | TSDefinedtype dt -> get_def_type dt subval
-        | TSBeantype    _  -> raise No_field
-  and
-  (* Get the field type of a typedef'd struct *)
-  get_def_type (ts, _) subval =
-    match ts with
-    | TSFieldStruct fs -> get_subfield_type fs subval
-    | TSDefinedtype dt -> get_def_type dt subval
-    | TSBeantype    _  -> raise No_field
-  in
-  let base_type = get_type sym_tbl proc_id id in
-  match base_type with
-  | TSBeantype    bt -> raise No_field
-  | TSDefinedtype dt -> get_def_type dt lval
-  | TSFieldStruct fs -> get_subfield_type fs lval
-
-(* Get the type of an lvalue *)
-let get_lval_type sym_tbl proc_id lval =
-  match lval with
-  | AST.LId (id, _)  -> get_type sym_tbl proc_id id
-  | AST.LField field -> get_field_type sym_tbl proc_id field
-*)
+  Hashtbl.find proc.proc_sym_tbl id
 
 (* Get the type of an ordinary variable id
  * when it's not given as an lvalue (like in declarations) *)
@@ -163,7 +109,7 @@ let get_id_type sym_tbl proc_id id =
   let (type_symbol, _, _, _) = Hashtbl.find proc.proc_sym_tbl id in
   type_symbol
 
-(* Get the type of a given lvalue *)
+(* Get the type symbol of a given lvalue *)
 let get_lval_type sym_tbl proc_id lval =
   let rec get_field_sym field lvalue =
     match lvalue with
@@ -184,25 +130,11 @@ let get_lval_type sym_tbl proc_id lval =
           let (field_type, _) = get_field_sym field lval in
           field_type
 
-(* Allocate a slot number for an id of any type *)
-let allocate_frame_slots sym_tbl proc_id id slot_num =
+let set_id_slot sym_tbl proc_id id slot_num =
   let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
-  let rec allocate_type type_sym slotnum =
-    match type_sym with
-    | STBeantype    _     -> slotnum
-    | STFieldStruct field ->
-        let field_fold id (t_sym, slot) slotn =
-          slot := Some slotn;
-          allocate_type t_sym (slotn+1)
-        in
-        Hashtbl.fold field_fold field slotnum
-  in
-  let (type_sym, scope, slot, _) = Hashtbl.find proc.proc_sym_tbl id in
-  match scope with
-  | SParamRef -> slot := Some slot_num; slot_num+1
-  | _         ->
-      slot := Some slot_num;
-      allocate_type type_sym (slot_num+1)
+  let (_, _, slot, _) = Hashtbl.find proc.proc_sym_tbl id in
+  slot := Some slot_num;
+  slot_num+1
 
 (* Retrieve the slot number for an id lvalue in a stack frame *)
 let get_lid_slot_num sym_tbl proc_id id =
@@ -366,8 +298,8 @@ let add_param_symbol td_tbl proc_sym_tbl param =
     Hashtbl.add proc_sym_tbl id param_sym
 
 (* Insert a single procedure into the proc lookup table *)
-let add_proc td_tbl ps_tbl (id, pparams, (proc_decls, _), proc_pos) =
-  if Hashtbl.mem ps_tbl id then
+let add_proc td_tbl p_tbl (id, pparams, (proc_decls, _), proc_pos) () =
+  if Hashtbl.mem p_tbl id then
     raise Duplicate_proc
   else
     let get_param_id (_, _, id, _) ids = id :: ids in
@@ -375,23 +307,21 @@ let add_proc td_tbl ps_tbl (id, pparams, (proc_decls, _), proc_pos) =
     let proc_sym_tbl = Hashtbl.create 10 in
     let proc_label   = ref None in
     let add_param param () = add_param_symbol td_tbl proc_sym_tbl param in
-    let add_decl decl ()   = add_decl_symbol td_tbl proc_sym_tbl decl in
-    List.fold_right add_param pparams ();
+    let add_decl  decl  () = add_decl_symbol td_tbl proc_sym_tbl decl in
+    List.fold_right add_param pparams     ();
     List.fold_right add_decl  proc_decls  ();
-    Hashtbl.add ps_tbl id {proc_params; proc_sym_tbl; proc_label; proc_pos}
+    Hashtbl.add p_tbl id {proc_params; proc_sym_tbl; proc_label; proc_pos}
 
 (* Insert procedures into a lookup table by ident *)
 let rec add_procs td_tbl p_tbl (procs: AST.proc list) =
-  match procs with
-  | []  -> ()
-  | p :: ps -> add_proc td_tbl p_tbl p; add_procs td_tbl p_tbl ps
+  List.fold_right (add_proc td_tbl p_tbl) procs ()
 
 (* Symbol table constructor.
  * Takes a complete AST as argument, and constructs a lookup
  * table for all variables in the program for semantic analysis
  * and code generation.                                          *)
 let build_symtbl ast =
-  let sym_tds = Hashtbl.create 5 in
+  let sym_tds   = Hashtbl.create 5  in
   let sym_procs = Hashtbl.create 10 in
   add_typedefs sym_tds ast.AST.typedefs;
   add_procs sym_tds sym_procs ast.AST.procs;

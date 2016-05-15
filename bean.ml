@@ -80,7 +80,7 @@ let main () =
         Bean_pprint.print_program Format.std_formatter prog 
     | Compile ->
         let oz_prog =
-          Bean_code_generate.generate_oz_code symtbl prog
+          Bean_oz.generate_oz_code symtbl prog
         in
         let outfile =
           if not !debug then
