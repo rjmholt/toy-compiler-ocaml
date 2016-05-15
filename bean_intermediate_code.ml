@@ -279,6 +279,56 @@ let gen_write_code symtbl proc_id wrt =
       in
       print_code @ expr_code
 
+(* Generate code to deal with passing of
+ * any type of argument into a procedure *)
+let gen_arg_pass_code callee_scope arg_num (t_sym, caller_scope, slot, _) =
+  let gen_val_val_pass argn slotn = [Load (Reg argn, StackSlot slotn)] in
+  let gen_ref_ref_pass argn slotn = gen_val_val_pass argn slotn    in
+  let gen_val_ref_pass argn slotn =
+    [LoadAddress (Reg argn, StackSlot slotn)]
+  in
+  let gen_ref_val_pass argn slotn =
+    [LoadIndirect (Reg argn, Reg argn); Load (Reg argn, StackSlot slotn)]
+  in
+  let gen_val_x scope argn slotn =
+    match scope with
+    | Sym.SDecl | Sym.SParamVal -> gen_val_val_pass argn slotn
+    | Sym.SParamRef             -> gen_val_ref_pass argn slotn
+  in
+  let gen_ref_x scope argn slotn =
+    match scope with
+    | Sym.SDecl | Sym.SParamVal -> gen_ref_val_pass argn slotn
+    | Sym.SParamRef             -> gen_ref_ref_pass argn slotn
+  in
+  let gen_pass_code out_scope in_scope argn slotn =
+    match out_scope with
+    | Sym.SDecl | Sym.SParamVal -> gen_val_x in_scope argn slotn
+    | Sym.SParamRef             -> gen_ref_x in_scope argn slotn
+  in
+  let rec gen_field_proc_pass _ (type_sym, field_slot) (argn, code) =
+    match type_sym with
+    | Sym.STFieldStruct fields ->
+        Hashtbl.fold gen_field_proc_pass fields (argn, [])
+    | Sym.STBeantype bt ->
+        let slot_num =
+          match !field_slot with
+          | Some num -> num
+        in
+        let arg_code = gen_pass_code caller_scope callee_scope argn slot_num in
+        (argn+1, arg_code @ code)
+  in
+  match t_sym with
+  | Sym.STBeantype _ ->
+      let slot_num =
+        match !slot with
+        | Some num -> num
+      in
+      gen_pass_code caller_scope callee_scope arg_num slot_num
+  | Sym.STFieldStruct fields ->
+      let (argn, code) =
+        Hashtbl.fold gen_field_proc_pass fields (arg_num, [])
+      in
+      code
 
 (*
   generates code to load a pointer to an arg in arg_num
