@@ -97,10 +97,30 @@ exception Slot_not_allocated
 exception No_such_procedure
 
 (* ---- SYMBOL TABLE INTERFACE FUNCTIONS ---- *)
+let rec get_field_sym field lvalue =
+  match lvalue with
+  | AST.LId    (id, _)  -> Hashtbl.find field id
+  | AST.LField (lv, id) ->
+      let (field_type, _) = Hashtbl.find field id in
+      match field_type with
+      | STBeantype    _        -> raise No_field
+      | STFieldStruct subfield ->
+          get_field_sym subfield lv
 
 let get_var_sym sym_tbl proc_id id =
   let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
   Hashtbl.find proc.proc_sym_tbl id
+
+let get_lval_sym sym_tbl proc_id lval =
+  match lval with
+  | AST.LId (id, _) ->
+      let (type_sym, _, slot, _) = get_var_sym sym_tbl proc_id id in
+      (type_sym, slot)
+  | AST.LField (lval, id) ->
+      let (type_sym, _, _, _) = get_var_sym sym_tbl proc_id id in
+      match type_sym with
+      | STBeantype    _      -> raise No_field
+      | STFieldStruct fields -> get_field_sym fields lval
 
 (* Get the type of an ordinary variable id
  * when it's not given as an lvalue (like in declarations) *)
@@ -111,16 +131,6 @@ let get_id_type sym_tbl proc_id id =
 
 (* Get the type symbol of a given lvalue *)
 let get_lval_type sym_tbl proc_id lval =
-  let rec get_field_sym field lvalue =
-    match lvalue with
-    | AST.LId    (id, _)  -> Hashtbl.find field id
-    | AST.LField (lv, id) ->
-        let (field_type, _) = Hashtbl.find field id in
-        match field_type with
-        | STBeantype    _        -> raise No_field
-        | STFieldStruct subfield ->
-            get_field_sym subfield lv
-  in
   match lval with
   | AST.LId    (id, _)    -> get_id_type sym_tbl proc_id id
   | AST.LField (lval, id) ->

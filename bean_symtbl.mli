@@ -82,6 +82,8 @@ val build_symtbl: Bean_ast.t -> symtbl
 
 val get_var_sym: symtbl -> AST.ident -> AST.ident -> var_symbol
 
+val get_lval_sym: symtbl -> AST.ident -> AST.lvalue -> field_symbol
+
 val get_id_type: symtbl -> AST.ident -> AST.ident -> type_symbol
 
 val get_lval_type: symtbl -> AST.ident -> AST.lvalue -> type_symbol
