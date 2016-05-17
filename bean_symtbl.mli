@@ -101,3 +101,5 @@ val get_proc_label: symtbl -> AST.ident -> string
 val get_param_list: symtbl -> AST.ident -> AST.ident list
 
 val get_proc_var_scope: symtbl -> AST.ident -> AST.ident -> var_scope
+
+val get_lval_scope: symtbl -> AST.ident -> AST.lvalue -> var_scope

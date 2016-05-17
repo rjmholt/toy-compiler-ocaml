@@ -199,6 +199,11 @@ let get_proc_var_scope sym_tbl proc_id symbol_id =
   let (_, scope, _, _) = Hashtbl.find proc_syms symbol_id in
   scope
 
+let get_lval_scope sym_tbl proc_id lval =
+  match lval with
+  | AST.LId (id, _) -> get_proc_var_scope sym_tbl proc_id id
+  | AST.LField (_, id) -> get_proc_var_scope sym_tbl proc_id id
+
 (* ---- SYMBOL TABLE CONSTRUCTOR FUNCTIONS ---- *)
 
 (* Attempt to find a typedef based on the identifier.

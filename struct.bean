@@ -1,0 +1,17 @@
+proc f (val {a: int, b: bool} x)
+    write "x.a = ";
+    write x.a;
+    write "\n";
+
+    write "x.b = ";
+    write x.b;
+    write "\n";
+end
+
+proc main()
+    {a: int, b: bool} t;
+
+    t := {a = 3, b = true};
+
+    f(t);
+end

@@ -233,8 +233,48 @@ let gen_read_code symtbl proc_id lval =
                       Load (Reg 1, StackSlot slot_num);
                       CallBuiltin read_call]
 
-let gen_struct_assign_code symtbl proc_id lval rstruct =
-  raise (Unsupported "Structure field assignments not yet supported")
+let asgn_primitive symtbl proc_id reg scope slot expr =
+  let slot_num =
+    match !slot with
+    | Some num -> num
+    | None -> raise (Unsupported "Slot not assigned")
+  in
+  let expr_code = gen_expr_code symtbl proc_id reg expr in
+  let asgn_code =
+    match scope with
+    | Sym.SDecl | Sym.SParamVal -> [Store (StackSlot slot_num, reg)]
+    | Sym.SParamRef             ->
+        [StoreIndirect (reg, reg); Load (reg, StackSlot slot_num)]
+  in
+  asgn_code @ expr_code
+
+let rec asgn_field symtbl proc_id reg scope field_tbl (id, rval, _) code =
+  let (type_sym, slot) =
+    try
+      Hashtbl.find field_tbl id
+    with
+    | Not_found -> raise (Unsupported "No such field in the struct")
+  in
+  let asgn_code =
+    match (type_sym, rval) with
+      | (Sym.STBeantype _, AST.Rexpr expr) ->
+          asgn_primitive symtbl proc_id reg scope slot expr
+    | (Sym.STFieldStruct subfield_tbl, AST.Rstruct rasgns) ->
+        let go = asgn_field symtbl proc_id reg scope subfield_tbl in
+        List.fold_right go rasgns []
+    | _ -> raise (Unsupported "No such field in the struct")
+  in
+  (asgn_code @ code)
+
+let gen_struct_assign_code symtbl proc_id reg lval rstruct =
+  let scope = Sym.get_lval_scope symtbl proc_id lval in
+  let type_sym = Sym.get_lval_type symtbl proc_id lval in
+  match type_sym with
+  | Sym.STBeantype _ ->
+      raise (Unsupported "Can't assign fields on a primitive value")
+  | Sym.STFieldStruct field_tbl ->
+      let go = asgn_field symtbl proc_id reg scope field_tbl in
+      List.fold_right go rstruct []
 
 let gen_assign_code symtbl proc_id lval rval =
   let lid_asgn id =
@@ -245,15 +285,22 @@ let gen_assign_code symtbl proc_id lval rval =
     | Sym.SParamRef -> [StoreIndirect (Reg 1, Reg 0);
                         Load (Reg 1, StackSlot slot_num)]
   in
+  let lfield_asgn (lval, id) =
+    let slot_num = Sym.get_lfield_slot_num symtbl proc_id (lval, id) in
+    match Sym.get_proc_var_scope symtbl proc_id id with
+    | Sym.SDecl | Sym.SParamVal -> [Store (StackSlot slot_num, Reg 0) ]
+    | Sym.SParamRef             -> [StoreIndirect (Reg 1, Reg 0);
+                                    Load (Reg 1, StackSlot slot_num)]
+  in
   match rval with
   | AST.Rstruct rstruct ->
-      gen_struct_assign_code symtbl proc_id lval rstruct
+      gen_struct_assign_code symtbl proc_id (Reg 0) lval rstruct
   | AST.Rexpr expr ->
       let expr_code = gen_expr_code symtbl proc_id (Reg 0) expr in
       let asgn_code =
         match lval with
         | AST.LId (id, _) -> lid_asgn id
-        | _ -> raise (Unsupported "Field assignment not yet supported")
+        | AST.LField lval -> lfield_asgn lval
       in
       asgn_code @ expr_code
 
