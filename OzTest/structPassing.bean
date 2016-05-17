@@ -1,0 +1,48 @@
+typedef {a: int, b: {a: bool, b: int}} myType
+
+proc main()
+
+  myType m;
+  bool b;
+
+  m := {a = 6, b = {a = true, b = 6}};
+
+  write "myType m = {a: 6, b: {a: true, b: 6}}\n";
+  print_struct(m);
+
+  write "pass by ref?: ";
+  read b;
+
+  if b then
+    sub_ref(m);
+  else
+    sub_val(m);
+  fi
+
+  print_struct(m);
+end
+
+
+proc print_struct(val myType m)
+  write "struct is:\n";
+  write "m.a = ";
+  write m.a;
+  write "\n";
+
+  write "m.b.a = ";
+  write m.b.a;
+  write "\n";
+
+  write "m.b.b = ";
+  write m.b.b;
+  write "\n";
+
+end
+
+proc sub_ref(ref myType m)
+  m := {a = 1, b = {a = false, b = 1}};
+end
+
+proc sub_val(val myType m)
+  m := {a = 1, b = {a = false, b = 1}};
+end

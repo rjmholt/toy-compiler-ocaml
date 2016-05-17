@@ -1,0 +1,42 @@
+
+typedef bool myBool
+typedef { a: int, b: {x: myBool, g: int}} aType
+typedef aType bType
+
+proc main()
+  myBool mbool;
+  aType  a;
+  bType  b;
+
+  write "myBool test, enterting anything other than bool should fail\n";
+  read mbool;
+
+  write "\nwriting contents of bType b, uninitialised: \n";
+
+  write "b.a = ";
+  write b.a;
+  write "\n";
+
+  write "b.b.x = ";
+  write b.b.x;
+  write "\n";
+
+  write "b.b.g = ";
+  write b.b.g;
+  write "\n";
+
+  write "\nb = {1, {true, 4}}\n";
+  write "b.a = ";
+  write b.a;
+  write "\n";
+
+  write "b.b.x = ";
+  write b.b.x;
+  write "\n";
+
+  write "b.b.g = ";
+  write b.b.g;
+  write "\n";
+
+
+end

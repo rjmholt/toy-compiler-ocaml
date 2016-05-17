@@ -1,0 +1,27 @@
+proc main()
+
+  bool n;
+  bool t;
+
+  t := true;
+  if t then
+    write "t is  always true\n";
+  fi
+
+  write "enter a bool: ";
+  read n;
+
+  write "entered value is: ";
+
+  if n then
+    write true;
+  else
+    write false;
+  fi
+  write "\n";
+
+  if n then
+    write "extra line to check if then branch\n";
+  fi
+
+end

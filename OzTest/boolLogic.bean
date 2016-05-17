@@ -1,0 +1,31 @@
+proc main()
+
+  bool a;
+  bool b;
+  bool c;
+
+  write "enter two bools: \n";
+
+  read a;
+  read b;
+
+  write "a";
+  write " and ";
+  write "b = ";
+  c := a and b;
+  write c;
+  write "\n";
+
+  write "a";
+  write "  or ";
+  write "b = ";
+  c := a or b;
+  write c;
+  write "\n";
+
+  write "  not a = ";
+  c := not a;
+  write c;
+  write "\n";
+
+end

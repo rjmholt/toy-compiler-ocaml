@@ -1,0 +1,30 @@
+proc main()
+
+  int n;
+  bool b;
+
+  write "enter int: ";
+  read n;
+
+  write "pass by val?: ";
+  read b;
+
+  if b then
+    dec_val(n);
+  else
+    dec_ref(n);
+  fi
+
+  write "int is now: ";
+  write n;
+  write "\n";
+
+end
+
+proc dec_val(val int n)
+  n := n - 1;
+end
+
+proc dec_ref(ref int n)
+  n := n - 1;
+end

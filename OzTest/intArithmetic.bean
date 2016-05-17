@@ -1,0 +1,42 @@
+proc main()
+  int a;
+  int b;
+  int c;
+
+  read a;
+  read b;
+
+  write a;
+  write " + ";
+  write b;
+  write " = ";
+  c := a + b;
+  write c;
+  write "\n";
+
+  write a;
+  write " - ";
+  write b;
+  write " = ";
+  c := a - b;
+  write c;
+  write "\n";
+
+  write a;
+  write " * ";
+  write b;
+  write " = ";
+  c := a * b;
+  write c;
+  write "\n";
+
+
+  write a;
+  write " / ";
+  write b;
+  write " = ";
+  c := a / b;
+  write c;
+  write "\n";
+
+end
