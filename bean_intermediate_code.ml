@@ -362,7 +362,7 @@ let gen_arg_pass_code callee_scope caller_scope arg_num (t_sym, slot) =
   let rec gen_field_proc_pass _ (type_sym, field_slot) (argn, code) =
     match type_sym with
     | Sym.STFieldStruct fields ->
-        Hashtbl.fold gen_field_proc_pass fields (argn, [])
+        Hashtbl.fold gen_field_proc_pass fields (argn, code)
     | Sym.STBeantype bt ->
         let slot_num =
           match !field_slot with

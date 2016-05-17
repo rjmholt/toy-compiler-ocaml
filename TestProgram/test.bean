@@ -127,6 +127,7 @@ end
 # If x is odd, multiply by three and add one and call mutual_one on it
 proc mutual_two(val int x)
     write x;
+    write "\n";
 
     if x - 2 * (x / 2) = 0 then
         mutual_one(x/2);
@@ -159,7 +160,9 @@ proc main()
 
     write "---- Testing default bool value ----\n";
     if p then
-        write "Hello";
+        write "Hello\n";
+    else
+        write "p's default is correctly 0\n";
     fi
     write "\n";
 
