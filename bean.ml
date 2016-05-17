@@ -88,7 +88,7 @@ let main () =
     | Compile ->
         (* generate oz code   TODO as a string?*)
         let oz_prog =
-          Bean_code_generate.generate_oz_code symtbl prog
+          Bean_oz.generate_oz_code symtbl prog
         in
 
         (* Determine where to pipe output *)

@@ -80,13 +80,15 @@ exception Undefined_type of AST.ident * pos
 
 val build_symtbl: Bean_ast.t -> symtbl
 
+val get_var_sym: symtbl -> AST.ident -> AST.ident -> var_symbol
+
+val get_lval_sym: symtbl -> AST.ident -> AST.lvalue -> field_symbol
+
 val get_id_type: symtbl -> AST.ident -> AST.ident -> type_symbol
 
 val get_lval_type: symtbl -> AST.ident -> AST.lvalue -> type_symbol
 
-val allocate_id_frame_slot: symtbl -> AST.ident -> AST.ident -> int -> int
-
-val allocate_field_frame_slot: symtbl -> field_symbol -> int -> int
+val set_id_slot: symtbl -> AST.ident -> AST.ident -> int -> int
 
 val get_lid_slot_num: symtbl -> AST.ident -> AST.ident -> int
 
@@ -99,3 +101,5 @@ val get_proc_label: symtbl -> AST.ident -> string
 val get_param_list: symtbl -> AST.ident -> AST.ident list
 
 val get_proc_var_scope: symtbl -> AST.ident -> AST.ident -> var_scope
+
+val get_lval_scope: symtbl -> AST.ident -> AST.lvalue -> var_scope
