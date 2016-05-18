@@ -27,7 +27,7 @@ and field_decl =
     field_type: typespec;
   }
 
-(* A field struct (C-struct-like compound type) becomes a 
+(* A field struct (C-struct-like compound type) becomes a
  * lookup table for fields, each having an
  * identifier and a type declaration                       *)
 and field_struct = (ident, field_decl) Hashtbl.t
@@ -154,7 +154,7 @@ let get_lid_slot_num sym_tbl proc_id id =
   | None     -> raise Slot_not_allocated
   | Some num -> num
 
-(* Get the slot number allocated to the field given 
+(* Get the slot number allocated to the field given
  * by an lvalue of a variable given by id            *)
 let get_lfield_slot_num sym_tbl proc_id (lval, id) =
   let proc = Hashtbl.find sym_tbl.sym_procs proc_id in

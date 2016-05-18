@@ -33,7 +33,7 @@ let write_str_const (IR.Reg r) str =
 
 let write_add_int (IR.Reg r1) (IR.Reg r2) (IR.Reg r3) =
   write "add_int r%d, r%d, r%d" r1 r2 r3
-                                                  
+
 let write_sub_int (IR.Reg r1) (IR.Reg r2) (IR.Reg r3) =
   write "sub_int r%d, r%d, r%d" r1 r2 r3
 
@@ -129,7 +129,7 @@ let write_instr instr =
   | IR.LoadAddress    (reg, slot) -> write_load_addr reg slot
   | IR.LoadIndirect  (reg1, reg2) -> write_load_ind reg1 reg2
   | IR.StoreIndirect (reg1, reg2) -> write_store_ind reg1 reg2
-  | IR.IntConst        (reg, imm) -> write_int_const reg imm
+  | IR.IntConst        (reg, imm) -> write_int_const  reg imm
   | IR.StringConst     (reg, str) -> write_str_const reg str
   | IR.AddInt        (r1, r2, r3) -> write_add_int r1 r2 r3
   | IR.SubInt        (r1, r2, r3) -> write_sub_int r1 r2 r3
