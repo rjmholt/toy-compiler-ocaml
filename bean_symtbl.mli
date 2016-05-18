@@ -2,9 +2,11 @@
 
 module AST = Bean_ast
 
-(* Symbol table data structure definitions *)
+(* ========================================================================== *)
+(* ======================= DATA STRUCTURE DEFINITIONS ======================= *)
+(* ========================================================================== *)
 
-(* Keep identities using whatever the AST is using *)
+(* Store identities using whatever format the AST is using *)
 type ident = AST.ident
 
 (* The parser records positions at both the start and end of the
@@ -22,12 +24,12 @@ type typespec =
 
 (* A field type declaration is composed of a position
  * and a type specification                               *)
-and field_decl =
-  { field_pos:  pos;
-    field_type: typespec;
-  }
+and field_decl = {
+  field_pos:  pos;
+  field_type: typespec;
+}
 
-(* A field struct (C-struct-like compound type) becomes a 
+(* A field struct (C-struct-like compound type) becomes a
  * lookup table for fields, each having an
  * identifier and a type declaration                       *)
 and field_struct = (ident, field_decl) Hashtbl.t
@@ -43,7 +45,7 @@ type var_scope =
   | SParamRef
 
 type type_symbol =
-  | STBeantype    of AST.beantype
+  | STBeantype    of  AST.beantype
   | STFieldStruct of (ident, field_symbol) Hashtbl.t
 
 and field_symbol = (type_symbol * int option ref)
@@ -56,10 +58,10 @@ type var_symbol = (type_symbol * var_scope * int option ref * pos)
  *   - a position (for error messages)   *)
 type proc =
   { (* Params must be a list, since Hashtbl doesn't preserve order *)
-    proc_params:  AST.ident list;
+    proc_params:   AST.ident list;
     proc_sym_tbl: (ident, var_symbol) Hashtbl.t;
-    proc_label:   string option ref;
-    proc_pos:     pos;
+    proc_label:    string option ref;
+    proc_pos:      pos;
   }
 
 (* Symbol (lookup) table, composed of:
@@ -74,32 +76,44 @@ type symtbl =
  * allows other modules to use `Bean_symtbl.t` *)
 type t = symtbl
 
+(* ========================================================================== *)
+(* ========================= EXCEPTION DEFINTIIONS ========================== *)
+(* ========================================================================== *)
+
 (* Exception if the user has tried to set a type
  * they have not defined                         *)
 exception Undefined_type of AST.ident * pos
 
-val build_symtbl: Bean_ast.t -> symtbl
+exception Duplicate_field    (* two fields in a struct share the same name   *)
+exception Duplicate_typedef  (* two typedefs share the same name             *)
+exception Duplicate_proc     (* two procs share the same name                *)
+exception Duplicate_param    (* two parameters share the same name           *)
+exception Duplicate_decl     (* variable is declared twice in the same scope *)
+exception No_field           (* struct does not have a field of this name    *)
+exception Slot_not_allocated (* no slot to store the value in                *)
+exception No_such_procedure  (* call made to a proc that doesn't exist       *)
 
-val get_var_sym: symtbl -> AST.ident -> AST.ident -> var_symbol
 
-val get_lval_sym: symtbl -> AST.ident -> AST.lvalue -> field_symbol
+(* ========================================================================== *)
+(* ========================== INTERFACE FUNCTIONS =========================== *)
+(* ========================================================================== *)
 
-val get_id_type: symtbl -> AST.ident -> AST.ident -> type_symbol
+val get_field_sym: (AST.ident, field_symbol) Hashtbl.t -> AST.lvalue -> field_symbol
 
-val get_lval_type: symtbl -> AST.ident -> AST.lvalue -> type_symbol
-
-val set_id_slot: symtbl -> AST.ident -> AST.ident -> int -> int
-
-val get_lid_slot_num: symtbl -> AST.ident -> AST.ident -> int
-
+val get_var_sym:         symtbl -> AST.ident -> AST.ident  -> var_symbol
+val get_lval_sym:        symtbl -> AST.ident -> AST.lvalue -> field_symbol
+val get_id_type:         symtbl -> AST.ident -> AST.ident  -> type_symbol
+val get_lval_type:       symtbl -> AST.ident -> AST.lvalue -> type_symbol
+val set_id_slot:         symtbl -> AST.ident -> AST.ident  -> int -> int
+val get_lid_slot_num:    symtbl -> AST.ident -> AST.ident  -> int
 val get_lfield_slot_num: symtbl -> AST.ident -> (AST.lvalue * AST.ident) -> int
+val set_proc_label:      symtbl -> AST.ident -> string -> unit
+val get_proc_label:      symtbl -> AST.ident -> string
+val get_param_list:      symtbl -> AST.ident -> AST.ident list
+val get_proc_var_scope:  symtbl -> AST.ident -> AST.ident  -> var_scope
+val get_lval_scope:      symtbl -> AST.ident -> AST.lvalue -> var_scope
 
-val set_proc_label: symtbl -> AST.ident -> string -> unit
-
-val get_proc_label: symtbl -> AST.ident -> string
-
-val get_param_list: symtbl -> AST.ident -> AST.ident list
-
-val get_proc_var_scope: symtbl -> AST.ident -> AST.ident -> var_scope
-
-val get_lval_scope: symtbl -> AST.ident -> AST.lvalue -> var_scope
+(* ========================================================================== *)
+(* ========================= CONSTRUCTOR FUNCTIONS ========================== *)
+(* ========================================================================== *)
+val build_symtbl:        Bean_ast.t -> symtbl

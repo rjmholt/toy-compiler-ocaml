@@ -122,41 +122,53 @@ let write_debug_stack =
 
 let write_instr instr =
   match instr with
+  (* Stack Manipulation *)
   | IR.PushStackFrame  frame_size -> write_push_stack frame_size
   | IR.PopStackFrame   frame_size -> write_pop_stack frame_size
-  | IR.Load           (reg, slot) -> write_load reg slot
-  | IR.Store          (slot, reg) -> write_store slot reg
-  | IR.LoadAddress    (reg, slot) -> write_load_addr reg slot
-  | IR.LoadIndirect  (reg1, reg2) -> write_load_ind reg1 reg2
+  (* Register Store/Load *)
+  | IR.Load          (reg0, slot) -> write_load      reg0 slot
+  | IR.Store         (slot, reg0) -> write_store     slot reg0
+  | IR.LoadAddress   (reg0, slot) -> write_load_addr reg0 slot
+  | IR.LoadIndirect  (reg1, reg2) -> write_load_ind  reg1 reg2
   | IR.StoreIndirect (reg1, reg2) -> write_store_ind reg1 reg2
-  | IR.IntConst        (reg, imm) -> write_int_const  reg imm
+  (* Register Immediate Operation *)
+  | IR.IntConst        (reg, imm) -> write_int_const reg imm
   | IR.StringConst     (reg, str) -> write_str_const reg str
+  (* Integer Arithmetic Operations *)
   | IR.AddInt        (r1, r2, r3) -> write_add_int r1 r2 r3
   | IR.SubInt        (r1, r2, r3) -> write_sub_int r1 r2 r3
   | IR.MulInt        (r1, r2, r3) -> write_mul_int r1 r2 r3
   | IR.DivInt        (r1, r2, r3) -> write_div_int r1 r2 r3
+  (* Address Offset Operations *)
   | IR.AddOffset     (r1, r2, r3) -> write_add_offset r1 r2 r3
   | IR.SubOffset     (r1, r2, r3) -> write_sub_offset r1 r2 r3
-  | IR.CmpEqInt      (r1, r2, r3) -> write_cmp_eq r1 r2 r3
+  (* Integer Comparison Operations *)
+  | IR.CmpEqInt      (r1, r2, r3) -> write_cmp_eq  r1 r2 r3
   | IR.CmpNeqInt     (r1, r2, r3) -> write_cmp_neq r1 r2 r3
-  | IR.CmpLtInt      (r1, r2, r3) -> write_cmp_lt r1 r2 r3
+  | IR.CmpLtInt      (r1, r2, r3) -> write_cmp_lt  r1 r2 r3
   | IR.CmpLeqInt     (r1, r2, r3) -> write_cmp_leq r1 r2 r3
-  | IR.CmpGtInt      (r1, r2, r3) -> write_cmp_gt r1 r2 r3
+  | IR.CmpGtInt      (r1, r2, r3) -> write_cmp_gt  r1 r2 r3
   | IR.CmpGeqInt     (r1, r2, r3) -> write_cmp_geq r1 r2 r3
+  (* Boolean Arithmetic Operations *)
   | IR.And           (r1, r2, r3) -> write_and r1 r2 r3
-  | IR.Or            (r1, r2, r3) -> write_or r1 r2 r3
+  | IR.Or            (r1, r2, r3) -> write_or  r1 r2 r3
   | IR.Not               (r1, r2) -> write_not r1 r2
+  (* Move *)
   | IR.Move              (r1, r2) -> write_move r1 r2
-  | IR.BranchOnTrue  (reg, label) -> write_branch_true reg label
-  | IR.BranchOnFalse (reg, label) -> write_branch_false reg label
+  (* Branch Instructions *)
+  | IR.BranchOnTrue  (reg, label) -> write_branch_true   reg label
+  | IR.BranchOnFalse (reg, label) -> write_branch_false  reg label
   | IR.BranchUncond         label -> write_branch_uncond label
-  | IR.Call                 label -> write_call label
+  (* Calls *)
+  | IR.Call                 label -> write_call         label
   | IR.CallBuiltin        builtin -> write_call_builtin builtin
   | IR.Return                     -> write_return
+  (* Emulator Halt *)
   | IR.Halt                       -> write_halt
   | IR.BlockLabel           label -> write_block_label label
-  | IR.DebugReg               reg -> write_debug_reg reg
-  | IR.DebugSlot       stack_slot -> write_debug_slot stack_slot
+  (* Debug Instructions *)
+  | IR.DebugReg               reg -> write_debug_reg   reg
+  | IR.DebugSlot       stack_slot -> write_debug_slot  stack_slot
   | IR.DebugStack                 -> write_debug_stack
 
 let write_program code =
