@@ -9,7 +9,6 @@
 
 open Format
 module P = Bean_parse
-module L = Lexing
 
 (* Argument parsing code *)
 type compiler_mode = PrettyPrint | Compile
@@ -38,19 +37,6 @@ let (speclist:(Arg.key * Arg.spec * Arg.doc) list) =
 (*  Lexer/Parser error tracking functions        *)
 (* --------------------------------------------- *)
 
-(* Retrieve the lexer's line and column number for error reporting *)
-let get_lex_pos lexbuf =
-  let pos   = lexbuf.Lexing.lex_curr_p in
-  let fname = pos.L.pos_fname in
-  let line  = pos.L.pos_lnum  in
-  let col   = pos.L.pos_cnum - pos.L.pos_bol + 1 in
-  (fname, line, col)
-
-(* Set the lexer filename *)
-let set_lex_file filename lexbuf =
-  lexbuf.L.lex_curr_p <- { lexbuf.L.lex_curr_p with
-                           L.pos_fname = filename }
-
 (* MAIN FUNCTION *)
 let main () =
   (* Parse the command-line arguments *)
@@ -75,7 +61,7 @@ let main () =
 
   (* Assume bean doesn't link -- so the file being lexed
    * is always the one the compiler was called on...     *)
-  set_lex_file filename lexbuf;
+  Bean_lex.set_lex_file filename lexbuf;
   (* Call the parser *)
   try
     (* Parsing happens here *)
@@ -109,11 +95,11 @@ let main () =
   with
   (* Error catching here*)
   | Bean_lex.Lex_error msg ->
-      let (fname, ln, col) = get_lex_pos lexbuf in
+      let (fname, ln, col) = Bean_lex.get_lex_pos lexbuf in
       printf "Lexer error: %s at line %i, column %i in file %s\n"
          msg ln col fname
   | Parsing.Parse_error ->
-      let (fname, ln, col) = get_lex_pos lexbuf in
+      let (fname, ln, col) = Bean_lex.get_lex_pos lexbuf in
       printf "%s at line %i, column %i in file %s\n"
         "Parse error" ln col fname
 
