@@ -184,7 +184,12 @@ let set_proc_label sym_tbl proc_id label =
   proc.proc_label := Some label
 
 let get_proc_label sym_tbl proc_id =
-  let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
+  let proc =
+    try
+      Hashtbl.find sym_tbl.sym_procs proc_id
+    with
+    | Not_found -> raise No_such_procedure
+  in
   match !(proc.proc_label) with
   | None       -> raise No_such_procedure
   | Some label -> label
@@ -194,7 +199,12 @@ let get_param_list sym_tbl proc_id =
   proc.proc_params
 
 let get_proc_var_scope sym_tbl proc_id symbol_id =
-  let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
+  let proc =
+    try
+      Hashtbl.find sym_tbl.sym_procs proc_id
+    with
+    | Not_found -> raise No_such_procedure
+  in
   let proc_syms = proc.proc_sym_tbl in
   let (_, scope, _, _) = Hashtbl.find proc_syms symbol_id in
   scope

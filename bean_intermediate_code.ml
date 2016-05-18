@@ -213,7 +213,11 @@ gen_expr_code symtbl proc_id load_reg expr =
       gen_binop_code symtbl proc_id load_reg binop lexpr rexpr
 
 let gen_read_code symtbl proc_id lval =
-  let (Sym.STBeantype bt) = Sym.get_lval_type symtbl proc_id lval in
+  let bt =
+    match Sym.get_lval_type symtbl proc_id lval with
+    | Sym.STBeantype t -> t
+    | _ -> raise (Unsupported "Can't print non-primitive types")
+  in
   let read_call =
     match bt with
     | AST.TInt  -> ReadInt
@@ -367,6 +371,7 @@ let gen_arg_pass_code callee_scope caller_scope arg_num (t_sym, slot) =
         let slot_num =
           match !field_slot with
           | Some num -> num
+          | None -> raise (Unsupported "No slot allocated to beantyped field")
         in
         let arg_code = gen_pass_code argn slot_num in
         (argn+1, arg_code @ code)
@@ -377,6 +382,7 @@ let gen_arg_pass_code callee_scope caller_scope arg_num (t_sym, slot) =
       let slot_num =
         match !slot with
         | Some num -> num
+        | None -> raise (Unsupported "No slot allocated to beantyped arg")
       in
       (arg_num+1, gen_pass_code arg_num slot_num)
   | Sym.STFieldStruct fields ->

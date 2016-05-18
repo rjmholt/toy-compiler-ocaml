@@ -2,11 +2,35 @@ module AST = Bean_ast
 module Sym = Bean_symtbl
 module P = Bean_pprint
 
+exception Not_yet_implemented
+
 exception Undefined_variable of string
 exception Undefined_proc of string
 exception Undefined_field of string
 exception Type_error of string
 exception Arity_mismatch of string
+
+let string_of_pos (start_pos, end_pos) = raise Not_yet_implemented
+
+let check_pass_type symtbl proc_id =
+  (* TODO Figure out how checking the pass type of a symbol will work *)
+  raise Not_yet_implemented
+
+let rec check_expr symtbl proc_id expr =
+  (* TODO Check expression operator and subexpressions recursively *)
+  raise Not_yet_implemented
+
+let get_expr_type symtbl proc_id expr =
+  (* TODO Check the expression then return the type *)
+  raise Not_yet_implemented
+
+let check_read =
+  (* TODO work out what needs to be checked for reads and do it *)
+  raise Not_yet_implemented
+
+let check_write =
+  (* TODO work out how to check write statements *)
+  raise Not_yet_implemented
 
 (* Check a procedure call *)
 let check_pcall td_tbl procs_tbl proc (id, exprs, pos) =
