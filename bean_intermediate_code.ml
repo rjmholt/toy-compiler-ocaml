@@ -1,5 +1,6 @@
 module AST = Bean_ast
 module Sym = Bean_symtbl
+module Sem = Bean_semantic
 
 (* ---- DATA STRUCTURE DEFINITIONS ---- *)
 
@@ -139,11 +140,12 @@ let gen_lval_code symtbl proc_id load_reg lval =
   let (scope, slot_num) = 
     match lval with
     | AST.LField (lval, id) ->
-        let scope = Sym.get_proc_var_scope symtbl proc_id id in
+        let pos = AST.get_lval_pos lval in
+        let scope = Sym.get_proc_var_scope symtbl proc_id id pos in
         let slot_num = Sym.get_lfield_slot_num symtbl proc_id (lval, id) in
         (scope, slot_num)
-    | AST.LId (id, _)       ->
-        let scope = Sym.get_proc_var_scope symtbl proc_id id in
+    | AST.LId (id, pos)       ->
+        let scope = Sym.get_proc_var_scope symtbl proc_id id pos in
         let slot_num = Sym.get_lid_slot_num symtbl proc_id id in
         (scope, slot_num)
   in
@@ -213,6 +215,7 @@ gen_expr_code symtbl proc_id load_reg expr =
       gen_binop_code symtbl proc_id load_reg binop lexpr rexpr
 
 let gen_read_code symtbl proc_id lval =
+  let pos = AST.get_lval_pos lval in
   let bt =
     match Sym.get_lval_type symtbl proc_id lval with
     | Sym.STBeantype t -> t
@@ -229,7 +232,7 @@ let gen_read_code symtbl proc_id lval =
     | AST.LField (lfield, id) ->
         (id, Sym.get_lfield_slot_num symtbl proc_id (lfield, id))
   in
-  match Sym.get_proc_var_scope symtbl proc_id id with
+  match Sym.get_proc_var_scope symtbl proc_id id pos with
   | Sym.SDecl
   | Sym.SParamVal -> [Store (StackSlot slot_num, Reg 0); 
                       CallBuiltin read_call]
@@ -271,7 +274,8 @@ let rec asgn_field symtbl proc_id reg scope field_tbl (id, rval, _) code =
   (asgn_code @ code)
 
 let gen_struct_assign_code symtbl proc_id reg lval rstruct =
-  let scope = Sym.get_lval_scope symtbl proc_id lval in
+  let pos = AST.get_lval_pos lval in
+  let scope = Sym.get_lval_scope symtbl proc_id lval pos in
   let type_sym = Sym.get_lval_type symtbl proc_id lval in
   match type_sym with
   | Sym.STBeantype _ ->
@@ -282,16 +286,18 @@ let gen_struct_assign_code symtbl proc_id reg lval rstruct =
 
 let gen_assign_code symtbl proc_id lval rval =
   let lid_asgn id =
+    let pos = AST.get_lval_pos lval in
     let slot_num = Sym.get_lid_slot_num symtbl proc_id id in
-    match Sym.get_proc_var_scope symtbl proc_id id with
+    match Sym.get_proc_var_scope symtbl proc_id id pos with
     | Sym.SDecl
     | Sym.SParamVal -> [Store (StackSlot slot_num, Reg 0)]
     | Sym.SParamRef -> [StoreIndirect (Reg 1, Reg 0);
                         Load (Reg 1, StackSlot slot_num)]
   in
   let lfield_asgn (lval, id) =
+    let pos = AST.get_lval_pos lval in
     let slot_num = Sym.get_lfield_slot_num symtbl proc_id (lval, id) in
-    match Sym.get_proc_var_scope symtbl proc_id id with
+    match Sym.get_proc_var_scope symtbl proc_id id pos with
     | Sym.SDecl | Sym.SParamVal -> [Store (StackSlot slot_num, Reg 0) ]
     | Sym.SParamRef             -> [StoreIndirect (Reg 1, Reg 0);
                                     Load (Reg 1, StackSlot slot_num)]
@@ -402,18 +408,18 @@ let gen_proc_load_ref symtbl caller_id arg_num arg =
   | AST.Eunop  _ | AST.Ebinop _
       -> raise (Unsupported "Cannot accept expression as ref arg")
   (* TODO flatten lvals of complex type to be passed as argument *)
-  | AST.Elval (lval, _) ->
+  | AST.Elval (lval, pos) ->
       let (scope, slot_num) =
         match lval with
         | AST.LField (lval, id) ->
             let slot_num =
               Sym.get_lfield_slot_num symtbl caller_id (lval, id)
             in
-            let scope = Sym.get_proc_var_scope symtbl caller_id id in
+            let scope = Sym.get_proc_var_scope symtbl caller_id id pos in
             (scope, slot_num)
         | AST.LId (id, _) ->
             let slot_num = Sym.get_lid_slot_num symtbl caller_id id in
-            let scope    = Sym.get_proc_var_scope symtbl caller_id id in
+            let scope    = Sym.get_proc_var_scope symtbl caller_id id pos in
             (scope, slot_num)
       in
       match scope with
@@ -422,11 +428,11 @@ let gen_proc_load_ref symtbl caller_id arg_num arg =
       | Sym.SParamRef -> [Load (arg_num, StackSlot slot_num)]
       
 
-let gen_proc_call_code symtbl caller_id callee_id exprs =
+let gen_proc_call_code symtbl caller_id callee_id exprs pos =
   let gen_lval_pass_code param_id lval (arg_num, code) =
     match lval with
-    | AST.LId (id, _) ->
-      let callee_scope = Sym.get_proc_var_scope symtbl callee_id param_id in
+    | AST.LId (id, pos) ->
+      let callee_scope = Sym.get_proc_var_scope symtbl callee_id param_id pos in
       let (type_sym, caller_scope, slot, _) =
         Sym.get_var_sym symtbl caller_id id
       in
@@ -435,8 +441,11 @@ let gen_proc_call_code symtbl caller_id callee_id exprs =
       in
       (new_arg, load_code @ code)
     | AST.LField (lval, id) ->
-        let callee_scope = Sym.get_proc_var_scope symtbl callee_id param_id in
-        let caller_scope = Sym.get_proc_var_scope symtbl caller_id id in
+        let pos = AST.get_lval_pos lval in
+        let callee_scope =
+          Sym.get_proc_var_scope symtbl callee_id param_id pos
+        in
+        let caller_scope = Sym.get_proc_var_scope symtbl caller_id id pos in
         let field_sym    =
           Sym.get_lval_sym symtbl caller_id (AST.LField (lval, id)) in
         let (new_arg, load_code) =
@@ -444,7 +453,7 @@ let gen_proc_call_code symtbl caller_id callee_id exprs =
         in
         (new_arg, load_code @ code)
   in
-  let proc_label = Sym.get_proc_label symtbl callee_id in
+  let proc_label = Sym.get_proc_label symtbl callee_id pos in
   let params = Sym.get_param_list symtbl callee_id in
   let load_arg (arg_num, code) (expr, param_id) =
     match expr with 
@@ -526,6 +535,7 @@ gen_while_code symtbl proc_id label_num expr stmts =
 (* Generate code for a single statement *)
 and
 gen_stmt_code symtbl proc_id (label_num, code) stmt =
+  Sem.check_stmt symtbl proc_id stmt;
   let (new_label, stmt_code) =
     match stmt with
     | AST.Write wrt ->
@@ -540,8 +550,8 @@ gen_stmt_code symtbl proc_id (label_num, code) stmt =
         gen_ifelse_code symtbl proc_id label_num expr if_stmts el_stmts
     | AST.While (expr, stmts) ->
         gen_while_code symtbl proc_id label_num expr stmts
-    | AST.ProcCall (callee_id, exprs, _) ->
-        (label_num, gen_proc_call_code symtbl proc_id callee_id exprs)
+    | AST.ProcCall (callee_id, exprs, pos) ->
+        (label_num, gen_proc_call_code symtbl proc_id callee_id exprs pos)
   in
   (new_label, stmt_code @ code)
 
@@ -570,7 +580,8 @@ let rec gen_field_decl_code _id (type_sym, slot) (prev_slot, prev_code) =
       Hashtbl.fold gen_field_decl_code fields (prev_slot, prev_code)
 
 (* Generate code for a single declaration *)
-let gen_decl_code symtbl proc_id (frame_size, code) (id, _, _) =
+let gen_decl_code symtbl proc_id (frame_size, code) (id, _, pos) =
+  Sem.check_decl_name symtbl proc_id id pos;
   let decl_type = Sym.get_id_type symtbl proc_id id in
   (* Store the location of this symbol in the symbol table *)
   let (new_frame, decl_code) =
@@ -601,6 +612,7 @@ let rec gen_field_param_code scope id (t_sym, slot) (arg_num, slot_num, code) =
 (* Generate code for a single parameter pass *)
 let gen_param_code symtbl proc_id (arg_num, frame_size, code) param =
   let (_, _, id, _) = param in
+  Sem.check_param_name symtbl proc_id id;
   let (param_type, param_scope, slot, _) = Sym.get_var_sym symtbl proc_id id in
   let (num_args, new_frame_size, param_code) = 
     match param_type with
@@ -614,8 +626,8 @@ let gen_param_code symtbl proc_id (arg_num, frame_size, code) param =
 
 (* Generate code for a single procedure *)
 let gen_proc_code symtbl (label_num, code) proc =
-  let (proc_id, params, (decls, stmts), _) = proc in
-  let label_str = Sym.get_proc_label symtbl proc_id in
+  let (proc_id, params, (decls, stmts), pos) = proc in
+  let label_str = Sym.get_proc_label symtbl proc_id pos in
   let frame_size = 0 in
   Sym.set_proc_label symtbl proc_id label_str;
   (* Define curried folder functions *)
@@ -642,6 +654,7 @@ let gen_proc_code symtbl (label_num, code) proc =
 
 (* Generate code for a bean program *)
 let gen_code symtbl prog =
+  Sem.check_has_main symtbl;
   let procs = prog.AST.procs in
   (* Standard Oz prelude: call proc_main and then halt *)
   let prelude = [Call (Label "proc_main"); Halt] in

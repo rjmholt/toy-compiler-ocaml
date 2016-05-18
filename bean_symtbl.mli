@@ -76,7 +76,16 @@ type t = symtbl
 
 (* Exception if the user has tried to set a type
  * they have not defined                         *)
-exception Undefined_type of AST.ident * pos
+exception Duplicate_type       of string * AST.pos
+exception Duplicate_proc       of string * AST.pos
+exception Duplicate_param      of string * AST.pos
+exception Duplicate_decl       of string * AST.pos
+exception Duplicate_field      of string * AST.pos
+
+exception Undefined_variable   of string * AST.pos
+exception Undefined_proc       of string * AST.pos
+exception Undefined_field      of string * AST.pos
+exception Undefined_type       of string * AST.pos
 
 val build_symtbl: Bean_ast.t -> symtbl
 
@@ -96,10 +105,10 @@ val get_lfield_slot_num: symtbl -> AST.ident -> (AST.lvalue * AST.ident) -> int
 
 val set_proc_label: symtbl -> AST.ident -> string -> unit
 
-val get_proc_label: symtbl -> AST.ident -> string
+val get_proc_label: symtbl -> AST.ident -> AST.pos -> string
 
 val get_param_list: symtbl -> AST.ident -> AST.ident list
 
-val get_proc_var_scope: symtbl -> AST.ident -> AST.ident -> var_scope
+val get_proc_var_scope: symtbl -> AST.ident -> AST.ident -> AST.pos -> var_scope
 
-val get_lval_scope: symtbl -> AST.ident -> AST.lvalue -> var_scope
+val get_lval_scope: symtbl -> AST.ident -> AST.lvalue -> AST.pos -> var_scope

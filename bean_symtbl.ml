@@ -78,32 +78,31 @@ type t = symtbl
 
 (* Exception if the user has tried to set a type
  * they have not defined                         *)
-exception Undefined_type of AST.ident * pos
+exception Duplicate_type       of string * AST.pos
+exception Duplicate_proc       of string * AST.pos
+exception Duplicate_param      of string * AST.pos
+exception Duplicate_decl       of string * AST.pos
+exception Duplicate_field      of string * AST.pos
 
-exception Duplicate_field
-
-exception Duplicate_typedef
-
-exception Duplicate_proc
-
-exception Duplicate_param
-
-exception Duplicate_decl
+exception Undefined_variable   of string * AST.pos
+exception Undefined_proc       of string * AST.pos
+exception Undefined_field      of string * AST.pos
+exception Undefined_type       of string * AST.pos
 
 exception No_field
 
 exception Slot_not_allocated
-
-exception No_such_procedure
 
 (* ---- SYMBOL TABLE INTERFACE FUNCTIONS ---- *)
 let rec get_field_sym field lvalue =
   match lvalue with
   | AST.LId    (id, _)  -> Hashtbl.find field id
   | AST.LField (lv, id) ->
+      let pos = AST.get_lval_pos lv in
       let (field_type, _) = Hashtbl.find field id in
       match field_type with
-      | STBeantype    _        -> raise No_field
+      | STBeantype    _        ->
+          raise (Undefined_field (id, pos))
       | STFieldStruct subfield ->
           get_field_sym subfield lv
 
@@ -117,9 +116,10 @@ let get_lval_sym sym_tbl proc_id lval =
       let (type_sym, _, slot, _) = get_var_sym sym_tbl proc_id id in
       (type_sym, slot)
   | AST.LField (lval, id) ->
+      let pos                 = AST.get_lval_pos lval in
       let (type_sym, _, _, _) = get_var_sym sym_tbl proc_id id in
       match type_sym with
-      | STBeantype    _      -> raise No_field
+      | STBeantype    _      -> raise (Undefined_field (id, pos))
       | STFieldStruct fields -> get_field_sym fields lval
 
 (* Get the type of an ordinary variable id
@@ -131,11 +131,12 @@ let get_id_type sym_tbl proc_id id =
 
 (* Get the type symbol of a given lvalue *)
 let get_lval_type sym_tbl proc_id lval =
+  let pos = AST.get_lval_pos lval in
   match lval with
   | AST.LId    (id, _)    -> get_id_type sym_tbl proc_id id
   | AST.LField (lval, id) ->
       match get_id_type sym_tbl proc_id id with
-      | STBeantype    _     -> raise No_field
+      | STBeantype    _     -> raise (Undefined_field (id, pos))
       | STFieldStruct field ->
           let (field_type, _) = get_field_sym field lval in
           field_type
@@ -157,11 +158,12 @@ let get_lid_slot_num sym_tbl proc_id id =
 (* Get the slot number allocated to the field given 
  * by an lvalue of a variable given by id            *)
 let get_lfield_slot_num sym_tbl proc_id (lval, id) =
+  let pos = AST.get_lval_pos lval in
   let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
   let (type_sym, _, _, _) = Hashtbl.find proc.proc_sym_tbl id in
   let get_field t_sym field_id =
     match t_sym with
-    | STBeantype    _     -> raise No_field
+    | STBeantype    _     -> raise (Undefined_field (field_id, pos))
     | STFieldStruct field -> Hashtbl.find field field_id
   in
   let rec get_field_slot field_type lval =
@@ -183,27 +185,27 @@ let set_proc_label sym_tbl proc_id label =
   let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
   proc.proc_label := Some label
 
-let get_proc_label sym_tbl proc_id =
+let get_proc_label sym_tbl proc_id pos =
   let proc =
     try
       Hashtbl.find sym_tbl.sym_procs proc_id
     with
-    | Not_found -> raise No_such_procedure
+    | Not_found -> raise (Undefined_proc (proc_id, pos))
   in
   match !(proc.proc_label) with
-  | None       -> raise No_such_procedure
+  | None       -> raise (Undefined_proc (proc_id, pos))
   | Some label -> label
 
 let get_param_list sym_tbl proc_id =
   let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
   proc.proc_params
 
-let get_proc_var_scope sym_tbl proc_id symbol_id =
+let get_proc_var_scope sym_tbl proc_id symbol_id pos =
   let proc =
     try
       Hashtbl.find sym_tbl.sym_procs proc_id
     with
-    | Not_found -> raise No_such_procedure
+    | Not_found -> raise (Undefined_proc (proc_id, pos))
   in
   let proc_syms = proc.proc_sym_tbl in
   let (_, scope, _, _) = Hashtbl.find proc_syms symbol_id in
@@ -232,7 +234,7 @@ let rec add_field_to_tbl td_tbl (id, typespec, pos) tbl =
     }
   in
   if Hashtbl.mem tbl id then
-    raise Duplicate_field
+    raise (Duplicate_field (id, pos))
   else
     Hashtbl.add tbl id field_decl;
     tbl
@@ -281,7 +283,7 @@ let make_var_symbol scope_type typespec pos =
 let add_typedef td_tbl (typespec, id, pos) =
   let sym_type = sym_tbl_t_of_ast_t td_tbl typespec in
   if Hashtbl.mem td_tbl id then
-    raise Duplicate_typedef
+    raise (Duplicate_type (id, pos))
   else
     Hashtbl.add td_tbl id (sym_type, pos)
 
@@ -299,7 +301,7 @@ let add_decl_symbol td_tbl proc_sym_tbl decl =
   let (id, decl_ast_type, decl_pos) = decl in
   let decl_sym = make_decl_symbol td_tbl decl_ast_type decl_pos in
   if Hashtbl.mem proc_sym_tbl id then
-    raise Duplicate_decl
+    raise (Duplicate_decl (id, decl_pos))
   else
     Hashtbl.add proc_sym_tbl id decl_sym
 
@@ -318,14 +320,14 @@ let add_param_symbol td_tbl proc_sym_tbl param =
   let (param_pass, param_type, id, param_pos) = param in
   let param_sym = make_param_symbol td_tbl param_pass param_type param_pos in
   if Hashtbl.mem proc_sym_tbl id then
-    raise Duplicate_param
+    raise (Duplicate_param (id, param_pos))
   else
     Hashtbl.add proc_sym_tbl id param_sym
 
 (* Insert a single procedure into the proc lookup table *)
 let add_proc td_tbl p_tbl (id, pparams, (proc_decls, _), proc_pos) () =
   if Hashtbl.mem p_tbl id then
-    raise Duplicate_proc
+    raise (Duplicate_proc (id, proc_pos))
   else
     let get_param_id (_, _, id, _) ids = id :: ids in
     let proc_params  = List.fold_right get_param_id pparams [] in

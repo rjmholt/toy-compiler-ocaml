@@ -14,10 +14,6 @@ exception Not_yet_implemented
  * to show the user where compilation failed in a nice way                   *)
 
 (* Internal semantic errors *)
-exception Undefined_variable   of string * AST.pos
-exception Undefined_proc       of string * AST.pos
-exception Undefined_field      of string * AST.pos
-exception Undefined_type       of string * AST.pos
 exception Type_error           of string * AST.pos
 exception Arity_mismatch       of string * AST.pos
 exception Assign_type_mismatch of Sym.type_symbol * Sym.type_symbol * AST.pos
@@ -27,7 +23,6 @@ exception Write_struct         of string * AST.pos
 exception Var_name_is_type     of string * AST.pos
 exception Var_name_is_param    of string * AST.pos
 exception Param_name_is_type   of string * AST.pos
-exception Duplicate_type       of string * AST.pos
 exception No_main_proc
 exception Evil                 of string
 
@@ -55,20 +50,15 @@ let get_binop_type binop =
   | AST.Op_lt  | AST.Op_leq
   | AST.Op_gt  | AST.Op_geq -> Sym.STBeantype AST.TInt
 
-let rec get_lval_pos lval =
-  match lval with
-  | AST.LId (_, p) -> p
-  | AST.LField (lval, _) -> get_lval_pos lval
-
 let check_type_defined symtbl type_id pos =
   if Hashtbl.mem symtbl.Sym.sym_tds type_id then
     ()
   else
-    raise (Undefined_type (type_id, pos))
+    raise (Sym.Undefined_type (type_id, pos))
 
 let check_no_duplicate_type symtbl type_id pos =
   if Hashtbl.mem symtbl.Sym.sym_tds type_id then
-    raise (Duplicate_type (type_id, pos))
+    raise (Sym.Duplicate_type (type_id, pos))
   else
     ()
 
@@ -77,7 +67,7 @@ let check_var_defined symtbl proc_id var_id pos =
   if Hashtbl.mem proc_tbl.Sym.proc_sym_tbl var_id then
     ()
   else
-    raise (Undefined_variable (var_id, pos))
+    raise (Sym.Undefined_variable (var_id, pos))
 
 let check_param_name symtbl proc_id param_id =
   let (_, scope, _, pos) = Sym.get_var_sym symtbl proc_id param_id in
@@ -86,7 +76,7 @@ let check_param_name symtbl proc_id param_id =
   else
     ()
 
-let check_var_name symtbl proc_id var_id pos =
+let check_decl_name symtbl proc_id var_id pos =
   let (_, scope, _, _) = Sym.get_var_sym symtbl proc_id var_id in
   if Hashtbl.mem symtbl.Sym.sym_tds var_id then
     raise (Var_name_is_type (var_id, pos))
@@ -100,7 +90,7 @@ let check_proc_defined symtbl proc_id pos =
   if Hashtbl.mem symtbl.Sym.sym_procs proc_id then
     ()
   else
-    raise (Undefined_proc
+    raise (Sym.Undefined_proc
       ("No defintion for procedure "^proc_id^"()", pos))
 
 let check_proc_call_arity symtbl callee_id args pos =
@@ -122,26 +112,26 @@ let check_has_field symtbl proc_id lval field_name =
   let lval_t_sym = Sym.get_lval_type symtbl proc_id lval in
   match lval_t_sym with
   | Sym.STBeantype _ ->
-      raise (Undefined_field
-        ("lval has no such field as "^field_name, get_lval_pos lval))
+      raise (Sym.Undefined_field
+        ("lval has no such field as "^field_name, AST.get_lval_pos lval))
   | Sym.STFieldStruct fields ->
       if Hashtbl.mem fields field_name then
         ()
       else
-        raise (Undefined_field
-          ("lval has no such field as "^field_name, get_lval_pos lval))
+        raise (Sym.Undefined_field
+          ("lval has no such field as "^field_name, AST.get_lval_pos lval))
 
 let check_lval_name symtbl proc_id lval =
-  let pos = get_lval_pos lval in
+  let pos = AST.get_lval_pos lval in
   let rec get_field_name lval =
     match lval with
     | AST.LId (id, _)           -> id
     | AST.LField (sub_lval, id) -> get_field_name sub_lval
   in
   match lval with
-  | AST.LId (id, _)       -> check_var_name symtbl proc_id id pos
+  | AST.LId (id, _)       -> check_var_defined symtbl proc_id id pos
   | AST.LField (lval, id) ->
-      check_var_name symtbl proc_id id pos;
+      check_var_defined symtbl proc_id id pos;
       let field_name = get_field_name (AST.LField (lval, id)) in
       check_has_field symtbl proc_id (AST.LField (lval, id)) field_name
 
@@ -171,7 +161,7 @@ let rec check_assignment_type symtbl proc_id type_sym rexpr pos =
           try
             Hashtbl.find field_tbl field_id
           with
-          | Not_found -> raise (Undefined_field ("No field", pos))
+          | Not_found -> raise (Sym.Undefined_field ("No field", pos))
         in
         check_assignment_type symtbl proc_id field_type sub_rv pos
       in
@@ -244,7 +234,7 @@ let check_asgn symtbl proc_id (lval, rval, pos) =
       try
         Hashtbl.find field_tbl id
       with
-      | Not_found -> raise (Undefined_field (id, pos))
+      | Not_found -> raise (Sym.Undefined_field (id, pos))
     in
     match (field_t_sym, sub_rval) with
     | (Sym.STBeantype bt, AST.Rexpr expr) ->
@@ -270,7 +260,7 @@ let check_read symtbl proc_id lval =
   if is_primitive symtbl proc_id lval then
     ()
   else
-    raise (Read_struct ("Can't read a compound type", get_lval_pos lval))
+    raise (Read_struct ("Can't read a compound type", AST.get_lval_pos lval))
 
 let check_write symtbl proc_id wexpr =
   match wexpr with
@@ -292,7 +282,8 @@ let check_pcall symtbl caller_id (callee_id, args, pos) =
     let procs_tbl = symtbl.Sym.sym_procs in
     try Hashtbl.find procs_tbl callee_id
     with
-    | Not_found -> raise (Undefined_proc ("No definition for procedure", pos))
+    | Not_found ->
+        raise (Sym.Undefined_proc ("No definition for procedure", pos))
   in
   let params = proc.Sym.proc_params in
   (* Make sure the call is the right arity *)

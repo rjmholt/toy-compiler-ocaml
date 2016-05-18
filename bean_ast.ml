@@ -6,17 +6,6 @@
 (* pretty printer, semantic checker or code generator          *)
 (* =========================================================== *)
 
-let get_pos_info (start_pos, end_pos) =
-  let get_ln_col pos = 
-    let start_ln  = pos.Lexing.pos_lnum in
-    let start_col = pos.Lexing.pos_cnum - pos.Lexing.pos_bol + 1 in
-    (start_ln, start_col)
-  in
-  let fname   = start_pos.Lexing.pos_fname in
-  let start_p = get_ln_col start_pos in
-  let end_p   = get_ln_col end_pos in
-  (fname, start_p, end_p)
-
 (* The start and end of a parsed symbol in the file *)
 type pos = (Lexing.position * Lexing.position)
 
@@ -136,3 +125,22 @@ type program = {
 
 (* Convenient top level type alias to pass to other modules *)
 type t = program
+
+
+(* ---- HELPER FUNCTIONS FOR OTHER MODULES ---- *)
+let get_pos_info (start_pos, end_pos) =
+  let get_ln_col pos = 
+    let start_ln  = pos.Lexing.pos_lnum in
+    let start_col = pos.Lexing.pos_cnum - pos.Lexing.pos_bol + 1 in
+    (start_ln, start_col)
+  in
+  let fname   = start_pos.Lexing.pos_fname in
+  let start_p = get_ln_col start_pos in
+  let end_p   = get_ln_col end_pos in
+  (fname, start_p, end_p)
+
+let rec get_lval_pos lval =
+  match lval with
+  | LId (_, p) -> p
+  | LField (lval, _) -> get_lval_pos lval
+
