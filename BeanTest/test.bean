@@ -146,7 +146,7 @@ proc main()
 
     y := true;
     z := { b = { x = true } };
-    writeTest(false, y, z);
+    writeTest(0, y, z);
 
     boolTest(y, z.b.x);
 

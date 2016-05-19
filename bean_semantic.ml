@@ -231,13 +231,50 @@ let rec check_expr symtbl proc_id expr =
       else
         raise (Type_error ("Type error in `"^P.string_of_expr expr^"`", pos))
 
-let check_expr_asgn symtbl proc_id beantype arg_expr =
+let check_primitive_asgn symtbl proc_id beantype arg_expr =
   let expr_type = get_expr_type symtbl proc_id arg_expr in
   if expr_type = beantype then
     ()
   else
     let pos = get_expr_pos arg_expr in
     raise (Type_error ("Type error in `"^P.string_of_expr arg_expr^"`", pos))
+
+let check_param_asgn symtbl caller_id callee_id param_id arg_expr =
+  let error  =
+    let pos = get_expr_pos arg_expr in
+    let expr_str = P.string_of_expr arg_expr in
+    let msg = String.concat " "
+      ["Types of expression"; expr_str; "and parameter"; param_id;
+       "in procedure"; callee_id; "do not match"]
+    in
+    Type_error (msg, pos)
+  in
+  let arg_type = get_expr_type symtbl caller_id arg_expr in
+  let match_beantype bt1 bt2 =
+    match (bt1, bt2) with
+    | (AST.TBool, AST.TBool) -> ()
+    | (AST.TInt,  AST.TInt)  -> ()
+    | _                      -> raise error
+  in
+  let rec check_field targ_fields id (asgn_type, _) () =
+    let (field_type, _) =
+      try
+        Hashtbl.find targ_fields id
+      with
+      | Not_found -> raise error
+    in
+    check_type_match asgn_type field_type
+  and
+  check_type_match vtype atype =
+    match (vtype, atype) with
+    | (Sym.STBeantype vt, Sym.STBeantype at) -> match_beantype vt at
+    | (Sym.STFieldStruct vfields, Sym.STFieldStruct afields) ->
+        Hashtbl.fold (check_field vfields) afields ();
+        Hashtbl.fold (check_field afields) vfields ()
+    | _ -> raise error
+  in
+  let var_type = Sym.get_id_type symtbl callee_id param_id in
+  check_type_match var_type arg_type
 
 let check_asgn symtbl proc_id (lval, rval, pos) =
   let rec check_field_asgn field_tbl (id, sub_rval, pos) () =
@@ -249,7 +286,7 @@ let check_asgn symtbl proc_id (lval, rval, pos) =
     in
     match (field_t_sym, sub_rval) with
     | (Sym.STBeantype bt, AST.Rexpr expr) ->
-        check_expr_asgn symtbl proc_id (Sym.STBeantype bt) expr
+        check_primitive_asgn symtbl proc_id (Sym.STBeantype bt) expr
     | (Sym.STFieldStruct subfields, AST.Rstruct sub_rvals) ->
       List.fold_right (check_field_asgn subfields) sub_rvals ()
     | (type_sym, sub_rv) ->
@@ -259,7 +296,7 @@ let check_asgn symtbl proc_id (lval, rval, pos) =
   let (lval_t_sym, _) = Sym.get_lval_sym symtbl proc_id lval in
   match (lval_t_sym, rval) with
   | (Sym.STBeantype bt, AST.Rexpr expr) ->
-      check_expr_asgn symtbl proc_id (Sym.STBeantype bt) expr
+      check_primitive_asgn symtbl proc_id (Sym.STBeantype bt) expr
   | (Sym.STFieldStruct fields, AST.Rstruct sub_rvals) ->
       List.fold_right (check_field_asgn fields) sub_rvals ()
   | (type_sym, rv) ->
@@ -306,11 +343,7 @@ let check_pcall symtbl caller_id (callee_id, args, pos) =
     (* Make sure the paramters are the right types and can be passed
      * by reference if they are required to be                       *)
     let go (param_id, arg) () =
-      let (type_sym, scope, _, pos) =
-        Hashtbl.find proc.Sym.proc_sym_tbl param_id
-    in
-      (* TODO this is an error which rejects passing structs *)
-      check_expr_asgn symtbl caller_id type_sym arg;
+      check_param_asgn symtbl caller_id callee_id param_id arg;
       check_pass_type symtbl caller_id callee_id param_id arg
     in
     List.fold_right go (List.combine params args) ()

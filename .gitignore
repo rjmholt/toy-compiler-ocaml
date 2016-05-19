@@ -16,3 +16,4 @@ name.sh
 *.gz
 bean_parse.output
 *.oz
+oz/
