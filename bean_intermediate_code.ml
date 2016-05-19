@@ -691,3 +691,25 @@ let gen_code_checked symtbl prog =
   | Sem.Main_has_nonzero_arity ->
       let pos = Sym.get_proc_pos symtbl "main" in
       raise (Sem.Semantic_error ("Procedure main has non-zero arity", pos))
+  | Sym.Duplicate_type (id, pos) ->
+      raise (Sym.Definition_error ("The type "^id^" is already defined", pos))
+  | Sym.Undefined_type (id, pos) ->
+      raise (Sym.Definition_error ("The type "^id^" is not defined", pos))
+  | Sym.Duplicate_proc (id, pos) ->
+      raise (Sym.Definition_error
+        ("The procedure "^id^" is already defined", pos))
+  | Sym.Undefined_proc (id, pos) ->
+      raise (Sym.Definition_error ("The procedure "^id^" is not defined", pos))
+  | Sym.Duplicate_param (id, pos) ->
+      raise (Sym.Definition_error
+        ("The parameter "^id^" is already declared", pos))
+  | Sym.Duplicate_decl (id, pos) ->
+      raise (Sym.Definition_error
+        ("The variable "^id^" is already declared", pos))
+  | Sym.Undefined_variable (id, pos) ->
+      raise (Sym.Definition_error
+        ("The variable "^id^" is not defined anywhere", pos))
+  | Sym.Duplicate_field (id, pos) ->
+      raise (Sym.Definition_error ("The field "^id^" is already defined", pos))
+  | Sym.Undefined_field (id, pos) ->
+      raise (Sym.Definition_error ("The field "^id^" is not defined", pos))
