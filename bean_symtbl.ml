@@ -1,6 +1,7 @@
 (* Bean Symbol Table *)
 
 module AST = Bean_ast
+module P   = Bean_pprint
 
 (* Symbol table data structure definitions *)
 
@@ -96,6 +97,8 @@ exception No_field
 
 exception Slot_not_allocated
 
+exception Very_bad of string
+
 (* ---- SYMBOL TABLE INTERFACE FUNCTIONS ---- *)
 let get_proc_pos sym_tbl proc_id =
   let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
@@ -109,7 +112,7 @@ let rec get_field_sym field lvalue =
       let (field_type, _) = Hashtbl.find field id in
       match field_type with
       | STBeantype    _        ->
-          raise (Undefined_field (id, pos))
+          raise (Undefined_field (P.string_of_lval lvalue, pos))
       | STFieldStruct subfield ->
           get_field_sym subfield lv
 

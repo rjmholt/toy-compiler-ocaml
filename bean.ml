@@ -67,23 +67,18 @@ let main () =
     (* Parsing happens here *)
     let prog   = Bean_parse.program Bean_lex.token lexbuf in
     let symtbl = Bean_symtbl.build_symtbl_checked prog in
-
     match !mode with
     | PrettyPrint ->
         Bean_pprint.print_program Format.std_formatter prog
     | Compile ->
-        (* generate oz code   TODO as a string?*)
-        let oz_prog =
-          Bean_oz.generate_oz_code symtbl prog
-        in
-
+        let ir_prog = Bean_intermediate_code.gen_code_checked symtbl prog in
+        let oz_prog = Bean_oz.generate_oz_code ir_prog in
         (* Determine where to pipe output *)
         let outfile =
           if not !debug
           then open_out !outfile_name
           else stdout
         in
-
         try
           Printf.fprintf outfile "%s" oz_prog;
           if   not !debug
@@ -96,19 +91,19 @@ let main () =
   (* Error catching here*)
   | Bean_lex.Lex_error msg ->
       let (fname, ln, col) = Bean_lex.get_lex_pos lexbuf in
-      fprintf err_formatter
+      printf
         "Lexer error: %s at line %i, column %i in file %s\n" msg ln col fname;
       exit 1
   | Parsing.Parse_error ->
       let (fname, ln, col) = Bean_lex.get_lex_pos lexbuf in
-      fprintf err_formatter
+      printf
         "%s at line %i, column %i in file %s\n" "Parse error" ln col fname;
       exit 1
   | Bean_symtbl.Definition_error (msg, pos) ->
       let (file, (st_ln, st_col), (end_ln, end_col)) =
         Bean_ast.get_pos_info pos
       in
-      fprintf err_formatter
+      printf
         "%s: From line %i, column %i to line %i, column %i in file %s\n"
         msg st_ln st_col end_ln end_col file;
       exit 1
@@ -116,12 +111,12 @@ let main () =
       let (file, (st_ln, st_col), (end_ln, end_col)) =
         Bean_ast.get_pos_info pos
       in
-      fprintf err_formatter
+      printf
         "%s: From line %i, column %i to line %i, column %i in file %s\n"
         msg st_ln st_col end_ln end_col file;
       exit 1
   | Bean_semantic.No_main_proc ->
-      fprintf err_formatter "No main function defined in %s\n" filename;
+      printf "No main function defined in %s\n" filename;
       exit 1
 
 let _ = main ()

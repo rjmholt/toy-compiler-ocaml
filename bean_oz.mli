@@ -1,1 +1,1 @@
-val generate_oz_code: Bean_symtbl.t -> Bean_ast.t -> string
+val generate_oz_code: Bean_intermediate_code.code -> string
