@@ -2,9 +2,12 @@
 
 module AST = Bean_ast
 
-(* Symbol table data structure definitions *)
 
-(* Keep identities using whatever the AST is using *)
+(* ========================================================================== *)
+(* ======================= DATA STRUCTURE DEFINITIONS ======================= *)
+(* ========================================================================== *)
+
+(* Store identities using whatever format the AST is using *)
 type ident = AST.ident
 
 (* The parser records positions at both the start and end of the
@@ -22,12 +25,12 @@ type typespec =
 
 (* A field type declaration is composed of a position
  * and a type specification                               *)
-and field_decl =
-  { field_pos:  pos;
-    field_type: typespec;
-  }
+and field_decl = {
+  field_pos:  pos;
+  field_type: typespec;
+}
 
-(* A field struct (C-struct-like compound type) becomes a 
+(* A field struct (C-struct-like compound type) becomes a
  * lookup table for fields, each having an
  * identifier and a type declaration                       *)
 and field_struct = (ident, field_decl) Hashtbl.t
@@ -43,7 +46,7 @@ type var_scope =
   | SParamRef
 
 type type_symbol =
-  | STBeantype    of AST.beantype
+  | STBeantype    of  AST.beantype
   | STFieldStruct of (ident, field_symbol) Hashtbl.t
 
 and field_symbol = (type_symbol * int option ref)
@@ -56,10 +59,10 @@ type var_symbol = (type_symbol * var_scope * int option ref * pos)
  *   - a position (for error messages)   *)
 type proc =
   { (* Params must be a list, since Hashtbl doesn't preserve order *)
-    proc_params:  AST.ident list;
+    proc_params:   AST.ident list;
     proc_sym_tbl: (ident, var_symbol) Hashtbl.t;
-    proc_label:   string option ref;
-    proc_pos:     pos;
+    proc_label:    string option ref;
+    proc_pos:      pos;
   }
 
 (* Symbol (lookup) table, composed of:
@@ -74,34 +77,33 @@ type symtbl =
  * allows other modules to use `Bean_symtbl.t` *)
 type t = symtbl
 
-(* ---- SYMBOL TABLE EXCEPTIONS ---- *)
+(* ========================================================================== *)
+(* ========================= EXCEPTION DEFINTIIONS ========================== *)
+(* ========================================================================== *)
 
 (* Exception if the user has tried to set a type
  * they have not defined                         *)
 exception Undefined_type of AST.ident * pos
 
-exception Duplicate_field
+exception Duplicate_field    (* two fields in a struct share the same name   *)
+exception Duplicate_typedef  (* two typedefs share the same name             *)
+exception Duplicate_proc     (* two procs share the same name                *)
+exception Duplicate_param    (* two parameters share the same name           *)
+exception Duplicate_decl     (* variable is declared twice in the same scope *)
+exception No_field           (* struct does not have a field of this name    *)
+exception Slot_not_allocated (* no slot to store the value in                *)
+exception No_such_procedure  (* call made to a proc that doesn't exist       *)
 
-exception Duplicate_typedef
 
-exception Duplicate_proc
+(* ========================================================================== *)
+(* ========================== INTERFACE FUNCTIONS =========================== *)
+(* ========================================================================== *)
 
-exception Duplicate_param
-
-exception Duplicate_decl
-
-exception No_field
-
-exception Slot_not_allocated
-
-exception No_such_procedure
-
-(* ---- SYMBOL TABLE INTERFACE FUNCTIONS ---- *)
-let rec get_field_sym field lvalue =
+let rec get_field_sym fieldtbl lvalue =
   match lvalue with
-  | AST.LId    (id, _)  -> Hashtbl.find field id
+  | AST.LId    (id, _)  -> Hashtbl.find fieldtbl id
   | AST.LField (lv, id) ->
-      let (field_type, _) = Hashtbl.find field id in
+      let (field_type, _) = Hashtbl.find fieldtbl id in
       match field_type with
       | STBeantype    _        -> raise No_field
       | STFieldStruct subfield ->
@@ -154,7 +156,7 @@ let get_lid_slot_num sym_tbl proc_id id =
   | None     -> raise Slot_not_allocated
   | Some num -> num
 
-(* Get the slot number allocated to the field given 
+(* Get the slot number allocated to the field given
  * by an lvalue of a variable given by id            *)
 let get_lfield_slot_num sym_tbl proc_id (lval, id) =
   let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
@@ -204,7 +206,9 @@ let get_lval_scope sym_tbl proc_id lval =
   | AST.LId (id, _) -> get_proc_var_scope sym_tbl proc_id id
   | AST.LField (_, id) -> get_proc_var_scope sym_tbl proc_id id
 
-(* ---- SYMBOL TABLE CONSTRUCTOR FUNCTIONS ---- *)
+(* ========================================================================== *)
+(* ========================= CONSTRUCTOR FUNCTIONS ========================== *)
+(* ========================================================================== *)
 
 (* Attempt to find a typedef based on the identifier.
  * If no such type is defined, an error is raised     *)
