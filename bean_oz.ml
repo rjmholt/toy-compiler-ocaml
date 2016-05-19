@@ -163,5 +163,5 @@ let write_program code =
   String.concat "\n" (List.map write_instr code)
 
 let generate_oz_code symtbl prog =
-  let code = IR.gen_code symtbl prog in
+  let code = IR.gen_code_checked symtbl prog in
   write_program code

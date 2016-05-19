@@ -69,4 +69,4 @@ type instr =
 
 type code = instr list
 
-val gen_code: Bean_symtbl.t -> Bean_ast.t -> instr list
+val gen_code_checked: Bean_symtbl.t -> Bean_ast.t -> instr list

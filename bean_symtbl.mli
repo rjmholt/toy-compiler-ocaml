@@ -76,6 +76,9 @@ type t = symtbl
 
 (* Exception if the user has tried to set a type
  * they have not defined                         *)
+
+exception Definition_error     of string * AST.pos
+
 exception Duplicate_type       of string * AST.pos
 exception Duplicate_proc       of string * AST.pos
 exception Duplicate_param      of string * AST.pos
@@ -87,7 +90,9 @@ exception Undefined_proc       of string * AST.pos
 exception Undefined_field      of string * AST.pos
 exception Undefined_type       of string * AST.pos
 
-val build_symtbl: Bean_ast.t -> symtbl
+val build_symtbl_checked: Bean_ast.t -> symtbl
+
+val get_proc_pos: symtbl -> AST.ident -> AST.pos
 
 val get_var_sym: symtbl -> AST.ident -> AST.ident -> var_symbol
 

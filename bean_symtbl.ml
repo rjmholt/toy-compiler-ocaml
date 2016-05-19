@@ -78,6 +78,9 @@ type t = symtbl
 
 (* Exception if the user has tried to set a type
  * they have not defined                         *)
+
+exception Definition_error     of string * AST.pos
+
 exception Duplicate_type       of string * AST.pos
 exception Duplicate_proc       of string * AST.pos
 exception Duplicate_param      of string * AST.pos
@@ -94,6 +97,10 @@ exception No_field
 exception Slot_not_allocated
 
 (* ---- SYMBOL TABLE INTERFACE FUNCTIONS ---- *)
+let get_proc_pos sym_tbl proc_id =
+  let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
+  proc.proc_pos
+
 let rec get_field_sym field lvalue =
   match lvalue with
   | AST.LId    (id, _)  -> Hashtbl.find field id
@@ -353,3 +360,27 @@ let build_symtbl ast =
   add_typedefs sym_tds ast.AST.typedefs;
   add_procs sym_tds sym_procs ast.AST.procs;
   { sym_tds; sym_procs }
+
+let build_symtbl_checked ast =
+  try
+    build_symtbl ast
+  with
+  | Duplicate_type (id, pos) ->
+      raise (Definition_error ("The type "^id^" is already defined", pos))
+  | Undefined_type (id, pos) ->
+      raise (Definition_error ("The type "^id^" is not defined", pos))
+  | Duplicate_proc (id, pos) ->
+      raise (Definition_error ("The procedure "^id^" is already defined", pos))
+  | Undefined_proc (id, pos) ->
+      raise (Definition_error ("The procedure "^id^" is not defined", pos))
+  | Duplicate_param (id, pos) ->
+      raise (Definition_error ("The parameter "^id^" is already declared", pos))
+  | Duplicate_decl (id, pos) ->
+      raise (Definition_error ("The variable "^id^" is already declared", pos))
+  | Undefined_variable (id, pos) ->
+      raise (Definition_error
+        ("The variable "^id^" is not defined anywhere", pos))
+  | Duplicate_field (id, pos) ->
+      raise (Definition_error ("The field "^id^" is already defined", pos))
+  | Undefined_field (id, pos) ->
+      raise (Definition_error ("The field "^id^" is not defined", pos))

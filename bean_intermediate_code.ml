@@ -662,3 +662,32 @@ let gen_code symtbl prog =
   List.fold_right (assign_proc_label symtbl) procs ();
   let (_, prog) = List.fold_left (gen_proc_code symtbl) (0, []) procs in
   prelude @ List.rev prog
+
+let gen_code_checked symtbl prog =
+  try
+    gen_code symtbl prog
+  with
+  | Sem.Type_error (msg, pos) ->
+      raise (Sem.Semantic_error (msg, pos))
+  | Sem.Arity_mismatch (id, pos) ->
+      raise (Sem.Semantic_error
+        (id^" is called with the wrong number of arguments", pos))
+  | Sem.Assign_type_mismatch (l_type_sym, r_type_sym, pos) ->
+      (* TODO figure out how to print things based on type sym? *)
+      raise (Sem.Semantic_error ("assignment type problem", pos))
+  | Sem.Reference_pass (id, pos) ->
+      raise (Sem.Semantic_error (id^" cannot be passed by reference", pos))
+  | Sem.Read_struct (id, pos) ->
+      raise (Sem.Semantic_error (id^" is a structure and cannot be read", pos))
+  | Sem.Write_struct (id, pos) ->
+      raise (Sem.Semantic_error
+        (id^" is a structure and cannot be written", pos))
+  | Sem.Var_name_is_type (id, pos) ->
+      raise (Sem.Semantic_error (id^" is already defined as a type", pos))
+  | Sem.Var_name_is_param (id, pos) ->
+      raise (Sem.Semantic_error (id^" is already defined as a paramater", pos))
+  | Sem.Param_name_is_type (id, pos) ->
+      raise (Sem.Semantic_error (id^" is already defined as a type", pos))
+  | Sem.Main_has_nonzero_arity ->
+      let pos = Sym.get_proc_pos symtbl "main" in
+      raise (Sem.Semantic_error ("Procedure main has non-zero arity", pos))

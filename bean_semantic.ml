@@ -23,6 +23,7 @@ exception Write_struct         of string * AST.pos
 exception Var_name_is_type     of string * AST.pos
 exception Var_name_is_param    of string * AST.pos
 exception Param_name_is_type   of string * AST.pos
+exception Main_has_nonzero_arity
 exception No_main_proc
 exception Evil                 of string
 
@@ -90,21 +91,23 @@ let check_proc_defined symtbl proc_id pos =
   if Hashtbl.mem symtbl.Sym.sym_procs proc_id then
     ()
   else
-    raise (Sym.Undefined_proc
-      ("No defintion for procedure "^proc_id^"()", pos))
+    raise (Sym.Undefined_proc (proc_id, pos))
 
 let check_proc_call_arity symtbl callee_id args pos =
   let params = Sym.get_param_list symtbl callee_id in
   if List.length params = List.length args then
     ()
   else
-    raise (Arity_mismatch
-      ("The number of arguments for this procedure is wrong", pos))
+    raise (Arity_mismatch (callee_id, pos))
 
 let check_has_main symtbl =
   let proc_tbl = symtbl.Sym.sym_procs in
   if Hashtbl.mem proc_tbl "main" then
-    ()
+    let main_proc = Hashtbl.find proc_tbl "main" in
+    if List.length main_proc.Sym.proc_params = 0 then
+      ()
+    else
+      raise Main_has_nonzero_arity
   else
     raise No_main_proc
 
@@ -112,14 +115,12 @@ let check_has_field symtbl proc_id lval field_name =
   let lval_t_sym = Sym.get_lval_type symtbl proc_id lval in
   match lval_t_sym with
   | Sym.STBeantype _ ->
-      raise (Sym.Undefined_field
-        ("lval has no such field as "^field_name, AST.get_lval_pos lval))
+      raise (Sym.Undefined_field (field_name, AST.get_lval_pos lval))
   | Sym.STFieldStruct fields ->
       if Hashtbl.mem fields field_name then
         ()
       else
-        raise (Sym.Undefined_field
-          ("lval has no such field as "^field_name, AST.get_lval_pos lval))
+        raise (Sym.Undefined_field (field_name, AST.get_lval_pos lval))
 
 let check_lval_name symtbl proc_id lval =
   let pos = AST.get_lval_pos lval in
@@ -181,7 +182,7 @@ let check_pass_type symtbl caller_id callee_id param_id arg_expr =
       | AST.Elval _ -> ()
       | _           ->
           let pos = get_expr_pos arg_expr in
-          raise (Reference_pass ("Lval required", pos))
+          raise (Reference_pass (P.string_of_expr arg_expr, pos))
 
 let is_primitive symtbl proc_id lval =
   let type_sym = Sym.get_lval_type symtbl proc_id lval in
@@ -208,7 +209,7 @@ let rec check_expr symtbl proc_id expr =
       if op_type = get_expr_type symtbl proc_id subexpr then
         ()
       else
-        raise (Type_error ("unop", pos))
+        raise (Type_error (P.string_of_expr expr, pos))
   | AST.Ebinop (lexpr, op, rexpr, pos) ->
       check_expr symtbl proc_id lexpr;
       check_expr symtbl proc_id rexpr;
@@ -218,7 +219,7 @@ let rec check_expr symtbl proc_id expr =
       if (op_type = lexpr_type) && (op_type = rexpr_type) then
         ()
       else
-        raise (Type_error ("binop", pos))
+        raise (Type_error (P.string_of_expr expr, pos))
 
 let check_expr_asgn symtbl proc_id beantype arg_expr =
   let expr_type = get_expr_type symtbl proc_id arg_expr in
@@ -226,7 +227,7 @@ let check_expr_asgn symtbl proc_id beantype arg_expr =
     ()
   else
     let pos = get_expr_pos arg_expr in
-    raise (Type_error ("expression", pos))
+    raise (Type_error (P.string_of_expr arg_expr, pos))
 
 let check_asgn symtbl proc_id (lval, rval, pos) =
   let rec check_field_asgn field_tbl (id, sub_rval, pos) () =
@@ -260,7 +261,7 @@ let check_read symtbl proc_id lval =
   if is_primitive symtbl proc_id lval then
     ()
   else
-    raise (Read_struct ("Can't read a compound type", AST.get_lval_pos lval))
+    raise (Read_struct (P.string_of_lval lval, AST.get_lval_pos lval))
 
 let check_write symtbl proc_id wexpr =
   match wexpr with
@@ -272,7 +273,7 @@ let check_write symtbl proc_id wexpr =
           if is_primitive symtbl proc_id lval then
             ()
           else
-            raise (Write_struct ("Can't write a compound type", pos))
+            raise (Write_struct (P.string_of_lval lval, pos))
       | _              -> ()
 
 (* Check a procedure call *)
@@ -283,14 +284,14 @@ let check_pcall symtbl caller_id (callee_id, args, pos) =
     try Hashtbl.find procs_tbl callee_id
     with
     | Not_found ->
-        raise (Sym.Undefined_proc ("No definition for procedure", pos))
+        raise (Sym.Undefined_proc (callee_id, pos))
   in
   let params = proc.Sym.proc_params in
   (* Make sure the call is the right arity *)
   if List.length args != List.length params then
     raise
     (Arity_mismatch
-      ("Procedure is called with the wrong number of arguments", pos))
+      (callee_id, pos))
   else
     (* Make sure the paramters are the right types and can be passed
      * by reference if they are required to be                       *)
