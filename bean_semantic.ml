@@ -115,7 +115,8 @@ let check_has_field symtbl proc_id lval field_name =
   let lval_t_sym = Sym.get_lval_type symtbl proc_id lval in
   match lval_t_sym with
   | Sym.STBeantype _ ->
-      raise (Sym.Undefined_field (field_name, AST.get_lval_pos lval))
+      (*raise (Sym.Undefined_field (field_name, AST.get_lval_pos lval))*)
+      ()
   | Sym.STFieldStruct fields ->
       if Hashtbl.mem fields field_name then
         ()

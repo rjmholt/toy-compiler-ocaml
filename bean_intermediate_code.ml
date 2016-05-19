@@ -711,5 +711,6 @@ let gen_code_checked symtbl prog =
         ("The variable "^id^" is not defined anywhere", pos))
   | Sym.Duplicate_field (id, pos) ->
       raise (Sym.Definition_error ("The field "^id^" is already defined", pos))
-  | Sym.Undefined_field (id, pos) ->
+  (*| Sym.Undefined_field (id, pos) ->
       raise (Sym.Definition_error ("The field "^id^" is not defined", pos))
+*)
