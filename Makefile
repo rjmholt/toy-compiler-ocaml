@@ -34,6 +34,7 @@ MODULES = bean_ast \
 	  bean_parse \
 	  bean_pprint \
 	  bean_symtbl \
+	  bean_semantic \
 	  bean_intermediate_code \
 	  bean_oz
 MLFILES = $(addsuffix .ml, $(MODULES))

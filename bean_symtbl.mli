@@ -82,24 +82,32 @@ type t = symtbl
 
 (* Exception if the user has tried to set a type
  * they have not defined                         *)
-exception Undefined_type of AST.ident * pos
 
-exception Duplicate_field    (* two fields in a struct share the same name   *)
-exception Duplicate_typedef  (* two typedefs share the same name             *)
-exception Duplicate_proc     (* two procs share the same name                *)
-exception Duplicate_param    (* two parameters share the same name           *)
-exception Duplicate_decl     (* variable is declared twice in the same scope *)
-exception No_field           (* struct does not have a field of this name    *)
-exception Slot_not_allocated (* no slot to store the value in                *)
-exception No_such_procedure  (* call made to a proc that doesn't exist       *)
+exception Definition_error     of string * AST.pos
 
+(* two typedefs share the same name             *)
+exception Duplicate_type       of string * AST.pos
+(* two procs share the same name                *)
+exception Duplicate_proc       of string * AST.pos
+(* two parameters share the same name           *)
+exception Duplicate_param      of string * AST.pos
+(* variable is declared twice in the same scope *)
+exception Duplicate_decl       of string * AST.pos
+(* two fields in a struct share the same name   *)
+exception Duplicate_field      of string * AST.pos
+
+exception Undefined_variable   of string * AST.pos
+(* call made to a proc that doesn't exist       *)
+exception Undefined_proc       of string * AST.pos
+(* struct does not have a field of this name    *)
+exception Undefined_field      of string * AST.pos
+exception Undefined_type       of string * AST.pos
 
 (* ========================================================================== *)
 (* ========================== INTERFACE FUNCTIONS =========================== *)
 (* ========================================================================== *)
 
 val get_field_sym: (AST.ident, field_symbol) Hashtbl.t -> AST.lvalue -> field_symbol
-
 val get_var_sym:         symtbl -> AST.ident -> AST.ident  -> var_symbol
 val get_lval_sym:        symtbl -> AST.ident -> AST.lvalue -> field_symbol
 val get_id_type:         symtbl -> AST.ident -> AST.ident  -> type_symbol
@@ -108,12 +116,15 @@ val set_id_slot:         symtbl -> AST.ident -> AST.ident  -> int -> int
 val get_lid_slot_num:    symtbl -> AST.ident -> AST.ident  -> int
 val get_lfield_slot_num: symtbl -> AST.ident -> (AST.lvalue * AST.ident) -> int
 val set_proc_label:      symtbl -> AST.ident -> string -> unit
-val get_proc_label:      symtbl -> AST.ident -> string
+val get_proc_label:      symtbl -> AST.ident -> AST.pos    -> string
 val get_param_list:      symtbl -> AST.ident -> AST.ident list
-val get_proc_var_scope:  symtbl -> AST.ident -> AST.ident  -> var_scope
-val get_lval_scope:      symtbl -> AST.ident -> AST.lvalue -> var_scope
+
+val get_lval_scope:      symtbl -> AST.ident -> AST.lvalue -> AST.pos -> var_scope
+val get_proc_var_scope:  symtbl -> AST.ident -> AST.ident -> AST.pos -> var_scope
+val get_proc_pos: symtbl -> AST.ident -> AST.pos
 
 (* ========================================================================== *)
 (* ========================= CONSTRUCTOR FUNCTIONS ========================== *)
 (* ========================================================================== *)
-val build_symtbl:        Bean_ast.t -> symtbl
+
+val build_symtbl_checked: Bean_ast.t -> symtbl

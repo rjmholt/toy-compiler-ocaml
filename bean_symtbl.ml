@@ -1,6 +1,7 @@
 (* Bean Symbol Table *)
 
 module AST = Bean_ast
+module P   = Bean_pprint
 
 
 (* ========================================================================== *)
@@ -83,29 +84,49 @@ type t = symtbl
 
 (* Exception if the user has tried to set a type
  * they have not defined                         *)
-exception Undefined_type of AST.ident * pos
 
-exception Duplicate_field    (* two fields in a struct share the same name   *)
-exception Duplicate_typedef  (* two typedefs share the same name             *)
-exception Duplicate_proc     (* two procs share the same name                *)
-exception Duplicate_param    (* two parameters share the same name           *)
-exception Duplicate_decl     (* variable is declared twice in the same scope *)
-exception No_field           (* struct does not have a field of this name    *)
+exception Definition_error     of string * AST.pos
+
+(* two typedefs share the same name             *)
+exception Duplicate_type       of string * AST.pos
+(* two procs share the same name                *)
+exception Duplicate_proc       of string * AST.pos
+(* two parameters share the same name           *)
+exception Duplicate_param      of string * AST.pos
+(* variable is declared twice in the same scope *)
+exception Duplicate_decl       of string * AST.pos
+(* two fields in a struct share the same name   *)
+exception Duplicate_field      of string * AST.pos
+
+exception Undefined_type       of string * AST.pos
+exception Undefined_variable   of string * AST.pos
+exception Undefined_proc       of string * AST.pos
+(* struct does not have a field of this name    *)
+exception Undefined_field      of string * AST.pos
+
+exception No_field
 exception Slot_not_allocated (* no slot to store the value in                *)
 exception No_such_procedure  (* call made to a proc that doesn't exist       *)
-
 
 (* ========================================================================== *)
 (* ========================== INTERFACE FUNCTIONS =========================== *)
 (* ========================================================================== *)
 
+
+(* ---- SYMBOL TABLE INTERFACE FUNCTIONS ---- *)
+let get_proc_pos sym_tbl proc_id =
+  let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
+  proc.proc_pos
+
 let rec get_field_sym fieldtbl lvalue =
   match lvalue with
   | AST.LId    (id, _)  -> Hashtbl.find fieldtbl id
   | AST.LField (lv, id) ->
+      let pos = AST.get_lval_pos lv in
       let (field_type, _) = Hashtbl.find fieldtbl id in
       match field_type with
-      | STBeantype    _        -> raise No_field
+      | STBeantype    _        ->
+          raise (Undefined_field (P.string_of_lval lvalue, pos))
       | STFieldStruct subfield ->
           get_field_sym subfield lv
 
@@ -119,9 +140,10 @@ let get_lval_sym sym_tbl proc_id lval =
       let (type_sym, _, slot, _) = get_var_sym sym_tbl proc_id id in
       (type_sym, slot)
   | AST.LField (lval, id) ->
+      let pos                 = AST.get_lval_pos lval in
       let (type_sym, _, _, _) = get_var_sym sym_tbl proc_id id in
       match type_sym with
-      | STBeantype    _      -> raise No_field
+      | STBeantype    _      -> raise (Undefined_field (id, pos))
       | STFieldStruct fields -> get_field_sym fields lval
 
 (* Get the type of an ordinary variable id
@@ -133,11 +155,12 @@ let get_id_type sym_tbl proc_id id =
 
 (* Get the type symbol of a given lvalue *)
 let get_lval_type sym_tbl proc_id lval =
+  let pos = AST.get_lval_pos lval in
   match lval with
   | AST.LId    (id, _)    -> get_id_type sym_tbl proc_id id
   | AST.LField (lval, id) ->
       match get_id_type sym_tbl proc_id id with
-      | STBeantype    _     -> raise No_field
+      | STBeantype    _     -> raise (Undefined_field (id, pos))
       | STFieldStruct field ->
           let (field_type, _) = get_field_sym field lval in
           field_type
@@ -159,11 +182,12 @@ let get_lid_slot_num sym_tbl proc_id id =
 (* Get the slot number allocated to the field given
  * by an lvalue of a variable given by id            *)
 let get_lfield_slot_num sym_tbl proc_id (lval, id) =
+  let pos = AST.get_lval_pos lval in
   let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
   let (type_sym, _, _, _) = Hashtbl.find proc.proc_sym_tbl id in
   let get_field t_sym field_id =
     match t_sym with
-    | STBeantype    _     -> raise No_field
+    | STBeantype    _     -> raise (Undefined_field (field_id, pos))
     | STFieldStruct field -> Hashtbl.find field field_id
   in
   let rec get_field_slot field_type lval =
@@ -185,18 +209,28 @@ let set_proc_label sym_tbl proc_id label =
   let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
   proc.proc_label := Some label
 
-let get_proc_label sym_tbl proc_id =
-  let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
+let get_proc_label sym_tbl proc_id pos =
+  let proc =
+    try
+      Hashtbl.find sym_tbl.sym_procs proc_id
+    with
+    | Not_found -> raise (Undefined_proc (proc_id, pos))
+  in
   match !(proc.proc_label) with
-  | None       -> raise No_such_procedure
+  | None       -> raise (Undefined_proc (proc_id, pos))
   | Some label -> label
 
 let get_param_list sym_tbl proc_id =
   let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
   proc.proc_params
 
-let get_proc_var_scope sym_tbl proc_id symbol_id =
-  let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
+let get_proc_var_scope sym_tbl proc_id symbol_id pos =
+  let proc =
+    try
+      Hashtbl.find sym_tbl.sym_procs proc_id
+    with
+    | Not_found -> raise (Undefined_proc (proc_id, pos))
+  in
   let proc_syms = proc.proc_sym_tbl in
   let (_, scope, _, _) = Hashtbl.find proc_syms symbol_id in
   scope
@@ -226,7 +260,7 @@ let rec add_field_to_tbl td_tbl (id, typespec, pos) tbl =
     }
   in
   if Hashtbl.mem tbl id then
-    raise Duplicate_field
+    raise (Duplicate_field (id, pos))
   else
     Hashtbl.add tbl id field_decl;
     tbl
@@ -275,7 +309,7 @@ let make_var_symbol scope_type typespec pos =
 let add_typedef td_tbl (typespec, id, pos) =
   let sym_type = sym_tbl_t_of_ast_t td_tbl typespec in
   if Hashtbl.mem td_tbl id then
-    raise Duplicate_typedef
+    raise (Duplicate_type (id, pos))
   else
     Hashtbl.add td_tbl id (sym_type, pos)
 
@@ -293,7 +327,7 @@ let add_decl_symbol td_tbl proc_sym_tbl decl =
   let (id, decl_ast_type, decl_pos) = decl in
   let decl_sym = make_decl_symbol td_tbl decl_ast_type decl_pos in
   if Hashtbl.mem proc_sym_tbl id then
-    raise Duplicate_decl
+    raise (Duplicate_decl (id, decl_pos))
   else
     Hashtbl.add proc_sym_tbl id decl_sym
 
@@ -312,14 +346,14 @@ let add_param_symbol td_tbl proc_sym_tbl param =
   let (param_pass, param_type, id, param_pos) = param in
   let param_sym = make_param_symbol td_tbl param_pass param_type param_pos in
   if Hashtbl.mem proc_sym_tbl id then
-    raise Duplicate_param
+    raise (Duplicate_param (id, param_pos))
   else
     Hashtbl.add proc_sym_tbl id param_sym
 
 (* Insert a single procedure into the proc lookup table *)
 let add_proc td_tbl p_tbl (id, pparams, (proc_decls, _), proc_pos) () =
   if Hashtbl.mem p_tbl id then
-    raise Duplicate_proc
+    raise (Duplicate_proc (id, proc_pos))
   else
     let get_param_id (_, _, id, _) ids = id :: ids in
     let proc_params  = List.fold_right get_param_id pparams [] in
@@ -345,3 +379,27 @@ let build_symtbl ast =
   add_typedefs sym_tds ast.AST.typedefs;
   add_procs sym_tds sym_procs ast.AST.procs;
   { sym_tds; sym_procs }
+
+let build_symtbl_checked ast =
+  try
+    build_symtbl ast
+  with
+  | Duplicate_type (id, pos) ->
+      raise (Definition_error ("The type "^id^" is already defined", pos))
+  | Undefined_type (id, pos) ->
+      raise (Definition_error ("The type "^id^" is not defined", pos))
+  | Duplicate_proc (id, pos) ->
+      raise (Definition_error ("The procedure "^id^" is already defined", pos))
+  | Undefined_proc (id, pos) ->
+      raise (Definition_error ("The procedure "^id^" is not defined", pos))
+  | Duplicate_param (id, pos) ->
+      raise (Definition_error ("The parameter "^id^" is already declared", pos))
+  | Duplicate_decl (id, pos) ->
+      raise (Definition_error ("The variable "^id^" is already declared", pos))
+  | Undefined_variable (id, pos) ->
+      raise (Definition_error
+        ("The variable "^id^" is not defined anywhere", pos))
+  | Duplicate_field (id, pos) ->
+      raise (Definition_error ("The field "^id^" is already defined", pos))
+  | Undefined_field (id, pos) ->
+      raise (Definition_error ("The field "^id^" is not defined", pos))

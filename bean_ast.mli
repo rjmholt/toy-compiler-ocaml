@@ -125,3 +125,9 @@ type program = {
 
 (* Convenient top level type alias to pass to other modules *)
 type t = program
+
+
+val get_pos_info: (Lexing.position * Lexing.position) ->
+                      (string * (int * int) * (int * int))
+
+val get_lval_pos: lvalue -> pos

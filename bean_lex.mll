@@ -6,10 +6,26 @@
 (* =========================================================== *)
 
 {
+module L = Lexing
+
 open Bean_parse
 
 (* Defines helpful error messages *)
 exception Lex_error of string
+
+(* Set the lexer filename *)
+let set_lex_file filename lexbuf =
+  lexbuf.L.lex_curr_p <- { lexbuf.L.lex_curr_p with
+                           L.pos_fname = filename }
+
+
+(* Retrieve the lexer's line and column number for error reporting *)
+let get_lex_pos lexbuf =
+  let pos   = lexbuf.L.lex_curr_p in
+  let fname = pos.L.pos_fname in
+  let line  = pos.L.pos_lnum  in
+  let col   = pos.L.pos_cnum - pos.L.pos_bol + 1 in
+  (fname, line, col)
 }
 
 let digit   = ['0' - '9']

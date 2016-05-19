@@ -171,9 +171,5 @@ let write_instr instr =
   | IR.DebugSlot       stack_slot -> write_debug_slot  stack_slot
   | IR.DebugStack                 -> write_debug_stack
 
-let write_program code =
-  String.concat "\n" (List.map write_instr code)
-
-let generate_oz_code symtbl prog =
-  let code = IR.gen_code symtbl prog in
-  write_program code
+let generate_oz_code ir_code =
+  String.concat "\n" (List.map write_instr ir_code)
