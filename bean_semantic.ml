@@ -42,14 +42,23 @@ let get_unop_type unop =
   | AST.Op_not   -> Sym.STBeantype AST.TBool
   | AST.Op_minus -> Sym.STBeantype AST.TInt
 
-let get_binop_type binop =
+let get_binop_arg_type binop =
   match binop with
-  | AST.Op_and | AST.Op_or  -> Sym.STBeantype AST.TBool
-  | AST.Op_add | AST.Op_sub 
-  | AST.Op_mul | AST.Op_div
   | AST.Op_eq  | AST.Op_neq 
   | AST.Op_lt  | AST.Op_leq
-  | AST.Op_gt  | AST.Op_geq -> Sym.STBeantype AST.TInt
+  | AST.Op_gt  | AST.Op_geq
+  | AST.Op_add | AST.Op_sub 
+  | AST.Op_mul | AST.Op_div -> Sym.STBeantype AST.TInt
+  | AST.Op_and | AST.Op_or  -> Sym.STBeantype AST.TBool
+
+let get_binop_type binop =
+  match binop with
+  | AST.Op_eq  | AST.Op_neq 
+  | AST.Op_lt  | AST.Op_leq
+  | AST.Op_gt  | AST.Op_geq
+  | AST.Op_and | AST.Op_or  -> Sym.STBeantype AST.TBool
+  | AST.Op_add | AST.Op_sub 
+  | AST.Op_mul | AST.Op_div -> Sym.STBeantype AST.TInt
 
 let check_type_defined symtbl type_id pos =
   if Hashtbl.mem symtbl.Sym.sym_tds type_id then
@@ -214,10 +223,10 @@ let rec check_expr symtbl proc_id expr =
   | AST.Ebinop (lexpr, op, rexpr, pos) ->
       check_expr symtbl proc_id lexpr;
       check_expr symtbl proc_id rexpr;
-      let op_type = get_binop_type op in
-      let lexpr_type = get_expr_type symtbl proc_id lexpr in
-      let rexpr_type = get_expr_type symtbl proc_id rexpr in
-      if (op_type = lexpr_type) && (op_type = rexpr_type) then
+      let op_arg_type = get_binop_arg_type op in
+      let lexpr_type  = get_expr_type symtbl proc_id lexpr in
+      let rexpr_type  = get_expr_type symtbl proc_id rexpr in
+      if (op_arg_type = lexpr_type) && (op_arg_type = rexpr_type) then
         ()
       else
         raise (Type_error ("Type error in `"^P.string_of_expr expr^"`", pos))
