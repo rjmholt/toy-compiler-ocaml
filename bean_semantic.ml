@@ -209,7 +209,7 @@ let rec check_expr symtbl proc_id expr =
       if op_type = get_expr_type symtbl proc_id subexpr then
         ()
       else
-        raise (Type_error (P.string_of_expr expr, pos))
+        raise (Type_error ("Type error in `"^P.string_of_expr expr^"`", pos))
   | AST.Ebinop (lexpr, op, rexpr, pos) ->
       check_expr symtbl proc_id lexpr;
       check_expr symtbl proc_id rexpr;
@@ -219,7 +219,7 @@ let rec check_expr symtbl proc_id expr =
       if (op_type = lexpr_type) && (op_type = rexpr_type) then
         ()
       else
-        raise (Type_error (P.string_of_expr expr, pos))
+        raise (Type_error ("Type error in `"^P.string_of_expr expr^"`", pos))
 
 let check_expr_asgn symtbl proc_id beantype arg_expr =
   let expr_type = get_expr_type symtbl proc_id arg_expr in
@@ -227,7 +227,7 @@ let check_expr_asgn symtbl proc_id beantype arg_expr =
     ()
   else
     let pos = get_expr_pos arg_expr in
-    raise (Type_error (P.string_of_expr arg_expr, pos))
+    raise (Type_error ("Type error in `"^P.string_of_expr arg_expr^"`", pos))
 
 let check_asgn symtbl proc_id (lval, rval, pos) =
   let rec check_field_asgn field_tbl (id, sub_rval, pos) () =
