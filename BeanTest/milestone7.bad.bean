@@ -1,0 +1,11 @@
+# Phase 7 test case
+# Semantic error test
+
+proc p(ref int x)
+    write x;
+end
+
+proc main()
+
+    p(42);    # Actual argument should be an lvalue
+end

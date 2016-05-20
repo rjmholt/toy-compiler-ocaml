@@ -3,15 +3,15 @@
 # Note: Not efficient - O(2^n). Use at own risk. May explode.
 
 proc fibb(val int n, ref int result)
-    int r1;
-    int r2;
+    int r;
+    int r';
 
     if n <= 1 then
         result := 1;
     else
-        fibb(n - 1, r1);
-        fibb(n - 2, r2);
-        result := r1 + r2;
+        fibb(n - 1, r);
+        fibb(n - 2, r');
+        result := r + r';
     fi
 end
 

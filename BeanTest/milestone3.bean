@@ -1,0 +1,19 @@
+# Phase 3 test case
+# If and while statements
+
+proc main()
+    int x;
+    read x;
+    while x > 10 and x < 100 do
+        if x < 50 then
+            x := x - 1;
+        else
+            x := x + 1;
+        fi
+    od
+    if x < 50 then
+        write "Went down\n";
+    else
+        write "Went up\n";
+    fi
+end

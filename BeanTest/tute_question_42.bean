@@ -1,0 +1,15 @@
+typedef int height
+
+proc f(val height x)
+    x := x + 1;
+    write x;
+    write "\n";
+end
+
+proc main()
+    int n;
+    n := 41;
+    f(n); 
+    write n;
+    write "\n";
+end

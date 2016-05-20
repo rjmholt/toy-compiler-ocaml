@@ -1,0 +1,20 @@
+# Phase 6 test case
+# Structures
+
+typedef {vip: bool, tfn: int} client
+
+typedef {acc_no: int, acc_holder: client, balance: int} account
+
+proc main()
+    account accA;
+    account accB;
+    client c;
+    c := {tfn = 072116};
+    accA := {acc_holder = c, acc_no = 1234};
+    accA.balance := - 100;
+    accB := accA;
+    if accB.balance > 0 or accB.balance > -500 and accB.acc_holder.vip
+        then write "transaction accepted\n";
+        else write "transaction declined\n";
+    fi
+end

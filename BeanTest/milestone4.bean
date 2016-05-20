@@ -1,0 +1,11 @@
+# Phase 4 test case
+# Call by-value arguments and procedure calls
+
+proc f(val int x, val bool y)
+    write x > 4 or y;
+end
+
+proc main()
+    f(8, false);
+    write "\n";
+end

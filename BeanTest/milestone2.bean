@@ -1,0 +1,11 @@
+# Phase 2 test case
+# Read and assignment statements
+
+proc main()
+    int x;
+    int y;
+    read x;
+    y := x;
+    write x + y;
+    write "\n";
+end

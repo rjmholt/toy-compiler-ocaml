@@ -1,0 +1,35 @@
+bean.cmo : bean_symtbl.cmi bean_semantic.cmi bean_pprint.cmi bean_parse.cmi \
+    bean_oz.cmi bean_lex.cmo bean_ast.cmi
+bean.cmx : bean_symtbl.cmx bean_semantic.cmx bean_pprint.cmx bean_parse.cmx \
+    bean_oz.cmx bean_lex.cmx bean_ast.cmx
+bean_ast.cmi :
+bean_parse.cmi : bean_ast.cmi
+bean_pprint.cmi : bean_ast.cmi
+bean_symtbl.cmi : bean_ast.cmi
+bean_semantic.cmi : bean_symtbl.cmi bean_ast.cmi
+bean_intermediate_code.cmi : bean_symtbl.cmi bean_ast.cmi
+bean_oz.cmi : bean_symtbl.cmi bean_ast.cmi
+bean_ast.cmo : bean_ast.cmi
+bean_ast.cmx : bean_ast.cmi
+bean_lex.cmo : bean_parse.cmi
+bean_lex.cmx : bean_parse.cmx
+bean_parse.cmo : bean_ast.cmi bean_parse.cmi
+bean_parse.cmx : bean_ast.cmx bean_parse.cmi
+bean_pprint.cmo : bean_ast.cmi bean_pprint.cmi
+bean_pprint.cmx : bean_ast.cmx bean_pprint.cmi
+bean_symtbl.cmo : bean_ast.cmi bean_symtbl.cmi
+bean_symtbl.cmx : bean_ast.cmx bean_symtbl.cmi
+bean_semantic.cmo : bean_symtbl.cmi bean_pprint.cmi bean_ast.cmi \
+    bean_semantic.cmi
+bean_semantic.cmx : bean_symtbl.cmx bean_pprint.cmx bean_ast.cmx \
+    bean_semantic.cmi
+bean_intermediate_code.cmo : bean_symtbl.cmi bean_semantic.cmi bean_ast.cmi \
+    bean_intermediate_code.cmi
+bean_intermediate_code.cmx : bean_symtbl.cmx bean_semantic.cmx bean_ast.cmx \
+    bean_intermediate_code.cmi
+bean_oz.cmo : bean_intermediate_code.cmi bean_oz.cmi
+bean_oz.cmx : bean_intermediate_code.cmx bean_oz.cmi
+bean.cmo : bean_symtbl.cmi bean_semantic.cmi bean_pprint.cmi bean_parse.cmi \
+    bean_oz.cmi bean_lex.cmo bean_ast.cmi
+bean.cmx : bean_symtbl.cmx bean_semantic.cmx bean_pprint.cmx bean_parse.cmx \
+    bean_oz.cmx bean_lex.cmx bean_ast.cmx

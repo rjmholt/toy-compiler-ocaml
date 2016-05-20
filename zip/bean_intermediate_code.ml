@@ -173,8 +173,8 @@ let gen_read_code symtbl proc_id lval =
   | Sym.SDecl
   | Sym.SParamVal -> [Store (StackSlot slot_num, Reg 0);
                       CallBuiltin read_call]
-  | Sym.SParamRef -> [StoreIndirect (Reg 1, Reg 0);
-                      Load (Reg 1, StackSlot slot_num);
+  | Sym.SParamRef -> [StoreIndirect (Reg 0, Reg 0);
+                      Load (Reg 0, StackSlot slot_num);
                       CallBuiltin read_call]
 
 (* ========================= Expression Evaluation ========================== *)
@@ -206,8 +206,8 @@ let gen_lval_code symtbl proc_id load_reg lval =
   match scope with
   | Sym.SDecl
   | Sym.SParamVal -> [Load (load_reg, StackSlot slot_num)]
-  | Sym.SParamRef -> [LoadIndirect (load_reg, load_reg);
-                      Load (load_reg, StackSlot slot_num)]  
+  | Sym.SParamRef -> [LoadIndirect (load_reg, load_reg)  ;
+                      Load (load_reg, StackSlot slot_num)]
 
 (* Generate IR code for a unary operation expression *)
 let rec gen_unop_code symtbl proc_id load_reg unop expr =
@@ -285,92 +285,13 @@ let asgn_primitive symtbl proc_id reg scope slot expr =
   in
   asgn_code @ expr_code
 
-let gen_lval_primitive_asgn reg (lscope, lslot) (rscope, rslot) =
-  let lslot_num =
-    match !lslot with
-    | Some snum -> snum
-    | None      -> raise (Unsupported "No slot allocated to lval")
-  in
-  let rslot_num =
-    match !rslot with
-    | Some snum -> snum
-    | None      -> raise (Unsupported "No slot allocated to rlval")
-  in
-  let (Reg r) = reg in
-  let next_reg = Reg (r+1) in
-  match (lscope, rscope) with
-  | (Val, Val) -> [Store (StackSlot lslot_num, reg);
-                   Load  (reg, StackSlot rslot_num)]
-  | (Val, Ref) -> [Store (StackSlot lslot_num, reg);
-                   LoadIndirect (reg, reg);
-                   Load  (reg, StackSlot rslot_num)]
-  | (Ref, Val) ->
-      [StoreIndirect (next_reg, reg);
-       Load (next_reg, StackSlot lslot_num);
-       Load (reg, StackSlot rslot_num)]
-  | (Ref, Ref) ->
-      [StoreIndirect (next_reg, reg);
-       Load (next_reg, StackSlot lslot_num);
-       LoadIndirect (reg, reg);
-       Load (reg, StackSlot rslot_num)]
-
-let rec field_asgn pos lscope rscope lfields field_id (rf_tsym, rf_slot) code =
-  let (lf_tsym, lf_slot) =
-    try
-      Hashtbl.find lfields field_id
-    with
-    | Not_found -> raise (Unsupported "No such field in lval for assignment")
-  in
-  match (lf_tsym, rf_tsym) with
-  | (Sym.STBeantype _, Sym.STBeantype _) ->
-      let asgn_code =
-        gen_lval_primitive_asgn (Reg 0) (lscope, lf_slot) (rscope, rf_slot)
-      in
-      asgn_code @ code
-  | (Sym.STFieldStruct lsubfields, Sym.STFieldStruct rsubfields) ->
-      Hashtbl.fold (field_asgn pos lscope rscope lsubfields) rsubfields code
-  | _ ->
-      raise (Sem.Type_error ("Bad unchecked lval assign type error", pos))
-
-let gen_assign_lval_code symtbl proc_id lval rlval =
-  let lpos = AST.get_lval_pos lval in
-  let rpos = AST.get_lval_pos rlval in
-  let lscope = get_pass_type (Sym.get_lval_scope symtbl proc_id lval lpos)  in
-  let rscope = get_pass_type (Sym.get_lval_scope symtbl proc_id rlval rpos) in
-  let (l_tsym, lslot) = Sym.get_lval_sym symtbl proc_id lval  in
-  let (r_tsym, rslot) = Sym.get_lval_sym symtbl proc_id rlval in
-  match (l_tsym, r_tsym) with
-  | (Sym.STBeantype _, Sym.STBeantype _) ->
-      gen_lval_primitive_asgn (Reg 0) (lscope, lslot) (rscope, rslot)
-  | (Sym.STFieldStruct lfields, Sym.STFieldStruct rfields) ->
-      Hashtbl.fold (field_asgn rpos lscope rscope lfields) rfields []
-  | _ ->
-      let pos = AST.get_lval_pos lval in
-      raise (Sem.Type_error ("Bad unchecked lval assign type error", pos))
-
 (* Stores the value of reg into the slot determined by the fields id *)
-let rec asgn_field symtbl proc_id reg scope field_tbl (id, rval, pos) code =
-  let lpass = get_pass_type scope in
+let rec asgn_field symtbl proc_id reg scope field_tbl (id, rval, _) code =
   let (type_sym, slot) =
     try
       Hashtbl.find field_tbl id
     with
     | Not_found -> raise (Unsupported "No such field in the struct")
-  in
-  let asgn_field_expr subfield_tbl expr =
-    let rlval =
-      match expr with
-      | AST.Elval (lv, _) -> lv
-      | _                 -> raise (Unsupported "No such field in the struct")
-    in
-    let rlval_scope = Sym.get_lval_scope symtbl proc_id rlval pos in
-    let rpass = get_pass_type rlval_scope in
-    let rlval_tsym = Sym.get_lval_type symtbl proc_id rlval in
-    match rlval_tsym with
-    | Sym.STFieldStruct rfields ->
-        let go = field_asgn pos lpass rpass subfield_tbl in
-        Hashtbl.fold go rfields [] 
-    | _ -> raise (Unsupported "The variable to assign is not of compound type")
   in
   let asgn_code =
     match (type_sym, rval) with
@@ -379,8 +300,6 @@ let rec asgn_field symtbl proc_id reg scope field_tbl (id, rval, pos) code =
     | (Sym.STFieldStruct subfield_tbl, AST.Rstruct rasgns) ->
         let go = asgn_field symtbl proc_id reg scope subfield_tbl in
         List.fold_right go rasgns []
-    | (Sym.STFieldStruct subfield_tbl, AST.Rexpr expr) ->
-        asgn_field_expr subfield_tbl expr
     | _ -> raise (Unsupported "No such field in the struct")
   in
   (asgn_code @ code)
@@ -396,6 +315,62 @@ let gen_struct_assign_code symtbl proc_id reg lval rstruct =
   | Sym.STFieldStruct field_tbl ->
       let go = asgn_field symtbl proc_id reg scope field_tbl in
       List.fold_right go rstruct []
+
+let gen_lval_primitive_asgn reg (lscope, lslot) (rscope, rslot) =
+  let lslot_num =
+    match !lslot with
+    | Some snum -> snum
+    | None      -> raise (Unsupported "No slot allocated to lval")
+  in
+  let rslot_num =
+    match !rslot with
+    | Some snum -> snum
+    | None      -> raise (Unsupported "No slot allocated to rlval")
+  in
+  match (lscope, rscope) with
+  | (Val, Val) 
+  | (Ref, Ref) -> [Store (StackSlot lslot_num, reg);
+                   Load  (reg, StackSlot rslot_num)]
+  | (Val, Ref) -> [Store (StackSlot lslot_num, reg);
+                   LoadIndirect (reg, reg);
+                   Load  (reg, StackSlot rslot_num)]
+  | (Ref, Val) -> [Store (StackSlot lslot_num, reg);
+                   LoadAddress (reg, StackSlot rslot_num)]
+
+let gen_assign_lval_code symtbl proc_id lval rlval =
+  let lpos = AST.get_lval_pos lval in
+  let rpos = AST.get_lval_pos rlval in
+  let lscope = get_pass_type (Sym.get_lval_scope symtbl proc_id lval lpos)  in
+  let rscope = get_pass_type (Sym.get_lval_scope symtbl proc_id rlval rpos) in
+  let (l_tsym, lslot) = Sym.get_lval_sym symtbl proc_id lval  in
+  let (r_tsym, rslot) = Sym.get_lval_sym symtbl proc_id rlval in
+  let rec field_asgn lfields field_id (rf_tsym, rf_slot) code =
+    let (lf_tsym, lf_slot) =
+      try
+        Hashtbl.find lfields field_id
+      with
+      | Not_found -> raise (Unsupported "No such field in lval for assignment")
+    in
+    match (lf_tsym, rf_tsym) with
+    | (Sym.STBeantype _, Sym.STBeantype _) ->
+        let asgn_code =
+          gen_lval_primitive_asgn (Reg 0) (lscope, lf_slot) (rscope, rf_slot)
+        in
+        asgn_code @ code
+    | (Sym.STFieldStruct lsubfields, Sym.STFieldStruct rsubfields) ->
+        Hashtbl.fold (field_asgn lsubfields) rsubfields code
+    | _ ->
+        let pos = AST.get_lval_pos lval in
+        raise (Sem.Type_error ("Bad unchecked lval assign type error", pos))
+  in
+  match (l_tsym, r_tsym) with
+  | (Sym.STBeantype _, Sym.STBeantype _) ->
+      gen_lval_primitive_asgn (Reg 0) (lscope, lslot) (rscope, rslot)
+  | (Sym.STFieldStruct lfields, Sym.STFieldStruct rfields) ->
+      Hashtbl.fold (field_asgn lfields) rfields []
+  | _ ->
+      let pos = AST.get_lval_pos lval in
+      raise (Sem.Type_error ("Bad unchecked lval assign type error", pos))
 
 (* stores the value of rval into lval, handles primitives and structs *)
 let gen_assign_code symtbl proc_id lval rval =
@@ -813,6 +788,6 @@ let gen_code_checked symtbl prog =
         ("The variable "^id^" is not defined anywhere", pos))
   | Sym.Duplicate_field (id, pos) ->
       raise (Sym.Definition_error ("The field "^id^" is already defined", pos))
-  | Sym.Undefined_field (id, pos) ->
+  (*| Sym.Undefined_field (id, pos) ->
       raise (Sym.Definition_error ("The field "^id^" is not defined", pos))
-
+*)

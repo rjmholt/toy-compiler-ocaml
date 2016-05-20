@@ -1,0 +1,9 @@
+# Phase 1 test case
+# Tests expressions and write statement
+
+proc main()
+    write 3 + 3 * 2;
+    write " ";
+    write 9 = 4 + 5 and true;
+    write " Hello!\n";
+end

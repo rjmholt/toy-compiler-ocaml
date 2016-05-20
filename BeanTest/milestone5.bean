@@ -1,0 +1,14 @@
+# Phase 5 test case
+# By-reference arguments
+
+proc main()
+    int result;
+
+    p(4, result);
+    write result;
+    write "\n";
+end
+
+proc p(val int in, ref int out)
+    out := 2 * in;
+end

@@ -1,3 +1,6 @@
+# Greatest common divisor of two positive integers
+# using a variant of Euclid's method
+
 proc main()
     int x;
     int y;
@@ -27,7 +30,7 @@ proc main()
     quotient := x / y;
     remainder := x - quotient * y;
 
-    while remainder > 0 do
+    while remainder > 0 do 
         x := y;
         y := remainder;
         quotient := x / y;
@@ -37,3 +40,4 @@ proc main()
     write y;
     write "\n";
 end
+

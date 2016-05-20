@@ -29,31 +29,6 @@ exception Evil                 of string
 
 (* ----- HELPER FUNCTIONS ----- *)
 
-exception Type_match_error
-
-let rec are_type_equivalent t_sym_a t_sym_b =
-  let match_bt bt_a bt_b =
-    match (bt_a, bt_b) with
-    | (AST.TBool, AST.TBool)
-    | (AST.TInt,  AST.TInt)  -> true
-    | _                      -> false
-  in
-  let match_fields fs_a fs_b =
-    let go field_tbl id (t_sym, _) isMatch =
-      try
-        let (field_tsym, _) = Hashtbl.find field_tbl id in
-        are_type_equivalent t_sym field_tsym
-      with
-      | Not_found -> false
-    in
-    (* Fold over the fields and make sure they all match symetrically *)
-    Hashtbl.fold (go fs_a) fs_b true && Hashtbl.fold (go fs_b) fs_a true
-  in
-  match (t_sym_a, t_sym_b) with
-  | (Sym.STBeantype bt_a,    Sym.STBeantype bt_b)    -> match_bt bt_a bt_a
-  | (Sym.STFieldStruct fs_a, Sym.STFieldStruct fs_b) -> match_fields fs_a fs_b
-  | _                                                -> false
-
 let get_expr_pos expr =
   match expr with
   | AST.Ebool  (_, p)       -> p
@@ -67,17 +42,14 @@ let get_unop_type unop =
   | AST.Op_not   -> Sym.STBeantype AST.TBool
   | AST.Op_minus -> Sym.STBeantype AST.TInt
 
-let binop_takes_arg binop arg_type =
-  let is_int t  = are_type_equivalent (Sym.STBeantype AST.TInt)  t in
-  let is_bool t = are_type_equivalent (Sym.STBeantype AST.TBool) t in
-  let either t  = is_bool t || is_int t in
+let get_binop_arg_type binop =
   match binop with
-  | AST.Op_eq  | AST.Op_neq -> either  arg_type
+  | AST.Op_eq  | AST.Op_neq 
   | AST.Op_lt  | AST.Op_leq
   | AST.Op_gt  | AST.Op_geq
-  | AST.Op_mul | AST.Op_div
-  | AST.Op_add | AST.Op_sub -> is_int  arg_type
-  | AST.Op_and | AST.Op_or  -> is_bool arg_type
+  | AST.Op_add | AST.Op_sub 
+  | AST.Op_mul | AST.Op_div -> Sym.STBeantype AST.TInt
+  | AST.Op_and | AST.Op_or  -> Sym.STBeantype AST.TBool
 
 let get_binop_type binop =
   match binop with
@@ -185,6 +157,29 @@ let get_expr_type symtbl proc_id expr =
   | AST.Ebinop (_, binop, _, _) -> get_binop_type binop
   (* TODO Check the expression then return the type *)
 
+let rec are_type_equivalent t_sym_a t_sym_b =
+  let match_bt bt_a bt_b =
+    match (bt_a, bt_b) with
+    | (AST.TBool, AST.TBool)
+    | (AST.TInt,  AST.TInt)  -> true
+    | _                      -> false
+  in
+  let match_fields fs_a fs_b =
+    let go field_tbl id (t_sym, _) isMatch =
+      try
+        let (field_tsym, _) = Hashtbl.find field_tbl id in
+        are_type_equivalent t_sym field_tsym
+      with
+      | Not_found -> false
+    in
+    (* Fold over the fields and make sure they all match symetrically *)
+    Hashtbl.fold (go fs_a) fs_b true && Hashtbl.fold (go fs_b) fs_a true
+  in
+  match (t_sym_a, t_sym_b) with
+  | (Sym.STBeantype bt_a,    Sym.STBeantype bt_b)    -> match_bt bt_a bt_a
+  | (Sym.STFieldStruct fs_a, Sym.STFieldStruct fs_b) -> match_fields fs_a fs_b
+  | _                                                -> false
+
 let rec check_assignment_type symtbl proc_id type_sym rexpr pos =
   match (type_sym, rexpr) with
   | (Sym.STBeantype bt, AST.Rexpr expr) ->
@@ -252,14 +247,10 @@ let rec check_expr symtbl proc_id expr =
   | AST.Ebinop (lexpr, op, rexpr, pos) ->
       check_expr symtbl proc_id lexpr;
       check_expr symtbl proc_id rexpr;
+      let op_arg_type = get_binop_arg_type op in
       let lexpr_type  = get_expr_type symtbl proc_id lexpr in
       let rexpr_type  = get_expr_type symtbl proc_id rexpr in
-      let binop_arg_type_match =
-        binop_takes_arg op lexpr_type
-        && binop_takes_arg op rexpr_type
-        && are_type_equivalent lexpr_type rexpr_type
-      in
-      if binop_arg_type_match then
+      if (op_arg_type = lexpr_type) && (op_arg_type = rexpr_type) then
         ()
       else
         raise (Type_error ("Type error in `"^P.string_of_expr expr^"`", pos))

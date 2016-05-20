@@ -1,0 +1,11 @@
+proc main()
+    int k;
+    k := 41;
+    incr(k);
+    write k;
+    write "\n";
+end
+
+proc incr (ref int n)
+    n := n + 1;
+end
