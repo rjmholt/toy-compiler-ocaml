@@ -1,0 +1,72 @@
+typedef {fA : int, fB : {gA : bool, gB : bool}} a_record
+typedef {used : bool, rec : a_record} b_record
+typedef {qA : bool, qB : int} q
+typedef int height
+
+proc q(val bool x, ref b_record k)
+    int Integer_'n;
+    int Q;
+    bool y;
+    a_record z;
+    
+    z.fA := 42;
+    z.fB := {gB = true, gA = false};
+end
+
+proc p(ref int i)
+    int Q;
+
+    i := 6 * (i + 4) / i;
+end
+
+proc pref(ref int x, ref int y)
+x := 4;
+y := y + x;
+end
+
+#This is the main fuction#
+proc main()
+    int Integer_'m;
+    int Integer_'n;
+    bool flag;
+    a_record record_m;
+    b_record record_n;
+    int z;
+    bool emptyFlag;
+    int emptyInt;
+
+    z := 3;
+    pref(z,z);
+    write z;
+    write emptyFlag;
+    write emptyInt;
+    read Integer_'n;
+    read flag;
+    Integer_'m := Integer_'n + Integer_'n * - 9;
+    write "int Integer_'m;int Integer_'n;  bool flag;\n";
+    write "# proc \main()\n";
+    record_m := {fA = 1, fB = {gA = false}};
+    record_m.fB.gB := true;
+    if(record_m.fB.gA or record_m.fB.gB and false and not true) then 
+        write  "if test!\n" ;
+    fi
+    if (Integer_'m != Integer_'n or Integer_'m = Integer_'n and Integer_'m < Integer_'n or Integer_'m > Integer_'n ) then 
+        write  "if test!\n" ;
+    fi
+    while Integer_'n >= 1 do
+        
+        while Integer_'m <= Integer_'n and Integer_'n >= 1 do
+            if Integer_'m > Integer_'n or Integer_'m < Integer_'n then
+                Integer_'n := Integer_'n - 1;
+                Integer_'m := Integer_'m - 1;
+                if Integer_'m = 0 then
+                    p(Integer_'m);
+                fi
+            else
+                Integer_'n := Integer_'n - Integer_'m;
+                Integer_'m := Integer_'m - 1;
+            fi
+        od
+    od
+end
+

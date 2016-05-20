@@ -1,0 +1,60 @@
+#Test case created by team Anti-Ocaml
+
+#type alias
+typedef int num
+typedef bool bull
+
+#equivalent types
+typedef {_a': int, _b': bool} bro_a
+typedef {_b': bull, _a': num} bro_b
+
+
+
+#procedure name can be used as formal parameter
+proc bro(val bro_a bro)
+	
+	#check default integer value (0)
+	write bro._a';
+end
+
+#type name is allowed to coincide with a procedure name
+proc bro_a(ref bro_a bro)
+	#field name can be used as variable
+	int _a';
+	
+	#see what happen to bro
+	_a' := 1;
+	bro._a' := _a';
+end
+
+proc main ()
+	bro_a b_a;
+	bro_b b_b;
+	bool x;
+	int a;
+	
+	#incomplete init of structure is permitted,
+	#_a' takes the default value 0
+	b_a := {_b' = true};
+	
+	#bro_a & bro_b consider as same type
+	#so this structure assignment is legal
+	b_b := b_a;
+	
+	bro(b_b);
+	bro_a(b_a);
+	#since b_a is passed as reference, 
+	#the field value will be affected
+	write b_a._a';
+	
+	#check default boolean value (false)
+	while x do
+		write "You will never see me\n";
+	od
+	
+	#divided by 0 causes runtime error
+	if true or 10 > 5/a then
+		write "all operands will be evaluated fully";
+	fi
+	
+end

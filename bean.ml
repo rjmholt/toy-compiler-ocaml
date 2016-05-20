@@ -13,10 +13,10 @@ module P = Bean_parse
 (* Argument parsing code *)
 type compiler_mode = PrettyPrint | Compile
 
-let infile_name  = ref None     (* Name of the (.bean) file read in      *)
-let mode         = ref Compile  (* PrettyPrint or (default) Compile mode *)
-let outfile_name = ref "a.out"  (* Name of the file to pipe to           *)
-let debug        = ref false    (* Debug flag                            *)
+let infile_name  = ref None    (* Name of the (.bean) file read in      *)
+let mode         = ref Compile (* PrettyPrint or (default) Compile mode *)
+let outfile_name = ref None    (* Name of the file to pipe to           *)
+let debug        = ref false   (* Debug flag                            *)
 
 (* --------------------------------------------- *)
 (*  Specification for command-line options       *)
@@ -26,7 +26,7 @@ let (speclist:(Arg.key * Arg.spec * Arg.doc) list) =
     ("-p", Arg.Unit (fun () -> mode := PrettyPrint),
      " Run the compiler in pretty-printer mode");
 
-    ("-o", Arg.String (fun str -> outfile_name := str),
+    ("-o", Arg.String (fun str -> outfile_name := Some str),
      " Specify the output file for bean to compile to");
 
     ("--debug", Arg.Unit (fun () -> debug := true),
@@ -75,9 +75,9 @@ let main () =
         let oz_prog = Bean_oz.generate_oz_code ir_prog in
         (* Determine where to pipe output *)
         let outfile =
-          if not !debug
-          then open_out !outfile_name
-          else stdout
+          match !outfile_name with
+          | Some filename -> open_out filename
+          | None          -> stdout
         in
         try
           Printf.fprintf outfile "%s" oz_prog;

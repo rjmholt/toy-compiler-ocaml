@@ -1,0 +1,79 @@
+# This is a sample bean program that throws away any integers from a list of
+# 5 integers not in the range specified in the first two arguments in Bean
+
+# input should always be 7 integers; lowerbound, upperbound, the numbers to be
+# considered
+
+# e.g of input: where R is the return key:
+# 0 R 100 R -1 R 10 R 1001 R 5 R 9 R
+# this will throw away any numbers from the last 5 entered that do not fall in
+# the range 0 - 100
+
+typedef  { A : int,  B : int,  C : int,  D : int, E : int } _numbers
+
+typedef { LB : int, UB : int} _bounds
+
+#read the 7 numbers from the input buffer
+proc getinput (ref _numbers i, ref _bounds b)
+  int n;
+  write "Lower Bound: ";
+  write "\n";
+  read n;
+  b.LB := n;
+  write "\n";
+  write "Upper Bound: ";
+  write "\n";
+  read n;
+  b.UB := n;
+  write "\n";
+  write "Input 5 integers separated by the return key: ";
+  write "\n";
+  read n;
+  i.A := n;
+  read n;
+  i.B := n;
+  read n;
+  i.C := n;
+  read n;
+  i.D := n;
+  read n;
+  i.E := n;
+end
+
+#filter the numbers and write the correct output
+proc filtervals (val _numbers i, val _bounds b)
+  write "Results: ";
+  write "\n";
+  if i.A >= b.LB and i.A <= b.UB then
+    write i.A;
+    write "\n";
+  fi
+  if i.B >= b.LB and i.B <= b.UB then
+    write i.B;
+    write "\n";
+  fi
+  if i.C >= b.LB and i.C <= b.UB then
+    write i.C;
+    write "\n";
+  fi
+  if i.D >= b.LB and i.D <= b.UB then
+    write i.D;
+    write "\n";
+  fi
+  if i.E >= b.LB and i.E <= b.UB then
+    write i.E;
+    write "\n";
+  fi
+  write "\n";
+  write "...END...\n";
+end
+
+
+proc main ()
+  _numbers input;
+  _bounds bounds;
+
+  getinput(input, bounds);
+  filtervals(input, bounds);
+
+end

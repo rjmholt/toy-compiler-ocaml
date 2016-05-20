@@ -1,0 +1,35 @@
+# Calculate the factorial of a given number
+
+proc fac(val int x, ref int ret)
+	ret := x;
+
+	while x > 1 do
+		ret := ret * (x - 1);
+		x := x - 1;
+	od
+
+  if x = 0 then
+    ret := 1;
+  fi
+
+  if x < 0 then
+    write "Error\n";
+  fi
+end
+
+proc main()
+	int input;
+	int result;
+
+  while input > -1 do
+    read input;
+
+    fac(input, result);
+
+    write "The factorial of ";
+    write input;
+    write " is ";
+    write result;
+    write "\n";
+  od
+end

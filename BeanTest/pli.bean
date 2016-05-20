@@ -1,0 +1,140 @@
+#these types are used for test
+typedef {f1 : int, f2 : {g1 : bool, g2 : bool}} a_record
+typedef {used : bool, rec : a_record} b_record
+#this is used to order an integer array
+typedef int height
+typedef {n1 : int, n2 : int, n3 : height} array
+
+
+#this is non-used test procedure
+proc q(val bool x, ref b_record k)
+	int n';
+	bool y;
+	a_record z;
+
+	z.f1 := 42;
+	z.f2 := {g2 = true};
+end
+
+#this is to test ref function
+proc p(ref int i)
+
+	i := 6 * i + 4;
+end
+
+#this is to order the array and output the result
+proc order(val int a, val int b, val int c)
+	
+	if a >= b and a >= c then
+		write "the large one is ";
+		write a;
+		write "\n";
+		if b >= c then 
+			write "the middle one is ";
+			write b;
+			write  "\n";
+			write "the small one is ";
+			write c;
+			write  "\n";
+		else
+			write "the middle one is ";
+			write c;
+			write  "\n";
+			write "the middle one is ";
+			write b;
+			write  "\n";
+		fi
+	else
+		if b >= c then
+			write "the large one is ";
+			write b;
+			write "\n";
+			if a >= c then 
+				write "the middle one is ";
+				write a;
+				write  "\n";
+				write "the small one is ";
+				write c;
+				write  "\n";
+			else
+				write "the middle one is ";
+				write c;
+				write  "\n";
+				write "the middle one is ";
+				write a;
+				write  "\n";
+			fi
+		else
+			write "the large one is ";
+			write c;
+			write "\n";
+			if a >= b then 
+				write "the middle one is ";
+				write a;
+				write  "\n";
+				write "the small one is ";
+				write b;
+				write  "\n";
+			else
+				write "the middle one is ";
+				write b;
+				write  "\n";
+				write "the middle one is ";
+				write a;
+				write  "\n";
+			fi
+		fi
+	fi
+end
+
+#this is the main procedure
+proc main()
+	int i;
+	height n;
+	int m;
+	array a;
+	int x;
+	
+	i := 1;
+	n := 5;
+	write "Hello World\n";
+	write "Plese input the first number:\n";
+	read a.n1;
+	write "Plese input the second number:\n";
+	read a.n2;
+	write "Plese input the third number:\n";
+	read a.n3;
+	if a.n1 = a.n2 and a.n2 = a.n3 then
+		write "Three numbers are same\n";
+	else
+		order(a.n1, a.n2, a.n3);
+		write "The sequence of numbers you input are ";
+		write a.n1;
+		write " ";
+		write a.n2;
+		write " ";
+		write a.n3;
+		write "\n";
+	fi
+	p(i);
+	if i = 10 then
+		write "P procedure works\n";
+	fi
+	while n > 1 do
+		m := n;
+		while m > 0 do
+			if m > 0 then
+				n := n - 1;
+				m := m - 1;
+				if m = 0 then
+					write "The loop works\n";
+				fi
+			else
+				m := n - m;
+				m := m - 1;
+			fi
+		od
+	od
+	x := -5 + (6 + (2 * 3));
+	write x;
+end

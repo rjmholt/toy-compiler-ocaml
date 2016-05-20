@@ -1,0 +1,34 @@
+# Print out the first n fibonacci numbers
+
+proc main()
+  int i;
+  int n;
+  int x;
+  int y;
+
+  x := 0;
+  y := 1;
+
+  # Input prompt
+  write "How many numbers to print? ";
+  read n;
+
+  write "\n";
+
+  while i < n do
+    next_fib(x, y);
+
+    write y;
+    write "\n";
+  od
+
+end
+
+# Calculate the next fibonacci number
+proc next_fib(ref int x, ref int y)
+  int temp;
+
+  temp := y;
+  y := x + y;
+  x := temp;
+end

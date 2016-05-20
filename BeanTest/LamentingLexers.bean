@@ -1,0 +1,27 @@
+# Recursive Fibonacci Sequence
+# Returns the nth fibonacci number
+# Note: Not efficient - O(2^n). Use at own risk. May explode.
+
+proc fibb(val int n, ref int result)
+    int r1;
+    int r2;
+
+    if n <= 1 then
+        result := 1;
+    else
+        fibb(n - 1, r1);
+        fibb(n - 2, r2);
+        result := r1 + r2;
+    fi
+end
+
+proc main()
+    int n;
+    int result;
+
+    read n;
+    fibb(n, result);
+    write "The fibbonacci number for the inputted value is: ";
+    write result;
+    write "\n";
+end

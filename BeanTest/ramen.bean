@@ -1,0 +1,42 @@
+# by reference arguments
+# by value arguments
+# if statement
+
+
+proc readinput(ref int x, ref int y)
+	write "Please enter two integers: ";
+	read x;
+	read y;
+	write "\n";
+end
+
+proc sort(ref int x, ref int y)
+	int temp;
+	
+	if x > y then
+		temp := x;
+		x := y;
+		y := temp;
+	fi
+end
+
+proc printresult(val int x, val int y)
+	write "Result: ";
+	write x;
+	write ", ";
+	write y;
+	write "\n";
+end	
+
+proc main()
+	int x;
+	int y;
+	
+	write "This program will sort two given integers in ascending order\n";
+	
+	readinput(x,y);
+	
+	sort(x,y);
+	
+	printresult(x,y);
+end

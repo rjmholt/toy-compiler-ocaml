@@ -363,7 +363,13 @@ let add_proc td_tbl p_tbl (id, pparams, (proc_decls, _), proc_pos) () =
     let add_decl  decl  () = add_decl_symbol td_tbl proc_sym_tbl decl in
     List.fold_right add_param pparams     ();
     List.fold_right add_decl  proc_decls  ();
-    Hashtbl.add p_tbl id {proc_params; proc_sym_tbl; proc_label; proc_pos}
+    let proc = { proc_params  = proc_params;
+                 proc_sym_tbl = proc_sym_tbl;
+                 proc_label   = proc_label;
+                 proc_pos     = proc_pos
+               }
+    in
+    Hashtbl.add p_tbl id proc
 
 (* Insert procedures into a lookup table by ident *)
 let rec add_procs td_tbl p_tbl (procs: AST.proc list) =
@@ -378,7 +384,9 @@ let build_symtbl ast =
   let sym_procs = Hashtbl.create 10 in
   add_typedefs sym_tds ast.AST.typedefs;
   add_procs sym_tds sym_procs ast.AST.procs;
-  { sym_tds; sym_procs }
+  { sym_tds   = sym_tds;
+    sym_procs = sym_procs
+  }
 
 let build_symtbl_checked ast =
   try

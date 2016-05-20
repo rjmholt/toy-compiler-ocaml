@@ -1,0 +1,50 @@
+# Team Cocoa bean test case
+# Prints a pyramid of stars
+# If input = 4
+#    *
+#   ***
+#  *****
+# *******
+
+typedef {nspaces: int, nstars: int} row
+
+proc main ()
+    int n;
+    int i;
+    row r;
+
+    write "How many rows do you want? (> 0) ";
+    read n;
+    write "\n";
+
+    r.nstars := 1;    
+    r.nspaces := 2 * n - r.nstars;
+
+    
+    # Print an asterisks triangle of n rows
+    while (i < n) do        
+        print_row(n, r);
+        i := i + 1;
+    od
+end
+
+
+proc print_row(val int n, ref row r)
+    int i;
+
+    while (i < (r.nspaces / 2)) do
+        write " ";
+        i := i + 1;
+    od
+    i := 0;
+
+    while (i < r.nstars) do
+        write "*";
+        i := i + 1;
+    od
+    write "\n";
+
+    # update for next row   
+    r.nspaces := r.nspaces - 2;
+    r.nstars := r.nstars + 2;
+end
