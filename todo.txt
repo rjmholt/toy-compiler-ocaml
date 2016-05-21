@@ -11,3 +11,7 @@ So TODO:
   	- Replace all the nasty internal error messages with helpful ones that don't reveal the compiler's internal failings and miserable existence
   	- Comment everything
 	- Names and student numbers at the top of every file
+
+Make type errors specific exceptions and catch them later
+
+Do the same for all the weird internal error messages

@@ -10,7 +10,7 @@ bean_parse.mli
 bean_lex.ml
 Members.txt
 beanCore/
-*.zip
+zip/
 name.sh
 *.tar
 *.gz
