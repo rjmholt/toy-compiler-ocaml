@@ -67,18 +67,18 @@ let main () =
     (* Parsing happens here *)
     let prog   = Bean_parse.program Bean_lex.token lexbuf in
     let symtbl = Bean_symtbl.build_symtbl_checked prog in
+    let outfile =
+      match !outfile_name with
+      | Some filename -> open_out filename
+      | None          -> stdout
+    in
     match !mode with
     | PrettyPrint ->
-        Bean_pprint.print_program Format.std_formatter prog
+        Bean_pprint.print_program outfile prog
     | Compile ->
         let ir_prog = Bean_intermediate_code.gen_code_checked symtbl prog in
         let oz_prog = Bean_oz.generate_oz_code ir_prog in
         (* Determine where to pipe output *)
-        let outfile =
-          match !outfile_name with
-          | Some filename -> open_out filename
-          | None          -> stdout
-        in
         try
           Printf.fprintf outfile "%s" oz_prog;
           if   not !debug

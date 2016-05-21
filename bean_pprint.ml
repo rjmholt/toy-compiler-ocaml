@@ -8,6 +8,7 @@
 open Bean_ast
 open Format
 
+let fprintf = Printf.fprintf
 
 (* ---- STRING CONVERSION FUNCTIONS FOR AST LEAVES ---- *)
 
@@ -186,9 +187,9 @@ let string_of_pass pass_type =
 (* ---- PRINTING HELPER FUNCTIONS ---- *)
 
 (* Print an indent of level n by printing 4*n spaces *)
-let print_indent indent_level =
+let print_indent file indent_level =
   for i = 1 to indent_level do
-    printf "    "
+    fprintf file "    "
   done
 
 (* TYPEDEF PRINTING FUNCTIONS *)
@@ -198,31 +199,31 @@ let print_indent indent_level =
  *   - print the string representation of the typespec the typedef
  *     will represent
  *   - print the ident of the typedef                               *)
-let print_typedef (typespec, ident, _) =
-  printf "typedef ";
-  printf "%s" (string_of_typespec typespec);
-  printf " %s\n" ident
+let print_typedef file (typespec, ident, _) =
+  fprintf file "typedef ";
+  fprintf file "%s" (string_of_typespec typespec);
+  fprintf file " %s\n" ident
 
 (* Print a typedef list by printing the first one, then the rest *)
-let rec print_typedef_list typedefs =
+let rec print_typedef_list file typedefs =
   match typedefs with
-  | []        -> printf "\n"
-  | td :: tds -> print_typedef td; print_typedef_list tds
+  | []        -> fprintf file "\n"
+  | td :: tds -> print_typedef file td; print_typedef_list file tds
 
 (* ---- DECLARATION PRINTING FUNCTIONS ---- *)
 
 (* Print a variable declaration:
  *   - print the string representation of the typespec of the variable
  *   - print the ident of the variable                                  *)
-let print_var_decl (ident, typespec, _) =
-  print_indent 1;
-  printf "%s %s;\n" (string_of_typespec typespec) ident
+let print_var_decl file (ident, typespec, _) =
+  print_indent file 1;
+  fprintf file "%s %s;\n" (string_of_typespec typespec) ident
 
 (* Print declarations by printing the first one, then the rest *)
-let rec print_decl_list dlist =
+let rec print_decl_list file dlist =
   match dlist with
-  | [decl]      -> print_var_decl decl
-  | decl :: ds  -> print_var_decl decl; print_decl_list ds
+  | [decl]      -> print_var_decl file decl
+  | decl :: ds  -> print_var_decl file decl; print_decl_list file ds
   | []          -> ()
 
 (* ---- STATEMENT PRINTING FUNCTIONS ---- *)
@@ -231,16 +232,16 @@ let rec print_decl_list dlist =
  *   - print the lvalue being assigned to
  *   - print the ":=" operator
  *   - print the rvalue being assigned     *)
-let print_assign indent lval rval =
-  print_indent indent;
-  printf "%s := %s;\n" (string_of_lval lval) (string_of_rval rval)
+let print_assign file indent lval rval =
+  print_indent file indent;
+  fprintf file "%s := %s;\n" (string_of_lval lval) (string_of_rval rval)
 
 (* Print a read statement:
  *   - print "read"
  *   - print the string represenation of the lvalue *)
-let print_read indent lval =
-  print_indent indent;
-  printf "read %s;\n" (string_of_lval lval)
+let print_read file indent lval =
+  print_indent file indent;
+  fprintf file "read %s;\n" (string_of_lval lval)
 
 (* Print write:
  *   - print "write"
@@ -248,19 +249,20 @@ let print_read indent lval =
  *       print the string representation of the expression
  *   - if it's a string:
  *       print the escaped string literal *)
-let print_write indent writeable =
-  print_indent indent;
+let print_write file indent writeable =
+  print_indent file indent;
   match writeable with
-  | WExpr expr  -> printf "write %s;\n" (string_of_expr expr)
+  | WExpr expr  -> fprintf file "write %s;\n" (string_of_expr expr)
   | WString str ->
-      printf "write %s;\n" (String.concat "" ["\"";str;"\""])
+      fprintf file "write %s;\n" (String.concat "" ["\"";str;"\""])
 
 (* Print a procedure call:
  *   - print the procedure ident
  *   - print the expressions passed to the procedure in the call *)
-let print_proc_call indent pname exprs =
-  print_indent indent;
-  printf "%s(%s);\n" pname (String.concat ", " (List.map string_of_expr exprs))
+let print_proc_call file indent pname exprs =
+  print_indent file indent;
+  fprintf file "%s(%s);\n" pname
+    (String.concat ", " (List.map string_of_expr exprs))
 
 (* Print an if statement:
  *   - print "if"
@@ -271,18 +273,18 @@ let print_proc_call indent pname exprs =
  *     + print "else"
  *     + print the else body statements
  *   - print "fi"                          *)
-let rec print_if indent expr ?elses:(slist=[]) stmts =
-  print_indent indent;
-  printf "if %s then\n" (string_of_expr expr);
-  print_stmt_list (indent+1) stmts;
+let rec print_if file indent expr ?elses:(slist=[]) stmts =
+  print_indent file indent;
+  fprintf file "if %s then\n" (string_of_expr expr);
+  print_stmt_list file (indent+1) stmts;
   match slist with
-  | [] -> print_indent indent ; printf "fi\n" ; ()
+  | [] -> print_indent file indent ; fprintf file "fi\n" ; ()
   | _ ->
-    print_indent indent;
-    printf "else\n";
-    print_stmt_list (indent+1) slist;
-  print_indent indent;
-  printf "fi\n"
+    print_indent file indent;
+    fprintf file "else\n";
+    print_stmt_list file (indent+1) slist;
+  print_indent file indent;
+  fprintf file "fi\n"
 
 (* Print a while statement:
  *   - print "while"
@@ -290,57 +292,57 @@ let rec print_if indent expr ?elses:(slist=[]) stmts =
  *   - print the body statements
  *   - print "od"                         *)
 and
-print_while indent expr stmts =
-  print_indent indent;
-  printf "while %s do\n" (string_of_expr expr);
-  print_stmt_list (indent+1) stmts;
-  print_indent indent;
-  printf "od\n";
+print_while file indent expr stmts =
+  print_indent file indent;
+  fprintf file "while %s do\n" (string_of_expr expr);
+  print_stmt_list file (indent+1) stmts;
+  print_indent file indent;
+  fprintf file "od\n";
 
 (* Print a statement list:
  *   - work out the type of the first statement
  *   - print it with the appropriate function
  *   - print the rest of the statements          *)
 and
-print_stmt_list indent stmt_list =
-  let print_stmt stmt =
+print_stmt_list file indent stmt_list =
+  let print_stmt file stmt =
     match stmt with
-    | Assign   (lval, rval, _)   -> print_assign indent lval rval
-    | Read     lval              -> print_read indent lval
-    | Write    writeable         -> print_write indent writeable
-    | If       (expr, stmts)     -> print_if indent expr stmts
-    | While    (expr, stmts)     -> print_while indent expr stmts
-    | ProcCall (ident, exprs, _) -> print_proc_call indent ident exprs
+    | Assign   (lval, rval, _)   -> print_assign file indent lval rval
+    | Read     lval              -> print_read file indent lval
+    | Write    writeable         -> print_write file indent writeable
+    | If       (expr, stmts)     -> print_if file indent expr stmts
+    | While    (expr, stmts)     -> print_while file indent expr stmts
+    | ProcCall (ident, exprs, _) -> print_proc_call file indent ident exprs
     | IfElse (expr, if_stmts, else_stmts) ->
-        print_if indent expr if_stmts ~elses:else_stmts
+        print_if file indent expr if_stmts ~elses:else_stmts
   in
   match stmt_list with
-  | stmt :: slist   -> print_stmt stmt; print_stmt_list indent slist
+  | stmt :: slist   -> print_stmt file stmt; print_stmt_list file indent slist
   | []              -> ()
 
 (* --- PROCEDURE PRINTING FUNCTIONS --- *)
 
-let print_proc_body (decls, stmts) =
-  print_decl_list decls;
-  printf "\n";
-  print_stmt_list 1 stmts
+let print_proc_body file (decls, stmts) =
+  print_decl_list file decls;
+  fprintf file "\n";
+  print_stmt_list file 1 stmts
 
 (* Print a parameter:
  *   - print the pass type
  *   - print the typespec
  *   - print the parameter ident *)
-let print_proc_param (pass_type, typespec, ident, _) =
-  printf "%s " (string_of_pass pass_type);
-  printf "%s " (string_of_typespec typespec);
-  printf "%s"  ident
+let print_proc_param file (pass_type, typespec, ident, _) =
+  fprintf file "%s " (string_of_pass pass_type);
+  fprintf file "%s " (string_of_typespec typespec);
+  fprintf file "%s"  ident
 
 (* Print parameters by printing one, then a comma, then the rest *)
-let rec print_proc_param_list param_list =
+let rec print_proc_param_list file param_list =
   match param_list with
   | []          -> ()
-  | [param]     -> print_proc_param param
-  | param :: ps -> print_proc_param param; printf ", ";
-                   print_proc_param_list ps
+  | [param]     -> print_proc_param file param
+  | param :: ps -> print_proc_param file param; fprintf file ", ";
+                   print_proc_param_list file ps
 
 (* Print a procedure:
  *   - print the "proc" keyword
@@ -348,23 +350,26 @@ let rec print_proc_param_list param_list =
  *   - print the declarations in the body
  *   - print the statements in the body
  *   - print the "end" keyword             *)
-let print_proc (ident, proc_params, proc_body, _) =
-  printf "proc %s(" ident;
-  print_proc_param_list proc_params;
-  printf ")\n";
-  print_proc_body proc_body;
-  printf "end"
+let print_proc file (ident, proc_params, proc_body, _) =
+  fprintf file "proc %s(" ident;
+  print_proc_param_list file proc_params;
+  fprintf file ")\n";
+  print_proc_body file proc_body;
+  fprintf file "end"
 
 (* Print procedures by printing one, then the rest *)
-let rec print_proc_list plist =
+let rec print_proc_list file plist =
   match plist with
   | []          -> ();
-  | [proc]      -> print_proc proc; printf "\n"
-  | proc :: ps  -> print_proc proc; printf "\n\n"; print_proc_list ps
+  | [proc]      -> print_proc file proc; fprintf file "\n"
+  | proc :: ps  ->
+      print_proc file proc;
+      fprintf file "\n\n";
+      print_proc_list file ps
 
 (* --- BEAN PROGRAM PRINTING FUNCTION --- *)
 
 (* Print a bean program by printing the typedefs then the procedures *)
-let print_program fmt prog =
-  print_typedef_list prog.typedefs;
-  print_proc_list prog.procs
+let print_program file prog =
+  print_typedef_list file prog.typedefs;
+  print_proc_list file prog.procs
