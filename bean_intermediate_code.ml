@@ -276,12 +276,14 @@ let asgn_primitive symtbl proc_id reg scope slot expr =
     | None     -> raise (Unsupported "Slot not assigned")
   in
   let expr_code = gen_expr_code symtbl proc_id reg expr in
+  let (Reg r) = reg in
+  let next_reg = Reg (r+1) in
   let asgn_code =
     match scope with
     | Sym.SDecl
     | Sym.SParamVal -> [Store (StackSlot slot_num, reg)]
-    | Sym.SParamRef -> [StoreIndirect (reg, reg)      ;
-                        Load (reg, StackSlot slot_num)]
+    | Sym.SParamRef -> [StoreIndirect (next_reg, reg)      ;
+                        Load (next_reg, StackSlot slot_num)]
   in
   asgn_code @ expr_code
 

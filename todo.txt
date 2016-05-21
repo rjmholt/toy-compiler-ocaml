@@ -4,3 +4,10 @@ TODOs
 Do semantic checking as an interface/service
 
 Clean up code
+
+So TODO:
+  	- Check for repeated fields in rstructs
+  	- Improve type checking for compound lvals in expressions (so that they don't throw funny errors when you try to use them like scalars)
+  	- Replace all the nasty internal error messages with helpful ones that don't reveal the compiler's internal failings and miserable existence
+  	- Comment everything
+	- Names and student numbers at the top of every file
