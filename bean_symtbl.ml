@@ -41,17 +41,25 @@ and field_struct = (ident, field_decl) Hashtbl.t
  *   - a position          *)
 and typedef = (typespec * pos)
 
+(* The scope of a variable:
+ *   - local declaration
+ *   - pass-by-value parameter
+ *   - pass-by-reference parameter *)
 type var_scope =
   | SDecl
   | SParamVal
   | SParamRef
 
+(* A hash-tabulated type representation *)
 type type_symbol =
   | STBeantype    of  AST.beantype
   | STFieldStruct of (ident, field_symbol) Hashtbl.t
 
+(* A field in a structural type, with a type and a possible slot number*)
 and field_symbol = (type_symbol * int option ref)
 
+(* A variable symbol with a type,
+ * a scope, a possible slot number and a position*)
 type var_symbol = (type_symbol * var_scope * int option ref * pos)
 
 (* Procedure symbol table, composed of:
@@ -104,21 +112,27 @@ exception Undefined_proc       of string * AST.pos
 (* struct does not have a field of this name    *)
 exception Undefined_field      of string * AST.pos
 
-exception No_field
-exception Slot_not_allocated (* no slot to store the value in                *)
-exception No_such_procedure  (* call made to a proc that doesn't exist       *)
+exception No_field           (* The field searched for does not exist        *)
+exception Slot_not_allocated (* No slot to store the value in                *)
+exception No_such_procedure  (* Call made to a proc that doesn't exist       *)
 
 (* ========================================================================== *)
 (* ========================== INTERFACE FUNCTIONS =========================== *)
 (* ========================================================================== *)
 
+(* Get the position stored for a procedure declaration *)
 let get_proc_pos sym_tbl proc_id =
   let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
   proc.proc_pos
 
+(* Get the field symbol from an lvalue and a table of fields
+ * This is for extracting the symbol of field lvalues        *)
 let rec get_field_sym fieldtbl lvalue =
   match lvalue with
-  | AST.LId    (id, _)  -> Hashtbl.find fieldtbl id
+  | AST.LId    (id, pos)  ->
+      (* This should not occur;
+       * this function should only be called on fields *)
+      raise (Undefined_field (P.string_of_lval lvalue, pos))
   | AST.LField (lv, id) ->
       let pos = AST.get_lval_pos lv in
       let (field_type, _) = Hashtbl.find fieldtbl id in
@@ -128,10 +142,12 @@ let rec get_field_sym fieldtbl lvalue =
       | STFieldStruct subfield ->
           get_field_sym subfield lv
 
+(* Get the variable symbol for a simple identifier *)
 let get_var_sym sym_tbl proc_id id =
   let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
   Hashtbl.find proc.proc_sym_tbl id
 
+(* Get the type symbol and slot for a given lvalue *)
 let get_lval_sym sym_tbl proc_id lval =
   match lval with
   | AST.LId (id, _) ->
@@ -163,6 +179,7 @@ let get_lval_type sym_tbl proc_id lval =
           let (field_type, _) = get_field_sym field lval in
           field_type
 
+(* Set the slot of a given identifier name *)
 let set_id_slot sym_tbl proc_id id slot_num =
   let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
   let (_, _, slot, _) = Hashtbl.find proc.proc_sym_tbl id in
@@ -207,6 +224,7 @@ let set_proc_label sym_tbl proc_id label =
   let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
   proc.proc_label := Some label
 
+(* Get the label allocated to a procedure *)
 let get_proc_label sym_tbl proc_id pos =
   let proc =
     try
@@ -218,10 +236,12 @@ let get_proc_label sym_tbl proc_id pos =
   | None       -> raise (Undefined_proc (proc_id, pos))
   | Some label -> label
 
+(* Get the list of parameters for a procedure *)
 let get_param_list sym_tbl proc_id =
   let proc = Hashtbl.find sym_tbl.sym_procs proc_id in
   proc.proc_params
 
+(* Get the scope of a variable in a given procedure *)
 let get_proc_var_scope sym_tbl proc_id symbol_id pos =
   let proc =
     try
@@ -233,6 +253,7 @@ let get_proc_var_scope sym_tbl proc_id symbol_id pos =
   let (_, scope, _, _) = Hashtbl.find proc_syms symbol_id in
   scope
 
+(* Get the scope of an lvalue in a given procedure *)
 let get_lval_scope sym_tbl proc_id lval =
   match lval with
   | AST.LId (id, _) ->    get_proc_var_scope sym_tbl proc_id id
@@ -317,10 +338,12 @@ let rec add_typedefs td_tbl typedefs =
   | td :: tds -> add_typedef td_tbl td; add_typedefs td_tbl tds
   | []        -> ()
 
+(* Build the symbol for a single declaration *)
 let make_decl_symbol td_tbl decl_ast_type decl_pos =
   let decl_type = sym_tbl_t_of_ast_t td_tbl decl_ast_type in
   make_var_symbol SDecl decl_type decl_pos
 
+(* Add a declaration symbol to the procedure's symbol table *)
 let add_decl_symbol td_tbl proc_sym_tbl decl =
   let (id, decl_ast_type, decl_pos) = decl in
   let decl_sym = make_decl_symbol td_tbl decl_ast_type decl_pos in
@@ -386,6 +409,9 @@ let build_symtbl ast =
     sym_procs = sym_procs
   }
 
+(* Build the symbol table while checking for definition errors
+ * If one is encountered, throw a more generic exception
+ * (because OCaml exceptions have no classes) with a helpful message *)
 let build_symtbl_checked ast =
   try
     build_symtbl ast
