@@ -117,6 +117,7 @@ let gen_decl_code symtbl proc_id (frame_size, code) (id, _, _) =
 
 (* =========================== Type Resolution  ============================= *)
 
+(* Condense scope types into pass types *)
 let get_pass_type scope =
   match scope with
   | Sym.SDecl | Sym.SParamVal -> Val

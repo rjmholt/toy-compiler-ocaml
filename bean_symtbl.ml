@@ -129,10 +129,8 @@ let get_proc_pos sym_tbl proc_id =
  * This is for extracting the symbol of field lvalues        *)
 let rec get_field_sym fieldtbl lvalue =
   match lvalue with
-  | AST.LId    (id, pos)  ->
-      (* This should not occur;
-       * this function should only be called on fields *)
-      raise (Undefined_field (P.string_of_lval lvalue, pos))
+  | AST.LId    (id, _)  ->
+      Hashtbl.find fieldtbl id
   | AST.LField (lv, id) ->
       let pos = AST.get_lval_pos lv in
       let (field_type, _) = Hashtbl.find fieldtbl id in
