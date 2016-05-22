@@ -25,29 +25,37 @@ These files compose the Bean compiler source code (so far).
 Building Bean
 -------------
 If your working directory is otherwise empty, run:
-    "make"
+    make
 to construct the Bean compiler executable ("bean").
 
 If you wish to recompile it, run:
-    "make clobber"
+    make clobber
 first to clean the directory of old intermediary OCaml files
 before running "make" again. Other Makefile commands are documented
 in that file.
 
 If `make` fails the first time, you make need to run:
-    "make depend"
+
+    make depend
+
 first, to generate the dependency files for bean.
 
 Running the Bean Compiler
 -------------------------
 To run the Bean compiler, execute like so:
-    "bean [-p] [-o <output-filepath>] <bean-filepath>"
+
+    bean [-p] [-o <output-filepath>] <bean-filepath>
+
 Or, if the Bean executable is not on your $PATH, but in your local
 directory:
-    "./bean [-p] [-o <output-filepath>] <bean-filepath>"
+
+    ./bean [-p] [-o <output-filepath>] <bean-filepath>
+
 For example:
-    "./bean -o mung.oz mung.bean"
-will compile the file "mung.bean" in the current directory.
+
+    ./bean -o mung.oz mung.bean
+
+will compile the file "mung.bean" in the current directory to mung.oz.
 
 No flag will call the Bean compiler. This compiles to Oz code, to run on the
 University of Melbourne Oz emulator. If you specify an output file with the
@@ -61,8 +69,9 @@ Not specifiying a file will cause Bean to compile whatever is passed to it
 over stdin. This may be useful if you are a power-user or don't like text
 editors (this is probably still more usable than ed), and instead prefer to
 write programs like this:
-    "cat <<EOF | ./bean
+
+    cat <<EOF | ./bean
     proc main()
         write "Hello, World!";
     end
-    EOF"
+    EOF
