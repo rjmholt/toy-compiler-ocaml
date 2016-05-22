@@ -112,9 +112,7 @@ exception Undefined_proc       of string * AST.pos
 (* struct does not have a field of this name    *)
 exception Undefined_field      of string * AST.pos
 
-exception No_field           (* The field searched for does not exist        *)
 exception Slot_not_allocated (* No slot to store the value in                *)
-exception No_such_procedure  (* Call made to a proc that doesn't exist       *)
 
 (* ========================================================================== *)
 (* ========================== INTERFACE FUNCTIONS =========================== *)

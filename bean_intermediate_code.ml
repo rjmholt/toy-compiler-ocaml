@@ -75,7 +75,10 @@ type instr =
 type code = instr list  (* code, by definition, is a list of instructions *)
 
 (* Exceptions *)
-exception Unsupported of string
+(* Things not yet implemented -- prevents compiler from complaining *)
+exception Unsupported             of string
+(* Only thrown when something that semantics should have prevented is reached *)
+exception Uncaught_semantic_error of string * AST.pos
 
 (* ========================================================================== *)
 (* ====================== BEAN CODE TO IR TRANSLATION ======================= *)
@@ -333,7 +336,8 @@ let rec field_asgn pos lscope rscope lfields field_id (rf_tsym, rf_slot) code =
   | (Sym.STFieldStruct lsubfields, Sym.STFieldStruct rsubfields) ->
       Hashtbl.fold (field_asgn pos lscope rscope lsubfields) rsubfields code
   | _ ->
-      raise (Sem.Type_error ("Bad unchecked lval assign type error", pos))
+      raise (Uncaught_semantic_error ("Field assign type error", pos))
+
 
 let gen_assign_lval_code symtbl proc_id lval rlval =
   let lpos = AST.get_lval_pos lval in
@@ -349,7 +353,7 @@ let gen_assign_lval_code symtbl proc_id lval rlval =
       Hashtbl.fold (field_asgn rpos lscope rscope lfields) rfields []
   | _ ->
       let pos = AST.get_lval_pos lval in
-      raise (Sem.Type_error ("Bad unchecked lval assign type error", pos))
+      raise (Uncaught_semantic_error ("Lvalue assign type error", pos))
 
 (* Stores the value of reg into the slot determined by the fields id *)
 let rec asgn_field symtbl proc_id reg scope field_tbl (id, rval, pos) code =
@@ -772,30 +776,6 @@ let gen_code_checked symtbl prog =
   try
     gen_code symtbl prog
   with
-  | Sem.Type_error (msg, pos) ->
-      raise (Sem.Semantic_error (msg, pos))
-  | Sem.Arity_mismatch (id, pos) ->
-      raise (Sem.Semantic_error
-        (id^" is called with the wrong number of arguments", pos))
-  | Sem.Assign_type_mismatch (l_type_sym, r_type_sym, pos) ->
-      (* TODO figure out how to print things based on type sym? *)
-      raise (Sem.Semantic_error ("assignment type problem", pos))
-  | Sem.Reference_pass (id, pos) ->
-      raise (Sem.Semantic_error (id^" cannot be passed by reference", pos))
-  | Sem.Read_struct (id, pos) ->
-      raise (Sem.Semantic_error (id^" is a structure and cannot be read", pos))
-  | Sem.Write_struct (id, pos) ->
-      raise (Sem.Semantic_error
-        (id^" is a structure and cannot be written", pos))
-  | Sem.Var_name_is_type (id, pos) ->
-      raise (Sem.Semantic_error (id^" is already defined as a type", pos))
-  | Sem.Var_name_is_param (id, pos) ->
-      raise (Sem.Semantic_error (id^" is already defined as a paramater", pos))
-  | Sem.Param_name_is_type (id, pos) ->
-      raise (Sem.Semantic_error (id^" is already defined as a type", pos))
-  | Sem.Main_has_nonzero_arity ->
-      let pos = Sym.get_proc_pos symtbl "main" in
-      raise (Sem.Semantic_error ("Procedure main has non-zero arity", pos))
   | Sym.Duplicate_type (id, pos) ->
       raise (Sym.Definition_error ("The type "^id^" is already defined", pos))
   | Sym.Undefined_type (id, pos) ->
@@ -818,4 +798,53 @@ let gen_code_checked symtbl prog =
       raise (Sym.Definition_error ("The field "^id^" is already defined", pos))
   | Sym.Undefined_field (id, pos) ->
       raise (Sym.Definition_error ("The field "^id^" is not defined", pos))
-
+  | Sem.Non_scalar_expression (expr_str, pos) ->
+      raise (Sem.Semantic_error
+        (expr_str^" was expected to be of scalar type", pos))
+  | Sem.Non_boolean_condition (expr_str, pos) ->
+      raise (Sem.Semantic_error ("The conditional expression "^expr_str^
+              " was expected to be of boolean type", pos))
+  | Sem.Arity_mismatch (id, pos) ->
+      raise (Sem.Semantic_error
+        (id^" is called with the wrong number of arguments", pos))
+  | Sem.Reference_pass (id, pos) ->
+      raise (Sem.Semantic_error (id^" cannot be passed by reference", pos))
+  | Sem.Read_struct (id, pos) ->
+      raise (Sem.Semantic_error (id^" is a structure and cannot be read", pos))
+  | Sem.Write_struct (id, pos) ->
+      raise (Sem.Semantic_error
+        (id^" is a structure and cannot be written", pos))
+  | Sem.Var_name_is_type (id, pos) ->
+      raise (Sem.Semantic_error (id^" is already defined as a type", pos))
+  | Sem.Var_name_is_param (id, pos) ->
+      raise (Sem.Semantic_error (id^" is already defined as a paramater", pos))
+  | Sem.Param_name_is_type (id, pos) ->
+      raise (Sem.Semantic_error (id^" is already defined as a type", pos))
+  | Sem.Rstruct_asgn_scalar_lval (lval_str, rval_str, pos) ->
+      raise (Sem.Semantic_error
+        ("The lvalue "^lval_str^" is of scalar type, and cannot be assigned "
+        ^"the rvalue "^rval_str, pos))
+  | Sem.Rstruct_asgn_scalar_field (lval_str, field_id, rval_str, pos) ->
+      raise (Sem.Semantic_error
+        ("The field "^field_id^" within the lvalue "^lval_str
+        ^" is of scalar type, and cannot be assigned the rvalue "
+        ^rval_str, pos))
+  | Sem.Operand_type_mismatch (op_str, expr_str, pos) ->
+      raise (Sem.Semantic_error
+        ("The expression "^expr_str^" has an incompatible type for the "
+        ^op_str^" operator", pos))
+  | Sem.Cmp_arg_type_mismatch (lexpr_str, rexpr_str, pos) ->
+      raise (Sem.Semantic_error
+        ("The expressions "^lexpr_str^" and "^rexpr_str^" are of different "
+        ^"type and cannot be compared", pos))
+  | Sem.Field_access_of_scalar (lval_str, field_id, pos) ->
+      raise (Sem.Semantic_error
+        ("The lvalue "^lval_str^" is of scalar type, and has no field "
+        ^field_id^" to evaluate", pos))
+  | Sem.Param_type_mismatch (expr_str, param_id, callee_id, pos) ->
+      raise (Sem.Semantic_error
+        ("The expression "^expr_str^" has incompatible type with the "
+        ^"formal parameter "^param_id^" of the procedure "^callee_id, pos))
+  | Sem.Main_has_nonzero_arity ->
+      let pos = Sym.get_proc_pos symtbl "main" in
+      raise (Sem.Semantic_error ("Procedure main has non-zero arity", pos))

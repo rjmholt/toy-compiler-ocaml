@@ -10,19 +10,24 @@ exception Semantic_error of string * AST.pos
 (* Like Haskell's `undefined`; stops the compiler from whinging *)
 exception Not_yet_implemented
 
-(* TODO pass expression names out or something, use pretty printer functions
- * to show the user where compilation failed in a nice way                   *)
-
-(* Internal semantic errors *)
-exception Type_error           of string * AST.pos
-exception Arity_mismatch       of string * AST.pos
-exception Assign_type_mismatch of Sym.type_symbol * Sym.type_symbol * AST.pos
-exception Reference_pass       of string * AST.pos
-exception Read_struct          of string * AST.pos
-exception Write_struct         of string * AST.pos
-exception Var_name_is_type     of string * AST.pos
-exception Var_name_is_param    of string * AST.pos
-exception Param_name_is_type   of string * AST.pos
+(* Semantic errors to convert to Semantic_error when caught *)
+exception Non_scalar_expression     of string * AST.pos
+exception Non_boolean_condition     of string * AST.pos
+exception Arity_mismatch            of string * AST.pos
+exception Reference_pass            of string * AST.pos
+exception Read_struct               of string * AST.pos
+exception Write_struct              of string * AST.pos
+exception Var_name_is_type          of string * AST.pos
+exception Var_name_is_param         of string * AST.pos
+exception Param_name_is_type        of string * AST.pos
+exception Rstruct_asgn_scalar_lval  of string * string * AST.pos
+exception Assign_type_mismatch      of string * string * AST.pos
+exception Operand_type_mismatch     of string * string * AST.pos
+exception Cmp_arg_type_mismatch     of string * string * AST.pos
+exception Field_access_of_scalar    of string * string * AST.pos
+exception Subfield_access_of_scalar of string * string * string * AST.pos
+exception Rstruct_asgn_scalar_field of string * string * string * AST.pos
+exception Param_type_mismatch       of string * string * string * AST.pos
 exception Main_has_nonzero_arity
 exception No_main_proc
 
@@ -164,17 +169,34 @@ let check_has_main symtbl =
     raise No_main_proc
 
 (* Check an lvalue has a given field *)
-let check_has_field symtbl proc_id lval field_name =
-  let lval_t_sym = Sym.get_lval_type symtbl proc_id lval in
-  match lval_t_sym with
-  | Sym.STBeantype _ ->
-      (*raise (Sym.Undefined_field (field_name, AST.get_lval_pos lval))*)
-      ()
-  | Sym.STFieldStruct fields ->
-      if Hashtbl.mem fields field_name then
-        ()
-      else
-        raise (Sym.Undefined_field (field_name, AST.get_lval_pos lval))
+let check_has_field symtbl proc_id lval id field_name =
+  let lval_str = P.string_of_lval lval in
+  let pos      = AST.get_lval_pos lval in
+  let error lv field_id =
+    let lval_field_str = P.string_of_lval lv in
+    Subfield_access_of_scalar (lval_str, lval_field_str, field_id, pos)
+  in
+  let get_field_type lv field_tbl field_id =
+    let (field_type, _) =
+      try
+        Hashtbl.find field_tbl field_id
+      with
+      | Not_found -> raise (error lv field_id)
+    in
+    field_type
+  in
+  let rec check_field_in_type t_sym lv =
+    match (t_sym, lv) with
+    | (Sym.STBeantype _, AST.LId _) -> ()
+    | (Sym.STFieldStruct fields, AST.LField (subfield_lval, field_id)) ->
+        let field_type = get_field_type subfield_lval fields field_id in
+        check_field_in_type field_type subfield_lval
+    | (Sym.STFieldStruct _, AST.LId _) -> () (* Non-scalar field is valid *)
+    | (Sym.STBeantype _, AST.LField _) ->
+        raise (Field_access_of_scalar (lval_str, field_name, pos))
+  in
+  let base_type = Sym.get_id_type symtbl proc_id id in
+  check_field_in_type base_type lval
 
 (* Check an lvalue's name is valid *)
 let check_lval_name symtbl proc_id lval =
@@ -188,8 +210,8 @@ let check_lval_name symtbl proc_id lval =
   | AST.LId (id, _)       -> check_var_defined symtbl proc_id id pos
   | AST.LField (lval, id) ->
       check_var_defined symtbl proc_id id pos;
-      let field_name = get_field_name (AST.LField (lval, id)) in
-      check_has_field symtbl proc_id (AST.LField (lval, id)) field_name
+      let field_name = get_field_name lval in
+      check_has_field symtbl proc_id lval id field_name
 
 (* Resolve the symbol table type of an expression *)
 let get_expr_type symtbl proc_id expr =
@@ -201,42 +223,6 @@ let get_expr_type symtbl proc_id expr =
    * call check_expr AND check_expr call this --> infinite loop      *)
   | AST.Eunop  (unop, _, _)     -> get_unop_type unop
   | AST.Ebinop (_, binop, _, _) -> get_binop_type binop
-  (* TODO Check the expression then return the type *)
-
-(* Check that an lvalue and the rvalue assigned to it are of
- * compatible types                                          *)
-let rec check_assignment_type symtbl proc_id type_sym rexpr pos =
-  match (type_sym, rexpr) with
-  | (Sym.STBeantype bt, AST.Rexpr expr) ->
-      let expr_type = get_expr_type symtbl proc_id expr in
-      let pos       = get_expr_pos expr in
-      if expr_type = Sym.STBeantype bt then
-        ()
-      else
-        raise (Type_error ("Assignment types do not match", pos))
-  | (Sym.STFieldStruct field_tbl, AST.Rstruct rexpr_list) ->
-      let go (field_id, sub_rv, pos) () =
-        let (field_type, _) =
-          try
-            Hashtbl.find field_tbl field_id
-          with
-          | Not_found -> raise (Sym.Undefined_field (field_id, pos))
-        in
-        check_assignment_type symtbl proc_id field_type sub_rv pos
-      in
-      List.fold_right go rexpr_list ()
-  | (lval_type, AST.Rexpr expr) ->
-      let expr_type = get_expr_type symtbl proc_id expr in
-      if are_type_equivalent lval_type expr_type then
-        ()
-      else
-        let name = P.string_of_expr expr in
-        raise (Type_error
-          ("The expression "^name
-           ^" does not match the type of the receiving lvalue", pos))
-  | (_, _) ->
-      raise (Type_error ("Assignment types do not match", pos))
-  (* TODO Maybe improve the way this last check works*)
 
 (* Ensure that a parameter being passed into a procedure is valid *)
 let check_pass_type symtbl caller_id callee_id param_id arg_expr =
@@ -269,12 +255,30 @@ let check_lval_expr_primitive symtbl proc_id lval =
   | Sym.STFieldStruct _ ->
       let pos  = AST.get_lval_pos lval in
       let name = P.string_of_lval lval in
-      raise (Type_error ("Scalar type expected in expression. "^name
-                         ^" is of non-scalar type", pos))
+      raise (Non_scalar_expression (name, pos))
 
 (* Check a scalar expression is valid
  * This will reject non-scalar lvalues *)
 let rec check_expr symtbl proc_id expr =
+  let check_binop_operand op expr pos =
+    let expr_type = get_expr_type symtbl proc_id expr in
+    if binop_takes_arg op expr_type then
+      ()
+    else
+      let op_str   = P.string_of_binop op  in
+      let expr_str = P.string_of_expr expr in
+      raise (Operand_type_mismatch (op_str, expr_str, pos))
+  in
+  let check_binop_args_match lexpr rexpr pos =
+    let lexpr_type = get_expr_type symtbl proc_id lexpr in
+    let rexpr_type = get_expr_type symtbl proc_id rexpr in
+    if are_type_equivalent lexpr_type rexpr_type then
+      ()
+    else
+      let lexpr_str = P.string_of_expr lexpr in
+      let rexpr_str = P.string_of_expr rexpr in
+      raise (Cmp_arg_type_mismatch (lexpr_str, rexpr_str, pos))
+  in
   match expr with
   | AST.Eint _ | AST.Ebool _     -> ()
   | AST.Elval (lval, _)          ->
@@ -286,21 +290,15 @@ let rec check_expr symtbl proc_id expr =
       if op_type = get_expr_type symtbl proc_id subexpr then
         ()
       else
-        raise (Type_error ("Type error in `"^P.string_of_expr expr^"`", pos))
+        let op_str   = P.string_of_unop op in
+        let expr_str = P.string_of_expr expr in
+        raise (Operand_type_mismatch (op_str, expr_str, pos))
   | AST.Ebinop (lexpr, op, rexpr, pos) ->
       check_expr symtbl proc_id lexpr;
       check_expr symtbl proc_id rexpr;
-      let lexpr_type  = get_expr_type symtbl proc_id lexpr in
-      let rexpr_type  = get_expr_type symtbl proc_id rexpr in
-      let binop_arg_type_match =
-        binop_takes_arg op lexpr_type
-        && binop_takes_arg op rexpr_type
-        && are_type_equivalent lexpr_type rexpr_type
-      in
-      if binop_arg_type_match then
-        ()
-      else
-        raise (Type_error ("Type error in `"^P.string_of_expr expr^"`", pos))
+      check_binop_operand op lexpr pos;
+      check_binop_operand op rexpr pos;
+      check_binop_args_match lexpr rexpr pos
 
 (* Check a simple primitive assignment of a scalar
  * expression to a beantyped lvalue                *)
@@ -310,19 +308,16 @@ let check_primitive_asgn symtbl proc_id beantype arg_expr =
   if expr_type = beantype then
     ()
   else
-    let pos = get_expr_pos arg_expr in
-    raise (Type_error ("Type error in `"^P.string_of_expr arg_expr^"`", pos))
+    let pos      = get_expr_pos arg_expr in
+    let expr_str = P.string_of_expr arg_expr in
+    raise (Non_scalar_expression (expr_str, pos))
 
 (* Check the passing of a procedure parameter *)
 let check_param_asgn symtbl caller_id callee_id param_id arg_expr =
   let error  =
     let pos = get_expr_pos arg_expr in
     let expr_str = P.string_of_expr arg_expr in
-    let msg = String.concat " "
-      ["Types of expression"; expr_str; "and parameter"; param_id;
-       "in procedure"; callee_id; "do not match"]
-    in
-    Type_error (msg, pos)
+    Param_type_mismatch (expr_str, param_id, callee_id, pos)
   in
   let arg_type = get_expr_type symtbl caller_id arg_expr in
   let match_beantype bt1 bt2 =
@@ -354,17 +349,15 @@ let check_param_asgn symtbl caller_id callee_id param_id arg_expr =
 (* Check the assignment of an rvalue to an lvalue *)
 let check_asgn symtbl proc_id (lval, rval, pos) =
   let error expr = 
-    let msg = 
-      P.string_of_lval lval^" and "
-      ^P.string_of_expr expr^ " have incompatible types"
-    in
-    Type_error (msg, pos)
+    let lval_str = P.string_of_lval lval in
+    let expr_str = P.string_of_expr expr in
+    raise (Assign_type_mismatch (lval_str, expr_str, pos))
   in
   let check_rstruct_duplicates rfield_list =
     let id_tbl = Hashtbl.create 5 in
     let go (id, _, pos) () =
       if Hashtbl.mem id_tbl id then
-        raise (Type_error ("Field "^id^" is already assigned in rvalue", pos))
+        raise (Sym.Duplicate_field (id, pos))
       else
         Hashtbl.add id_tbl id id
     in
@@ -389,8 +382,10 @@ let check_asgn symtbl proc_id (lval, rval, pos) =
           ()
         else
           raise (error expr)
-    | _ -> raise (Type_error
-        ("Cannot assign a primitive type to a compound-typed lvalue", pos))
+    | (_, AST.Rstruct rfields) ->
+        let lval_str    = P.string_of_lval lval in
+        let rstruct_str = P.string_of_struct_assign rfields in
+        raise (Rstruct_asgn_scalar_field (lval_str, id, rstruct_str, pos))
   in
   let (lval_t_sym, _) = Sym.get_lval_sym symtbl proc_id lval in
   match (lval_t_sym, rval) with
@@ -405,8 +400,10 @@ let check_asgn symtbl proc_id (lval, rval, pos) =
         ()
       else
         raise (error expr)
-  | _ -> raise (Type_error
-      ("Cannot assign a primitive type to a compound-typed lvalue", pos))
+  | (_, AST.Rstruct rfields) ->
+      let lval_str    = P.string_of_lval lval in
+      let rstruct_str = P.string_of_struct_assign rfields in
+      raise (Rstruct_asgn_scalar_lval (lval_str, rstruct_str, pos))
 
 
 (* Check a read statement;
@@ -466,9 +463,9 @@ let rec check_stmt symtbl proc_id stmt =
       | _                        -> true
     in
     if cond_not_bool then
-      let pos = get_expr_pos expr in
-      raise (Type_error
-              ("Expression in conditional guard is not boolean", pos))
+      let pos      = get_expr_pos expr     in
+      let expr_str = P.string_of_expr expr in
+      raise (Non_boolean_condition (expr_str, pos))
     else
       ()
   in
