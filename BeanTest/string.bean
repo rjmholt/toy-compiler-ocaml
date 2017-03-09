@@ -1,5 +1,0 @@
-proc main()
-    write "\n";
-    write "\\n";
-    write "\\\n";
-end

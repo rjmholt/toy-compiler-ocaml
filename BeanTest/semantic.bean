@@ -1,9 +1,0 @@
-typedef {a: int, b: bool} mytype
-typedef {n: int, g: {k: int, v: bool}} othertype
-
-proc main()
-    mytype x;
-    othertype y;
-
-    write x.a + y.g.v;
-end

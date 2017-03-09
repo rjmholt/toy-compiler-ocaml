@@ -17,3 +17,7 @@ name.sh
 bean_parse.output
 *.oz
 oz/
+OzTest/
+BeanTest/
+feedback/
+collate.sh

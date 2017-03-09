@@ -1,3 +1,0 @@
-proc notMain()
-    write "Hello World!\n";
-end

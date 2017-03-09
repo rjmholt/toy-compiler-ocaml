@@ -1,3 +1,0 @@
-proc f(,ref int x)
-    write x;
-end

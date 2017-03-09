@@ -17,22 +17,22 @@ Contents
 
 With this README should be the following files:
 
-    * bean.ml
-    * bean\_lex.mll
-    * bean\_parse.mly
-    * bean\_ast.ml
-    * bean\_ast.mli
-    * bean\_pprint.ml
-    * bean\_pprint.mli
-    * bean\_symtbl.ml
-    * bean\_symtbl.mli
-    * bean\_semantic.ml
-    * bean\_semantic.mli
-    * bean\_intermediate\_code.ml
-    * bean\_intermediate\_code.mli
-    * bean\_oz.ml
-    * bean\_oz.mli
-    * Makefile
+* bean.ml
+* bean\_lex.mll
+* bean\_parse.mly
+* bean\_ast.ml
+* bean\_ast.mli
+* bean\_pprint.ml
+* bean\_pprint.mli
+* bean\_symtbl.ml
+* bean\_symtbl.mli
+* bean\_semantic.ml
+* bean\_semantic.mli
+* bean\_intermediate\_code.ml
+* bean\_intermediate\_code.mli
+* bean\_oz.ml
+* bean\_oz.mli
+* Makefile
 
 These files compose the Bean compiler source code (so far).
 

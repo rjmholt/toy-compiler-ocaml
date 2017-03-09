@@ -1,8 +1,0 @@
-proc main()
-  fail(1);
-end
-
-proc fail()
-  write n;
-  write "\n";
-end
