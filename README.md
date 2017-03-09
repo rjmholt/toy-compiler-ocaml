@@ -1,23 +1,37 @@
 Simple Bean Compiler
 ====================
 
+Note to Unimelb students
+---
+
+If you use this codebase in any other way than as a reference for your
+own original project, it will be obvious. I am a PLI tutor. Your work will
+be run on an originality checker and compared to this.
+
+I've left it up here because there are not many good resources for writing
+a compiler in OCaml on the web -- at least not in full code -- and this is
+relatively self-documenting. Don't make me take it down.
+
+Contents
+---
+
 With this README should be the following files:
 
     * bean.ml
-    * bean_lex.mll
-    * bean_parse.mly
-    * bean_ast.ml
-    * bean_ast.mli
-    * bean_pprint.ml
-    * bean_pprint.mli
-    * bean_symtbl.ml
-    * bean_symtbl.mli
-    * bean_semantic.ml
-    * bean_semantic.mli
-    * bean_intermediate_code.ml
-    * bean_intermediate_code.mli
-    * bean_oz.ml
-    * bean_oz.mli
+    * bean\_lex.mll
+    * bean\_parse.mly
+    * bean\_ast.ml
+    * bean\_ast.mli
+    * bean\_pprint.ml
+    * bean\_pprint.mli
+    * bean\_symtbl.ml
+    * bean\_symtbl.mli
+    * bean\_semantic.ml
+    * bean\_semantic.mli
+    * bean\_intermediate\_code.ml
+    * bean\_intermediate\_code.mli
+    * bean\_oz.ml
+    * bean\_oz.mli
     * Makefile
 
 These files compose the Bean compiler source code (so far).
