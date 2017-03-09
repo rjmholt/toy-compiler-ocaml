@@ -79,10 +79,11 @@ print to stdout.
 The "-p" flag will call the Bean pretty printer on the program specified.
 This option is currently well-supported.
 
-Not specifiying a file will cause Bean to compile whatever is passed to it
-over stdin. This may be useful if you are a power-user or have a moral
-disagreement with text editors, and instead prefer to write programs like 
-this (this is probably still more usable than `ed`):
+Not specifying a file will invoke the Bean REPO (Read-Eval-Print-Once), in which bean will try to compile
+whatever is passed to it from stdin. This may be useful if
+you are prototyping a bean program, or if you have a moral
+disagreement with text editors (although still more useable
+then `ed`). An example:
 
     cat <<EOF | ./bean
     proc main()
